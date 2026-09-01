@@ -13,37 +13,37 @@ await Demo.create(ctx, "A new item");
 ```
 
 Methods are the capability, named for what a caller wants done. They take `ctx`
-and reach the plugin's services through it, so they work anywhere a context
-exists: `setup`, a listener, a command. `use()` is the exception, for
-components.
+and reach the plugin's services through it, so they run in `setup`, a listener
+or a command. `use()` is the exception, for components.
 
-An `index.ts` holding only types and a hook exposes nothing: another plugin can
-render beside it but never ask it for anything. It is a plugin's only importable
-file; a deeper path is a defect.
+A component crosses the same way: `Demo.ItemRow`. A slot lets the opener place
+what it never imported; an exported component lets the caller place what it
+chose.
+
+It is a plugin's only importable file, and a deeper path is a defect. One
+holding nothing but types and a hook exposes nothing at all.
 
 ## Events
 
 You announce that something happened, want nothing back, and never wait. Emit
-only after the state it describes is written: a write and its event must never
-disagree.
+only after the state is written: a write and its event must never disagree.
 
-A listener that throws reaches neither the emitter nor the others. It is caught,
-logged and recorded.
+A listener that throws reaches neither the emitter nor the others; it is caught
+and recorded.
 
 Never request and respond over events: that is a public API with worse types.
 
 ## Slots
 
-You extend another plugin without importing it. It opens a named slot, you
-contribute to it. Nav items, toolbar buttons and settings panels are
-contributions, never imports.
+You extend another plugin without importing it. Nav items, toolbar buttons and
+settings panels are contributions, never imports.
 
 The opener defines the payload schema; one failing it is rejected at startup.
 
 ## Hooks
 
 The owner runs a lifecycle point and lets others intercept. A participant
-rejects by returning a reason, which the owner surfaces.
+rejects by returning a reason.
 
 ## Permissions
 
@@ -52,7 +52,6 @@ UI reflects what the API enforces, never decides.
 
 ## Rules
 
-Everything crossing is declared in `plugin.ts`. Undeclared does not exist.
-
-What one plugin uses stays inside it, moving to a shared layer only when a
-second needs it.
+Everything crossing is declared in `plugin.ts`. Undeclared does not exist. What
+one plugin uses stays inside it, moving to a shared layer only when a second
+needs it.

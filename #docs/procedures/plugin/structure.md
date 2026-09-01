@@ -1,18 +1,18 @@
 # Procedure: plugin structure
 
-One plugin is one capability: swap its implementation and nothing notices.
+One plugin is one capability: swap it and nothing notices.
 
 ## Folders
 
 ```
 plugins/<name>/
 ├── plugin.ts       the contract: all that crosses the boundary
-├── index.ts        the public API: all another plugin may import
+├── index.ts        the public API: methods, components, types
 ├── types/          one per file, schema and type together
 ├── utils/          pure functions, no domain
 ├── api/            the backend, validated
 ├── services/       the logic, over api and hooks
-├── hooks/          one per file: React state, effects, refs
+├── hooks/          one per file: state, effects, refs
 ├── components/     private
 ├── sections/       blocks of them
 ├── pages/          screens
@@ -32,19 +32,21 @@ Stop at the first yes:
 5. Pure and domain-free → `utils/`
 6. Renders → `components/`, `sections/`, `pages/`
 
-Validation lives beside the type it validates.
+Validation lives beside the type it validates. The schema stands outside the
+object when a method returns that type: a `const` and a `type` of one name
+cannot reference each other in a circle.
 
 ## Style
 
 Everything is an object with methods; no loose top-level `const`. A hook is the
-exception: React calls it, so it is a function named `use…`, one per file.
+exception: React calls it, so it is a function `use…`, one per file.
 
 Allman braces for functions and blocks, arrows included: a named function's body
 is a block with a `return`, never one expression. An inline callback stays as
-it is. An object's brace stays on the key line, as does an array's. No comments.
+it is. An object's brace stays on the key line. No comments.
 
 ## Adding a plugin
 
 `plugin.ts` first, declaring only what it needs; `index.ts` last, the smallest
 surface a consumer needs. Prove it starts, that a wrong contract is rejected,
-and that a test fails when you break the behaviour.
+and that a test fails when behaviour breaks.

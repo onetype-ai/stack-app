@@ -48,6 +48,9 @@ export const Demo = {
     },
 };
 
+export { ItemRow } from "./components/ItemRow/ItemRow";
+export type { ItemRowProps } from "./components/ItemRow/ItemRow";
+
 export type { DemoItem } from "./types/DemoItem";
 export type { DemoItemPage } from "./types/DemoItemPage";
 export type { DemoListQuery } from "./types/DemoListQuery";
