@@ -7,6 +7,7 @@ const resolvePath = (path: string): string => fileURLToPath(new URL(path, import
 export default defineConfig({
     plugins: [react()],
     resolve: {
+        dedupe: ["react", "react-dom"],
         alias: [
             { find: /^@ui$/, replacement: resolvePath("./src/ui/index.ts") },
             { find: /^@ui\//, replacement: `${resolvePath("./src/ui")}/` },
