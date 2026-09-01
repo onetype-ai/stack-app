@@ -1,0 +1,19 @@
+.root
+{
+    display: block;
+}
+
+.root > .body
+{
+    max-width: var(--width-container);
+    margin-inline: auto;
+    padding-block: var(--space-6);
+    padding-inline: var(--space-5);
+}
+
+.root > .body > .state
+{
+    padding-block: var(--space-7);
+    color: var(--color-text-muted);
+    text-align: center;
+}

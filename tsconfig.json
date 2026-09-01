@@ -1,0 +1,40 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "types": [
+      "vite/client",
+      "node"
+    ],
+    "paths": {
+      "@ui": [
+        "./src/ui/index.ts"
+      ],
+      "@ui/*": [
+        "./src/ui/*"
+      ],
+      "@onetype/stack-app-kit": [
+        "./packages/stack-app-kit/src/index.ts"
+      ],
+      "@onetype/stack-app-kit/react": [
+        "./packages/stack-app-kit/src/plugins/kernel/react/index.tsx"
+      ],
+      "@plugins/*": [
+        "./src/plugins/*"
+      ],
+      "@onetype/stack-app-kit/testing": [
+        "./packages/stack-app-kit/src/testing.ts"
+      ]
+    }
+  },
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "tests/**/*.ts",
+    "*.ts",
+    "*.tsx"
+  ],
+  "exclude": [
+    "dist",
+    "node_modules"
+  ]
+}

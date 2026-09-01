@@ -1,0 +1,8 @@
+node_modules/
+dist/
+*.local
+.DS_Store
+
+# Symlinks to the shared packages. They point outside this repo, so they are set up
+# locally rather than committed. See README.
+packages/

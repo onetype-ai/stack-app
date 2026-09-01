@@ -1,0 +1,27 @@
+.root
+{
+    display: block;
+}
+
+.root > .body
+{
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: var(--space-3) var(--space-5);
+    max-width: var(--width-container);
+    margin-inline: auto;
+    padding-block: var(--space-6);
+    padding-inline: var(--space-5);
+}
+
+.root > .body > .term
+{
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+}
+
+.root > .body > .value
+{
+    font-weight: var(--weight-medium);
+    color: var(--color-text);
+}

@@ -1,0 +1,35 @@
+.root
+{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding: var(--space-3);
+    background-color: var(--color-surface);
+    border: var(--border-width) solid var(--color-border);
+    border-radius: var(--radius-md);
+}
+
+.root > .label
+{
+    font-size: var(--text-sm);
+    font-weight: var(--weight-medium);
+    color: var(--color-text-muted);
+}
+
+.root > .open
+{
+    padding-block: var(--space-1);
+    padding-inline: var(--space-3);
+    font-size: var(--text-sm);
+    color: var(--color-text);
+    text-decoration: none;
+    background-color: var(--color-surface);
+    border: var(--border-width) solid var(--color-border);
+    border-radius: var(--radius-sm);
+}
+
+.root > .open:hover
+{
+    background-color: var(--color-surface-hover);
+}

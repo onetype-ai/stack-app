@@ -1,0 +1,26 @@
+.root
+{
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding-block: var(--space-3);
+    border-block-end: var(--border-width) solid var(--color-border);
+}
+
+.root > .title
+{
+    flex: 1;
+    font-weight: var(--weight-medium);
+    color: var(--color-text);
+}
+
+.root > .status
+{
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+}
+
+.root[data-status="archived"] > .title
+{
+    color: var(--color-text-disabled);
+}
