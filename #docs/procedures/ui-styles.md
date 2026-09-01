@@ -36,8 +36,8 @@ meaning, and prefixed `ui-` so a global class is never mistaken for a module one
 Prove it needed in two unrelated places first; one used in a single place is a
 misfiled module rule.
 
-Fonts load in `index.html`, never through CSS; the family name is a token. Self-host,
-preload what first paint needs, and declare a fallback stack.
+Fonts load in `index.html`, never through CSS; the family name is a token.
+Preload what first paint needs, and declare a fallback stack.
 
 ## Proving it
 
