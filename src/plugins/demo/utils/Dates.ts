@@ -1,5 +1,6 @@
-export const formatDate = {
-    absolute: (iso: string, locale?: string): string =>
+class DatesUtil
+{
+    absolute(iso: string, locale?: string): string
     {
         const date = new Date(iso);
 
@@ -12,9 +13,9 @@ export const formatDate = {
             dateStyle: "medium",
             timeStyle: "short",
         }).format(date);
-    },
+    }
 
-    relative: (iso: string, now: Date = new Date(), locale?: string): string =>
+    relative(iso: string, now: Date = new Date(), locale?: string): string
     {
         const date = new Date(iso);
 
@@ -43,5 +44,7 @@ export const formatDate = {
         }
 
         return formatter.format(0, "minute");
-    },
-};
+    }
+}
+
+export const Dates = new DatesUtil();

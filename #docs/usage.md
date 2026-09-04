@@ -17,14 +17,13 @@ guarded route renders 403.
 
 ## Adding a plugin
 
-Create `src/plugins/<name>/plugin.ts` and export a `definePlugin` result. Startup
-discovers it — there is no list to update.
+Create `src/plugins/<name>/plugin.ts` and export a `definePlugin` result. Startup finds it: there is no list to update.
 
 ```ts
 export default definePlugin("billing", {
     version: "1.0.0",
     describe: "Invoices and payment methods.",
-    dependsOn: ["auth", "transport"],
+    dependsOn: ["auth"],
     routes: [{ path: "/billing", title: "Billing", requires: ["billing.read"], component: Invoices }],
 });
 ```
@@ -42,7 +41,7 @@ import { Auth } from "@plugins/auth";
 A plugin's `index.ts` is the only file another may import, and the plugin must be
 in `dependsOn`. Anything deeper is rejected by lint.
 
-For everything else, use events, slots or hooks — never a request-and-response over
+For everything else, use events, slots or hooks: never a request-and-response over
 the event bus.
 
 ## Shared UI
@@ -57,5 +56,5 @@ length or duration belongs in a token, not a module.
 
 ## Where things are
 
-- `#docs/procedures/` — how to build each part
-- `stack.md` — the exact structure and why
+- `#docs/procedures/`: how to build each part
+- `stack.md`: the exact structure and why

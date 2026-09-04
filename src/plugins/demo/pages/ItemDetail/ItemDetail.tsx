@@ -7,7 +7,7 @@ import { Demo } from "../../index";
 
 import { DemoItemId } from "../../types/DemoItemId";
 import { DemoKeys } from "../../utils/DemoKeys";
-import { formatDate } from "../../utils/formatDate";
+import { Dates } from "../../utils/Dates";
 
 import styles from "./ItemDetail.module.css";
 
@@ -44,7 +44,7 @@ export const ItemDetail = () =>
                         <dd className={styles.value}>{item.data.status}</dd>
 
                         <dt className={styles.term}>Created</dt>
-                        <dd className={styles.value}>{formatDate.absolute(item.data.createdAt)}</dd>
+                        <dd className={styles.value}>{Dates.absolute(item.data.createdAt)}</dd>
                     </dl>
                 )}
             </div>

@@ -28,8 +28,8 @@ plugin imports another only through its `index.ts`. ESLint rejects each.
 
 ## The kit
 
-`@onetype/stack-app-kit` has three entries. `.` is pure — registry, contracts,
-events, hooks, slots, permissions, transport — and runs without a DOM. `./react`
+`@onetype/stack-app-kit` has three entries. `.` is pure: registry, contracts,
+events, hooks, slots, permissions, transport: and runs without a DOM. `./react`
 adds `KernelProvider`, `Slot`, `RouteGuard`, `usePlugin` and `StartupFailure`.
 `./testing` holds the checks a test calls.
 

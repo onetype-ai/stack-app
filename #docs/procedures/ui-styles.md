@@ -6,11 +6,11 @@ Global, unscoped styles. What one component uses is a CSS Module beside it.
 
 Order is fixed by `index.css`; a layer may only depend on ones above it.
 
-- `reset.css` — neutralises browser defaults. Removes only, declares nothing.
-- `tokens.css` — every design value, as custom properties on `:root`. No selectors.
-- `base.css` — bare element appearance. Element selectors only.
-- `utilities.css` — reusable global classes.
-- `index.css` — imports only, never a rule.
+- `reset.css`: neutralises browser defaults. Removes only, declares nothing.
+- `tokens.css`: every design value, as custom properties on `:root`. No selectors.
+- `base.css`: bare element appearance. Element selectors only.
+- `utilities.css`: reusable global classes.
+- `index.css`: imports only, never a rule.
 
 The app imports `index.css` once, at the entry. Nothing imports a layer directly.
 

@@ -2,11 +2,11 @@
 
 Three levels of one thing. Each composes the one below; none reaches down.
 
-- **component** — smallest unit. Knows no domain.
-- **section** — composes components into a self-contained block. Knows no page.
-- **page** — composes sections, and is the only level that loads data.
+- **component**: smallest unit. Knows no domain.
+- **section**: composes components into a self-contained block. Knows no page.
+- **page**: composes sections, and is the only level that loads data.
 
-A **hook** is none of them: behaviour a unit borrows — state, an effect, a ref.
+A **hook** is none of them, but behaviour a unit borrows: state, an effect, a ref.
 It lives in `hooks/`, one per file, named `use…`, and returns what the caller
 renders with. It renders nothing itself.
 

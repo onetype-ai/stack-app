@@ -32,13 +32,13 @@ every guarded route renders 403. That is the app working, not a bug.
 
 ## Where to read
 
-- `#docs/usage.md` — how to add and use a plugin
-- `#docs/stack.md` — the exact structure and why
-- `#docs/architecture.md` — why plugins, why a declared boundary
-- `#docs/procedures/` — how each part is built
+- `#docs/usage.md`: how to add and use a plugin
+- `#docs/stack.md`: the exact structure and why
+- `#docs/architecture.md`: why plugins, why a declared boundary
+- `#docs/procedures/`: how each part is built
 
 `src/plugins/demo` is the worked example: read it once beside the procedures,
-then delete it. Its styles are deliberately plain — take the mechanics, never
+then delete it. Its styles are deliberately plain: take the mechanics, never
 the look.
 
 `src/ui` arrives empty. `tokens.css` is the first thing to fill, and what fills
