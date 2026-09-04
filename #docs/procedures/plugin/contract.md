@@ -32,7 +32,7 @@ export default definePlugin("demo", { ... });
 ## Rules
 
 `services` comes before anything reading `ctx.services`: inference runs left
-to right, so a callback above it sees `unknown`.
+to right. What `ctx` carries is in the kit's `reference.md`.
 
 Every crossing carries a description and a schema, and a payload failing it is
 rejected at the boundary. Referencing another plugin's permission makes it a

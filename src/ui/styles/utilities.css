@@ -1,0 +1,43 @@
+/*
+ * One behaviour each, prefixed so a global class is never mistaken for a
+ * module one. Each is here because two unrelated places needed it.
+ */
+
+/* Reachable by a screen reader, invisible to everyone else. */
+.ui-only-heard
+{
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
+
+/* Hidden until focused: a skip link, and nothing else so far. */
+.ui-only-heard:focus-visible
+{
+    position: static;
+    width: auto;
+    height: auto;
+    margin: 0;
+    overflow: visible;
+    clip-path: none;
+}
+
+/* One line, cut with an ellipsis rather than wrapped. */
+.ui-one-line
+{
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+/* Wide content scrolls inside itself, so the page never does. */
+.ui-scrolls-across
+{
+    overflow-x: auto;
+    max-width: 100%;
+}

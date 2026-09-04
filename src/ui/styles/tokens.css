@@ -1,3 +1,114 @@
+/*
+ * Every design value, named for what it does.
+ *
+ * A name says the role, so a theme changes the value and nothing else:
+ * `--surface-sunken`, never `--grey-100`.
+ */
+
 :root
 {
+    color-scheme: light dark;
+
+    /* Ink and ground */
+    --ink: #16181d;
+    --ink-soft: #5a6072;
+    --ink-faint: #8b91a3;
+    --ground: #f6f7f9;
+    --surface: #ffffff;
+    --surface-sunken: #f1f2f6;
+    --line: #e4e6ec;
+    --line-strong: #d3d6df;
+
+    /* What a reader is meant to act on */
+    --accent: #4f46e5;
+    --accent-ink: #ffffff;
+    --accent-soft: #eef2ff;
+
+    /* What a reader is meant to notice */
+    --danger: #d92d20;
+    --danger-soft: #fef3f2;
+    --caution: #dc6803;
+    --caution-soft: #fffaeb;
+    --success: #067647;
+    --success-soft: #ecfdf3;
+
+    /* Type */
+    --family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --family-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+    --size-small: 0.8125rem;
+    --size-body: 0.875rem;
+    --size-lead: 1rem;
+    --size-title: 1.125rem;
+    --size-display: 1.5rem;
+    --weight-regular: 400;
+    --weight-medium: 550;
+    --weight-strong: 650;
+    --leading-tight: 1.25;
+    --leading-body: 1.5;
+
+    /* Space, one scale, so two gaps are never nearly the same */
+    --space-hair: 0.25rem;
+    --space-tight: 0.5rem;
+    --space-snug: 0.75rem;
+    --space-room: 1rem;
+    --space-wide: 1.5rem;
+    --space-open: 2rem;
+
+    /* Shape */
+    --radius-tight: 6px;
+    --radius: 10px;
+    --radius-round: 999px;
+    --edge: 1px;
+
+    /* Depth */
+    --lift-low: 0 1px 2px rgb(16 24 40 / 0.06), 0 1px 3px rgb(16 24 40 / 0.1);
+    --lift-high: 0 12px 32px -8px rgb(16 24 40 / 0.18);
+
+    /* Motion */
+    --pace-quick: 120ms;
+    --pace-calm: 220ms;
+    --ease: cubic-bezier(0.2, 0, 0.2, 1);
+
+    /* Stacking, named so two layers never guess at each other */
+    --layer-raised: 10;
+    --layer-sticky: 20;
+    --layer-over: 30;
+    --layer-toast: 40;
+}
+
+@media (prefers-color-scheme: dark)
+{
+    :root
+    {
+        --ink: #e8eaef;
+        --ink-soft: #9aa1b1;
+        --ink-faint: #6b7284;
+        --ground: #0d0e12;
+        --surface: #16181e;
+        --surface-sunken: #101218;
+        --line: #262a33;
+        --line-strong: #333844;
+
+        --accent: #7c74f0;
+        --accent-soft: #1e1c39;
+
+        --danger: #f97066;
+        --danger-soft: #2d1614;
+        --caution: #fdb022;
+        --caution-soft: #2b1f0d;
+        --success: #47cd89;
+        --success-soft: #10231a;
+
+        --lift-low: 0 1px 2px rgb(0 0 0 / 0.4);
+        --lift-high: 0 16px 40px -12px rgb(0 0 0 / 0.6);
+    }
+}
+
+@media (prefers-reduced-motion: reduce)
+{
+    :root
+    {
+        --pace-quick: 1ms;
+        --pace-calm: 1ms;
+    }
 }

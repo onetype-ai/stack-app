@@ -28,8 +28,8 @@ Re-declaring what `base.css` already gives you is a bug.
 ## Rules
 
 Every value a component sees is a token. A literal colour, length, duration or
-easing curve outside `tokens.css` is a defect lint rejects. Names describe role,
-not appearance.
+easing curve outside `tokens.css` is a defect, and no lint catches it yet.
+Names describe role, not appearance.
 
 A utility is one behaviour, named for what it does, with no component or domain
 meaning, and prefixed `ui-` so a global class is never mistaken for a module one.

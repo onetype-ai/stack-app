@@ -16,11 +16,13 @@ import "@ui/styles/index.css";
   Imported once, in that order, through `styles/index.css`.
 - `index.ts`: the only entry. A plugin imports `@ui`, never a path inside it.
 
-## Nothing here yet
+## What exists
 
-`index.ts` is empty and `tokens.css` declares nothing, so `reset.css` has taken
-the browser defaults away and put nothing back. The first unit written needs
-tokens before it has a size or a colour to use.
+The styles do: tokens for colour, type, space, shape, depth and motion, and a
+`base` that dresses bare elements in them. Dark and reduced motion answer the
+reader's own setting.
+
+No unit does. `index.ts` is empty, so the first one written is the first.
 
 ## Rules
 
