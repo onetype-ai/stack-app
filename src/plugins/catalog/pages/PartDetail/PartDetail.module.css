@@ -1,0 +1,100 @@
+.root
+{
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-wide);
+    max-width: var(--width-prose);
+}
+
+.root .eyebrow
+{
+    margin: 0 0 var(--space-hair);
+    color: var(--accent);
+    font-size: var(--size-small);
+    font-weight: var(--weight-strong);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.root .title
+{
+    margin: 0;
+    font-size: var(--size-display);
+    font-weight: var(--weight-strong);
+    letter-spacing: -0.02em;
+    line-height: var(--leading-tight);
+}
+
+.root .body
+{
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-wide);
+    padding: var(--space-wide);
+    background-color: var(--surface);
+    border: var(--edge) solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--lift-low);
+}
+
+.root .facts
+{
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-open);
+    margin: 0;
+}
+
+.root .fact
+{
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-hair);
+}
+
+.root .term
+{
+    color: var(--ink-faint);
+    font-size: var(--size-small);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.root .value
+{
+    margin: 0;
+    font-size: var(--size-title);
+    font-weight: var(--weight-medium);
+    font-variant-numeric: tabular-nums;
+}
+
+.root .aside
+{
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-snug);
+    padding-top: var(--space-room);
+    border-top: var(--edge) solid var(--line);
+}
+
+.root .foot
+{
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-tight);
+    align-items: flex-start;
+    padding-top: var(--space-room);
+    border-top: var(--edge) solid var(--line);
+}
+
+.root .refused,
+.root .wrong
+{
+    margin: 0;
+    padding: var(--space-snug) var(--space-room);
+    border: var(--edge) solid var(--danger);
+    border-radius: var(--radius-tight);
+    background-color: var(--danger-soft);
+    color: var(--danger);
+    font-size: var(--size-small);
+}

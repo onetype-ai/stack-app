@@ -1,0 +1,25 @@
+.root
+{
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-tight);
+    align-items: flex-start;
+    padding: var(--space-room);
+    border: var(--edge) solid var(--caution);
+    border-radius: var(--radius-tight);
+    background-color: var(--caution-soft);
+}
+
+.root .title
+{
+    margin: 0;
+    color: var(--ink);
+    font-weight: var(--weight-medium);
+}
+
+.root .body
+{
+    margin: 0;
+    color: var(--ink-soft);
+    font-size: var(--size-small);
+}

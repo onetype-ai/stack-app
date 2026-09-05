@@ -5,7 +5,7 @@ kernel refuses to start. The name is passed separately, so an error always
 names the plugin.
 
 ```ts
-export default definePlugin("demo", { ... });
+export default definePlugin("catalog", { ... });
 ```
 
 ## Keys

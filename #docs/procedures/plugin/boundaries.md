@@ -7,15 +7,15 @@ Four ways to cross. Pick by what you need back.
 A result now, from a plugin in `dependsOn`.
 
 ```ts
-import { Demo } from "@plugins/demo";
+import { Catalog } from "@plugins/catalog";
 
-await Demo.create(ctx, "A new item");
+const cents = await Catalog.priceOf(ctx, id);
 ```
 
 Methods take `ctx` and reach the plugin's services through it, so they run
 anywhere. `use()` is the exception, for components.
 
-A component crosses the same way: `Demo.ItemRow`. A slot lets the opener place
+A component crosses the same way: `PartRow` from `@plugins/catalog`. A slot lets the opener place
 what it never imported; an exported component lets the caller place what it
 chose.
 

@@ -76,8 +76,6 @@ importers:
         specifier: 4.1.11
         version: 4.1.11(@types/node@26.4.0)(jsdom@30.0.1)(vite@8.2.2(@types/node@26.4.0))
 
-  packages/stack-app-kit: {}
-
 packages:
 
   '@adobe/css-tools@4.5.0':

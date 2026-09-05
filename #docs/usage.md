@@ -50,7 +50,7 @@ the event bus.
 import { Button } from "@ui";
 ```
 
-`ui` knows no domain and imports no plugin. The styles are written; no unit is,
-so the first component is the first.
+`ui` knows no domain and imports no plugin. Tokens and eight units arrive with
+it; a ninth is what this application needs and no other does.
 
 `#docs/procedures/` holds how to build each part; `stack.md` the structure.

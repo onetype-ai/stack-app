@@ -1,0 +1,99 @@
+.root
+{
+    display: flex;
+    flex-direction: column;
+    min-height: 100dvh;
+    background-color: var(--ground);
+}
+
+.root .bar
+{
+    position: sticky;
+    top: 0;
+    z-index: var(--layer-sticky);
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-room);
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-snug) var(--space-wide);
+    border-bottom: var(--edge) solid var(--line);
+    background-color: color-mix(in srgb, var(--surface) 86%, transparent);
+    backdrop-filter: blur(12px);
+}
+
+.root .mark
+{
+    display: inline-flex;
+    gap: var(--space-tight);
+    align-items: center;
+    color: var(--ink);
+    text-decoration: none;
+}
+
+.root .badge
+{
+    display: grid;
+    place-items: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: var(--radius-tight);
+    background-color: var(--accent);
+    color: var(--accent-ink);
+    font-size: var(--size-small);
+    font-weight: var(--weight-strong);
+    letter-spacing: 0.02em;
+}
+
+.root .wordmark
+{
+    font-size: var(--size-lead);
+    font-weight: var(--weight-strong);
+    letter-spacing: -0.01em;
+}
+
+.root .nav
+{
+    display: flex;
+    gap: var(--space-tight);
+    align-items: center;
+}
+
+.root .link
+{
+    padding: var(--space-hair) var(--space-snug);
+    border-radius: var(--radius-round);
+    color: var(--ink-soft);
+    font-size: var(--size-body);
+    font-weight: var(--weight-medium);
+    text-decoration: none;
+    transition: background-color var(--pace-quick) var(--ease), color var(--pace-quick) var(--ease);
+}
+
+.root .link:hover
+{
+    background-color: var(--surface-sunken);
+    color: var(--ink);
+}
+
+.root .here
+{
+    background-color: var(--accent-soft);
+    color: var(--accent);
+}
+
+.root .work
+{
+    width: 100%;
+    max-width: var(--width-container);
+    margin-inline: auto;
+    padding: var(--space-open) var(--space-wide) var(--space-open);
+}
+
+@media (max-width: 40rem)
+{
+    .root .work
+    {
+        padding: var(--space-wide) var(--space-room);
+    }
+}

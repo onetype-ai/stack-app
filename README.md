@@ -27,8 +27,10 @@ pnpm verify           # lint, typecheck, test, build
 `VITE_API_URL` sets the backend base URL and defaults to `/api`; `VITE_WS_URL`
 sets the websocket, and without one the transport stays on HTTP.
 
-Until something answers that URL there is no session, so no permissions, so
-every guarded route renders 403. That is the app working, not a bug.
+There is no server yet, so `src/kernel/source.ts` answers over `fetch`: the
+plugins take the same path they will take once one exists. Point
+`VITE_API_URL` at a real backend and the stand-in steps aside for every path
+it does not hold.
 
 ## Where to read
 
@@ -37,9 +39,10 @@ every guarded route renders 403. That is the app working, not a bug.
 - `#docs/architecture.md`: why plugins, why a declared boundary
 - `#docs/procedures/`: how each part is built
 
-`src/plugins/demo` is the worked example: read it once beside the procedures,
-then delete it. Its styles are deliberately plain: take the mechanics, never
-the look.
+`catalog` and `cart` are the worked pair: the first stands alone and opens a
+slot, the second depends on it and fills it. Between them they use every way
+across a boundary exactly once, so read one crossing where it actually runs
+rather than in a declaration with nothing on the other side.
 
 `src/ui` arrives with tokens and eight units: `Button`, `Field`, `Select`,
 `Badge`, `Empty`, `Skeleton`, `Spinner`, `Modal`. Anything past those is what
