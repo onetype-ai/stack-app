@@ -2,25 +2,25 @@
 {
     display: flex;
     align-items: center;
-    gap: var(--space-3);
-    padding-block: var(--space-3);
-    border-block-end: var(--border-width) solid var(--color-border);
+    gap: var(--space-snug);
+    padding-block: var(--space-snug);
+    border-block-end: var(--edge) solid var(--line);
 }
 
 .root > .title
 {
     flex: 1;
     font-weight: var(--weight-medium);
-    color: var(--color-text);
+    color: var(--ink);
 }
 
 .root > .status
 {
-    font-size: var(--text-sm);
-    color: var(--color-text-muted);
+    font-size: var(--size-small);
+    color: var(--ink-soft);
 }
 
 .root[data-status="archived"] > .title
 {
-    color: var(--color-text-disabled);
+    color: var(--ink-faint);
 }

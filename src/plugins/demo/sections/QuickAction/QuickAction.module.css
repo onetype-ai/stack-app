@@ -3,33 +3,33 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: var(--space-3);
-    padding: var(--space-3);
-    background-color: var(--color-surface);
-    border: var(--border-width) solid var(--color-border);
-    border-radius: var(--radius-md);
+    gap: var(--space-snug);
+    padding: var(--space-snug);
+    background-color: var(--surface);
+    border: var(--edge) solid var(--line);
+    border-radius: var(--radius);
 }
 
 .root > .label
 {
-    font-size: var(--text-sm);
+    font-size: var(--size-small);
     font-weight: var(--weight-medium);
-    color: var(--color-text-muted);
+    color: var(--ink-soft);
 }
 
 .root > .open
 {
-    padding-block: var(--space-1);
-    padding-inline: var(--space-3);
-    font-size: var(--text-sm);
-    color: var(--color-text);
+    padding-block: var(--space-hair);
+    padding-inline: var(--space-snug);
+    font-size: var(--size-small);
+    color: var(--ink);
     text-decoration: none;
-    background-color: var(--color-surface);
-    border: var(--border-width) solid var(--color-border);
-    border-radius: var(--radius-sm);
+    background-color: var(--surface);
+    border: var(--edge) solid var(--line);
+    border-radius: var(--radius-tight);
 }
 
 .root > .open:hover
 {
-    background-color: var(--color-surface-hover);
+    background-color: var(--surface-sunken);
 }

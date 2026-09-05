@@ -54,6 +54,11 @@
     --space-wide: 1.5rem;
     --space-open: 2rem;
 
+    /* How wide a thing is allowed to be */
+    --width-container: 72rem;
+    --width-prose: 68ch;
+    --sidebar-width: 15rem;
+
     /* Shape */
     --radius-tight: 6px;
     --radius: 10px;

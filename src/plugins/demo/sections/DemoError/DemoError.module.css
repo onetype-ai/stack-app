@@ -3,22 +3,22 @@
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    gap: var(--space-4);
+    gap: var(--space-room);
     max-width: var(--width-container);
     margin-inline: auto;
-    padding-block: var(--space-7);
-    padding-inline: var(--space-5);
+    padding-block: var(--space-open);
+    padding-inline: var(--space-room);
 }
 
 .root > .title
 {
-    font-size: var(--text-xl);
-    font-weight: var(--weight-semibold);
-    color: var(--color-text);
+    font-size: var(--size-title);
+    font-weight: var(--weight-strong);
+    color: var(--ink);
 }
 
 .root > .body
 {
     max-width: var(--width-prose);
-    color: var(--color-text-muted);
+    color: var(--ink-soft);
 }

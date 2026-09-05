@@ -27,16 +27,17 @@ Re-declaring what `base.css` already gives you is a bug.
 
 ## Rules
 
-Every value a component sees is a token. A literal colour, length, duration or
-easing curve outside `tokens.css` is a defect, and no lint catches it yet.
-Names describe role, not appearance.
+Every value a component sees is a token, named for role, not appearance. A
+literal colour, length or duration outside `tokens.css` is a defect.
+
+A token nobody declared is worse than a literal: it resolves to nothing and
+the rule quietly does not apply. A test asserts every `var()` names something.
 
 A utility is one behaviour, prefixed `ui-` so a global class is never mistaken
 for a module one. Prove it needed in two unrelated places first; one used in a
 single place is a misfiled module rule.
 
 Fonts load in `index.html`, never through CSS; the family name is a token.
-Preload what first paint needs, and declare a fallback stack.
 
 ## Proving it
 
