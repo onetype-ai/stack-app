@@ -1,0 +1,54 @@
+.over
+{
+    position: fixed;
+    inset: 0;
+    z-index: var(--layer-over);
+    display: grid;
+    place-items: center;
+    padding: var(--space-room);
+    background: rgb(16 24 40 / 0.4);
+}
+
+.panel
+{
+    width: 100%;
+    max-width: 32rem;
+    max-height: 85vh;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    background: var(--surface);
+    border-radius: var(--radius);
+    box-shadow: var(--lift-high);
+    overflow: hidden;
+}
+
+.head
+{
+    display: flex;
+    align-items: center;
+    gap: var(--space-room);
+    padding: var(--space-snug) var(--space-room);
+    border-bottom: var(--edge) solid var(--line);
+}
+
+.title
+{
+    flex: 1;
+    font-size: var(--size-lead);
+}
+
+.body
+{
+    padding: var(--space-room);
+    overflow-y: auto;
+}
+
+.foot
+{
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-tight);
+    padding: var(--space-snug) var(--space-room);
+    border-top: var(--edge) solid var(--line);
+    background: var(--surface-sunken);
+}

@@ -18,11 +18,14 @@ import "@ui/styles/index.css";
 
 ## What exists
 
-The styles do: tokens for colour, type, space, shape, depth and motion, and a
-`base` that dresses bare elements in them. Dark and reduced motion answer the
-reader's own setting.
+Tokens for colour, type, space, shape, depth and motion, and a `base` that
+dresses bare elements in them. Dark and reduced motion answer the reader's own
+setting.
 
-No unit does. `index.ts` is empty, so the first one written is the first.
+Eight units: `Button`, `Field`, `Select`, `Badge`, `Empty`, `Skeleton`,
+`Spinner`, `Modal`. Not chosen: five builds of five different applications
+each reached for the same set, from an empty folder, without knowing about
+each other.
 
 ## Rules
 

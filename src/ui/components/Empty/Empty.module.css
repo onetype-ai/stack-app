@@ -1,0 +1,20 @@
+.root
+{
+    display: grid;
+    justify-items: center;
+    gap: var(--space-tight);
+    padding: var(--space-open) var(--space-room);
+    text-align: center;
+}
+
+.title
+{
+    font-weight: var(--weight-strong);
+}
+
+.hint
+{
+    max-width: 34ch;
+    color: var(--ink-soft);
+    font-size: var(--size-small);
+}
