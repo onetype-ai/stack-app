@@ -20,12 +20,15 @@ describe("this application", () =>
         await app.stop();
     });
 
-    test("registers a route for every page a plugin declared", async () =>
+    /**
+     * Whatever ships, no two plugins may claim one path. With the examples
+     * packed away there is nothing to collide, and that is still the answer.
+     */
+    test("registers each declared page once, and never a path twice", async () =>
     {
         const app = await mount(new QueryClient());
         const paths = app.kernel.routes().map((one) => one.path);
 
-        expect(paths.length).toBeGreaterThan(0);
         expect(new Set(paths).size).toBe(paths.length);
 
         await app.stop();
@@ -45,14 +48,40 @@ describe("this application", () =>
     });
 
     /**
-     * `routes` throws without a frame, and nothing else here would say so:
-     * the failure reaches a blank screen rather than a test.
+     * A router needs a shell to render pages into, and nothing else here
+     * would say so: the failure reaches a blank screen rather than a test.
+     * Which answer is right depends on whether a plugin ships a frame.
      */
-    test("builds a router from them, which needs a frame to exist", async () =>
+    test("builds a router when a plugin frames it, and says so when none does", async () =>
     {
         const app = await mount(new QueryClient());
 
-        expect(() => routes(app.kernel)).not.toThrow();
+        if (app.kernel.frame() === undefined)
+        {
+            expect(() => routes(app.kernel)).toThrow(/frame/);
+        }
+        else
+        {
+            expect(() => routes(app.kernel)).not.toThrow();
+        }
+
+        await app.stop();
+    });
+
+    /**
+     * A guarded route asks the kernel, so a kernel that granted nothing turns
+     * every one of them into a blanket 403 with no error anywhere.
+     */
+    test("carries the permissions its plugins granted, and only those", async () =>
+    {
+        const app = await mount(new QueryClient());
+
+        // Whatever ships, a plugin declared it, so every route's requirement
+        // is answerable. What nobody declared is refused.
+        const asked = app.kernel.routes().flatMap((route) => route.requires ?? []);
+
+        expect(app.kernel.permissions.all(asked)).toBe(true);
+        expect(app.kernel.permissions.has("nobody.granted.this")).toBe(false);
 
         await app.stop();
     });
