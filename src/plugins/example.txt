@@ -4,10 +4,11 @@ Every file of these plugins, one after another. A line starting
 with "==> " opens a file and names its path; everything until the next
 such line is that file, byte for byte.
 
-Rebuild the folders with:  node tools/pack/plugins.mjs unpack
-Rewrite this file with:    node tools/pack/plugins.mjs pack catalog cart
+Rebuild it with:     node tools/pack/plugins.mjs unpack
+Rewrite this with:   node tools/pack/plugins.mjs pack catalog cart
 
 ==> src/plugins/catalog/plugin.ts
+
 import { definePlugin } from "@onetype/stack-app-kit";
 
 import { PartDetail } from "./pages/PartDetail/PartDetail";
@@ -108,7 +109,9 @@ export default definePlugin("catalog", {
         ctx.log.info("catalog stopped");
     },
 });
+
 ==> src/plugins/catalog/index.ts
+
 import { usePlugin } from "@onetype/stack-app-kit/react";
 
 import type { Context } from "@onetype/stack-app-kit";
@@ -154,7 +157,9 @@ export type { Beside } from "./types/Beside";
 export type { Part } from "./types/Part";
 export type { PartKind } from "./types/PartKind";
 export type { Withdrawal } from "./types/Withdrawal";
+
 ==> src/plugins/catalog/api/parts.ts
+
 import type { Context } from "@onetype/stack-app-kit";
 
 import { Part } from "../types/Part";
@@ -185,7 +190,9 @@ export const partsApi = {
         return Part.schema.parse(answered);
     },
 };
+
 ==> src/plugins/catalog/api/viewer.ts
+
 import type { Context } from "@onetype/stack-app-kit";
 
 import { Viewer } from "../types/Viewer";
@@ -196,7 +203,9 @@ export const viewerApi = {
         return Viewer.schema.parse(await ctx.http.get(path));
     },
 };
+
 ==> src/plugins/catalog/components/PartRow/PartRow.module.css
+
 .root
 {
     display: grid;
@@ -275,7 +284,9 @@ export const viewerApi = {
         justify-content: flex-start;
     }
 }
+
 ==> src/plugins/catalog/components/PartRow/PartRow.tsx
+
 import { Badge } from "@ui";
 
 import { PartKind } from "../../types/PartKind";
@@ -335,7 +346,9 @@ export const PartRow = ({ part, currency, lowStock, href, trailing, onOpen }: Pa
         </li>
     );
 };
+
 ==> src/plugins/catalog/hooks/useChosenKind.ts
+
 import { useNavigate, useSearch } from "@tanstack/react-router";
 
 import { PartQuery } from "../types/PartQuery";
@@ -368,7 +381,9 @@ export const useChosenKind = (): ChosenKind =>
         },
     };
 };
+
 ==> src/plugins/catalog/pages/PartDetail/PartDetail.module.css
+
 .root
 {
     display: flex;
@@ -469,7 +484,9 @@ export const useChosenKind = (): ChosenKind =>
     color: var(--danger);
     font-size: var(--size-small);
 }
+
 ==> src/plugins/catalog/pages/PartDetail/PartDetail.tsx
+
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useNavigate, useParams } from "@tanstack/react-router";
 
@@ -558,7 +575,9 @@ export const PartDetail = () =>
         </article>
     );
 };
+
 ==> src/plugins/catalog/pages/Parts/Parts.module.css
+
 .root
 {
     display: flex;
@@ -606,7 +625,9 @@ export const PartDetail = () =>
     background-color: var(--danger-soft);
     color: var(--danger);
 }
+
 ==> src/plugins/catalog/pages/Parts/Parts.tsx
+
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 
@@ -658,7 +679,9 @@ export const Parts = () =>
         </div>
     );
 };
+
 ==> src/plugins/catalog/sections/DepotFrame/DepotFrame.module.css
+
 .root
 {
     display: flex;
@@ -758,7 +781,9 @@ export const Parts = () =>
         padding: var(--space-wide) var(--space-room);
     }
 }
+
 ==> src/plugins/catalog/sections/DepotFrame/DepotFrame.tsx
+
 import { Link, Outlet } from "@tanstack/react-router";
 
 import styles from "./DepotFrame.module.css";
@@ -788,14 +813,18 @@ export const DepotFrame = () =>
         </div>
     );
 };
+
 ==> src/plugins/catalog/sections/NoEntry/NoEntry.module.css
+
 .root
 {
     display: grid;
     place-items: center;
     min-height: 50dvh;
 }
+
 ==> src/plugins/catalog/sections/NoEntry/NoEntry.tsx
+
 import { Empty } from "@ui";
 
 import styles from "./NoEntry.module.css";
@@ -817,7 +846,9 @@ export const NoEntry = ({ permission }: NoEntryProps) =>
         </section>
     );
 };
+
 ==> src/plugins/catalog/sections/NoPage/NoPage.module.css
+
 .root
 {
     display: grid;
@@ -842,7 +873,9 @@ export const NoEntry = ({ permission }: NoEntryProps) =>
 {
     background-color: color-mix(in srgb, var(--accent) 88%, black);
 }
+
 ==> src/plugins/catalog/sections/NoPage/NoPage.tsx
+
 import { Link } from "@tanstack/react-router";
 
 import { Empty } from "@ui";
@@ -861,7 +894,9 @@ export const NoPage = () =>
         </section>
     );
 };
+
 ==> src/plugins/catalog/sections/PartTable/PartTable.module.css
+
 .root
 {
     overflow: hidden;
@@ -902,7 +937,9 @@ export const NoPage = () =>
     padding: 0;
     list-style: none;
 }
+
 ==> src/plugins/catalog/sections/PartTable/PartTable.tsx
+
 import { Empty, Select, Skeleton } from "@ui";
 
 import { PartRow } from "../../components/PartRow/PartRow";
@@ -983,7 +1020,9 @@ export const PartTable = ({
         </section>
     );
 };
+
 ==> src/plugins/catalog/services/parts.ts
+
 import type { Context } from "@onetype/stack-app-kit";
 
 import { partsApi } from "../api/parts";
@@ -1062,7 +1101,9 @@ export const createPartsService = (ctx: Context) =>
 };
 
 export type PartsService = ReturnType<typeof createPartsService>;
+
 ==> src/plugins/catalog/services/viewer.ts
+
 import type { Context } from "@onetype/stack-app-kit";
 
 import { viewerApi } from "../api/viewer";
@@ -1106,7 +1147,9 @@ export const createViewerService = (ctx: Context<{ sessionPath: string }>) =>
 };
 
 export type ViewerService = ReturnType<typeof createViewerService>;
+
 ==> src/plugins/catalog/tests/contract.test.ts
+
 import { describe, expect, test } from "vitest";
 
 import catalog from "../plugin";
@@ -1204,7 +1247,9 @@ describe("what the catalog announces", () =>
         expect(() => withdrawn?.schema.parse({ id: "gone", name: "Hex bolt M8" })).toThrow();
     });
 });
+
 ==> src/plugins/catalog/tests/kind.test.tsx
+
 import { createMemoryHistory, createRootRoute, createRoute, createRouter, RouterProvider } from "@tanstack/react-router";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -1285,7 +1330,9 @@ describe("which kind the reader is looking at", () =>
         expect(await screen.findByText("everything")).toBeDefined();
     });
 });
+
 ==> src/plugins/catalog/tests/parts.test.ts
+
 import { describe, expect, test } from "vitest";
 
 import { createPartsService } from "../services/parts";
@@ -1426,7 +1473,9 @@ describe("withdrawing a part from stock", () =>
         expect(fake.dropped).toEqual([["catalog", "parts"]]);
     });
 });
+
 ==> src/plugins/catalog/tests/serving.ts
+
 import type { Context } from "@onetype/stack-app-kit";
 import type { CatalogConfig } from "../types/CatalogConfig";
 
@@ -1536,7 +1585,9 @@ export const serving = (canned: Canned, config: Readonly<Record<string, unknown>
 
     return held;
 };
+
 ==> src/plugins/catalog/tests/table.test.tsx
+
 import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, test, vi } from "vitest";
@@ -1675,7 +1726,9 @@ describe("opening a part", () =>
         expect(opened).not.toHaveBeenCalled();
     });
 });
+
 ==> src/plugins/catalog/types/Beside.ts
+
 import { z } from "zod";
 
 export const Beside = {
@@ -1687,7 +1740,9 @@ export const Beside = {
 };
 
 export type Beside = z.infer<typeof Beside.schema>;
+
 ==> src/plugins/catalog/types/CatalogConfig.ts
+
 import { z } from "zod";
 
 export const CatalogConfig = {
@@ -1699,7 +1754,9 @@ export const CatalogConfig = {
 };
 
 export type CatalogConfig = z.infer<typeof CatalogConfig.schema>;
+
 ==> src/plugins/catalog/types/Part.ts
+
 import { z } from "zod";
 
 import { PartKind } from "./PartKind";
@@ -1715,7 +1772,9 @@ export const Part = {
 };
 
 export type Part = z.infer<typeof Part.schema>;
+
 ==> src/plugins/catalog/types/PartId.ts
+
 import { z } from "zod";
 
 const schema = z.uuid();
@@ -1739,7 +1798,9 @@ export const PartId = {
 };
 
 export type PartId = z.infer<typeof schema>;
+
 ==> src/plugins/catalog/types/PartKind.ts
+
 import { z } from "zod";
 
 const schema = z.enum(["fastener", "seal", "bearing"]);
@@ -1762,7 +1823,9 @@ export const PartKind = {
 };
 
 export type PartKind = z.infer<typeof schema>;
+
 ==> src/plugins/catalog/types/PartPage.ts
+
 import { z } from "zod";
 
 import { Part } from "./Part";
@@ -1775,7 +1838,9 @@ export const PartPage = {
 };
 
 export type PartPage = z.infer<typeof PartPage.schema>;
+
 ==> src/plugins/catalog/types/PartQuery.ts
+
 import { z } from "zod";
 
 import { PartKind } from "./PartKind";
@@ -1787,7 +1852,9 @@ export const PartQuery = {
 };
 
 export type PartQuery = z.infer<typeof PartQuery.schema>;
+
 ==> src/plugins/catalog/types/Viewer.ts
+
 import { z } from "zod";
 
 export const Viewer = {
@@ -1799,7 +1866,9 @@ export const Viewer = {
 };
 
 export type Viewer = z.infer<typeof Viewer.schema>;
+
 ==> src/plugins/catalog/types/Withdrawal.ts
+
 import { z } from "zod";
 
 export const Withdrawal = {
@@ -1807,7 +1876,9 @@ export const Withdrawal = {
 };
 
 export type Withdrawal = z.infer<typeof Withdrawal.schema>;
+
 ==> src/plugins/catalog/utils/CatalogKeys.ts
+
 import type { PartQuery } from "../types/PartQuery";
 
 export const CatalogKeys = {
@@ -1826,7 +1897,9 @@ export const CatalogKeys = {
         return ["catalog", "parts", "detail", id] as const;
     },
 };
+
 ==> src/plugins/catalog/utils/Money.ts
+
 export const Money = {
     format: (cents: number, currency: string, locale?: string): string =>
     {
@@ -1838,7 +1911,9 @@ export const Money = {
         return new Intl.NumberFormat(locale, { style: "currency", currency }).format(cents / 100);
     },
 };
+
 ==> src/plugins/cart/plugin.ts
+
 import { definePlugin } from "@onetype/stack-app-kit";
 
 import { Handover } from "./pages/Handover/Handover";
@@ -1958,7 +2033,9 @@ export default definePlugin("cart", {
         ctx.log.info("cart stopped", { left: ctx.services.picking.read().items });
     },
 });
+
 ==> src/plugins/cart/index.ts
+
 import { usePlugin } from "@onetype/stack-app-kit/react";
 
 import { Bay } from "./types/Bay";
@@ -1988,7 +2065,9 @@ export const Cart = {
 
 export type { Line } from "./types/Line";
 export type { PickList } from "./types/PickList";
+
 ==> src/plugins/cart/components/LineRow/LineRow.module.css
+
 .root
 {
     display: grid;
@@ -2055,7 +2134,9 @@ export type { PickList } from "./types/PickList";
         row-gap: var(--space-tight);
     }
 }
+
 ==> src/plugins/cart/components/LineRow/LineRow.tsx
+
 import { Badge, Button } from "@ui";
 
 import { Money } from "../../utils/Money";
@@ -2100,7 +2181,9 @@ export const LineRow = ({ line, currency, onDrop }: LineRowProps) =>
         </li>
     );
 };
+
 ==> src/plugins/cart/hooks/useHandingOver.ts
+
 import { useState } from "react";
 
 import { Bay } from "../types/Bay";
@@ -2162,7 +2245,9 @@ export const useHandingOver = (): HandingOver =>
         },
     };
 };
+
 ==> src/plugins/cart/pages/Handover/Handover.module.css
+
 .root
 {
     display: flex;
@@ -2235,7 +2320,9 @@ export const useHandingOver = (): HandingOver =>
         align-items: stretch;
     }
 }
+
 ==> src/plugins/cart/pages/Handover/Handover.tsx
+
 import { useNavigate } from "@tanstack/react-router";
 
 import { useKept } from "@onetype/stack-app-kit/react";
@@ -2312,7 +2399,9 @@ export const Handover = () =>
         </div>
     );
 };
+
 ==> src/plugins/cart/pages/PickedList/PickedList.module.css
+
 .root
 {
     display: flex;
@@ -2350,7 +2439,9 @@ export const Handover = () =>
     color: var(--ink-soft);
     line-height: var(--leading-body);
 }
+
 ==> src/plugins/cart/pages/PickedList/PickedList.tsx
+
 import { useNavigate } from "@tanstack/react-router";
 
 import { useKept } from "@onetype/stack-app-kit/react";
@@ -2396,7 +2487,9 @@ export const PickedList = () =>
         </div>
     );
 };
+
 ==> src/plugins/cart/sections/AddToList/AddToList.module.css
+
 .root
 {
     display: flex;
@@ -2435,7 +2528,9 @@ export const PickedList = () =>
     color: var(--danger);
     font-size: var(--size-small);
 }
+
 ==> src/plugins/cart/sections/AddToList/AddToList.tsx
+
 import { useState } from "react";
 
 import { useHearing, useKept } from "@onetype/stack-app-kit/react";
@@ -2507,7 +2602,9 @@ export const AddToList = ({ payload }: AddToListProps) =>
         </div>
     );
 };
+
 ==> src/plugins/cart/sections/AsTheDepotHasIt/AsTheDepotHasIt.module.css
+
 .root
 {
     overflow: hidden;
@@ -2540,7 +2637,9 @@ export const AddToList = ({ payload }: AddToListProps) =>
     padding: 0;
     list-style: none;
 }
+
 ==> src/plugins/cart/sections/AsTheDepotHasIt/AsTheDepotHasIt.tsx
+
 import { useQueries } from "@tanstack/react-query";
 
 import { Catalog, PartRow } from "@plugins/catalog";
@@ -2600,7 +2699,9 @@ export const AsTheDepotHasIt = ({ partIds }: AsTheDepotHasItProps) =>
         </section>
     );
 };
+
 ==> src/plugins/cart/sections/CartTrouble/CartTrouble.module.css
+
 .root
 {
     display: flex;
@@ -2626,7 +2727,9 @@ export const AsTheDepotHasIt = ({ partIds }: AsTheDepotHasItProps) =>
     color: var(--ink-soft);
     font-size: var(--size-small);
 }
+
 ==> src/plugins/cart/sections/CartTrouble/CartTrouble.tsx
+
 import { Button } from "@ui";
 
 import styles from "./CartTrouble.module.css";
@@ -2648,7 +2751,9 @@ export const CartTrouble = ({ error, plugin, reset }: CartTroubleProps) =>
         </section>
     );
 };
+
 ==> src/plugins/cart/sections/PickedLines/PickedLines.module.css
+
 .root
 {
     overflow: hidden;
@@ -2696,7 +2801,9 @@ export const CartTrouble = ({ error, plugin, reset }: CartTroubleProps) =>
     font-weight: var(--weight-strong);
     font-variant-numeric: tabular-nums;
 }
+
 ==> src/plugins/cart/sections/PickedLines/PickedLines.tsx
+
 import { Empty } from "@ui";
 
 import { LineRow } from "../../components/LineRow/LineRow";
@@ -2747,7 +2854,9 @@ export const PickedLines = ({ list, currency, onDrop, action }: PickedLinesProps
         </section>
     );
 };
+
 ==> src/plugins/cart/services/picking.ts
+
 import { Catalog } from "@plugins/catalog";
 
 import type { Context } from "@onetype/stack-app-kit";
@@ -2853,7 +2962,9 @@ export const createPickingService = (ctx: Context<CartConfig>) =>
 };
 
 export type PickingService = ReturnType<typeof createPickingService>;
+
 ==> src/plugins/cart/tests/aside.test.tsx
+
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, test } from "vitest";
@@ -2975,7 +3086,9 @@ describe("a contribution the viewer may not make", () =>
         await kernel.stop();
     });
 });
+
 ==> src/plugins/cart/tests/borrowed.test.tsx
+
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, test } from "vitest";
@@ -3086,7 +3199,9 @@ describe("a line shown as the depot holds it", () =>
         await kernel.stop();
     });
 });
+
 ==> src/plugins/cart/tests/contract.test.ts
+
 import { describe, expect, test } from "vitest";
 
 import cart from "../plugin";
@@ -3273,7 +3388,9 @@ describe("what the cart puts beside a part", () =>
         expect(cart.definition.dependsOn).toEqual(["catalog"]);
     });
 });
+
 ==> src/plugins/cart/tests/depot.ts
+
 import { definePlugin } from "@onetype/stack-app-kit";
 import { z } from "zod";
 
@@ -3352,7 +3469,9 @@ export const depot = (held: Depot = {}): Plugin =>
         },
     });
 };
+
 ==> src/plugins/cart/tests/handing.test.ts
+
 import { act, renderHook } from "@testing-library/react";
 import { describe, expect, test } from "vitest";
 
@@ -3429,7 +3548,9 @@ describe("where a list is going", () =>
         expect(result.current.wrong).toBeUndefined();
     });
 });
+
 ==> src/plugins/cart/tests/lines.test.tsx
+
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, test, vi } from "vitest";
@@ -3537,7 +3658,9 @@ describe("a pick list on screen", () =>
         expect(screen.queryByRole("button")).toBeNull();
     });
 });
+
 ==> src/plugins/cart/tests/picking.test.ts
+
 import { describe, expect, test } from "vitest";
 
 import { createPickingService } from "../services/picking";
@@ -3730,7 +3853,9 @@ describe("striking a part off", () =>
         expect(moves).toBe(0);
     });
 });
+
 ==> src/plugins/cart/tests/serving.ts
+
 import type { Context } from "@onetype/stack-app-kit";
 import type { CartConfig } from "../types/CartConfig";
 
@@ -3824,7 +3949,9 @@ export const serving = (config: Readonly<Record<string, unknown>> = {}): Fake =>
 
     return held;
 };
+
 ==> src/plugins/cart/tests/together.test.ts
+
 import { QueryClient } from "@tanstack/react-query";
 import { afterEach, describe, expect, test } from "vitest";
 
@@ -3932,7 +4059,9 @@ describe("the catalog behind the depot this application ships", () =>
         await app.stop();
     });
 });
+
 ==> src/plugins/cart/types/Bay.ts
+
 import { z } from "zod";
 
 const schema = z.string().regex(/^[A-Z]{2}-[0-9]{1,3}$/, "A bay is two capital letters, a hyphen and a number.");
@@ -3954,7 +4083,9 @@ export const Bay = {
 };
 
 export type Bay = z.infer<typeof schema>;
+
 ==> src/plugins/cart/types/CartConfig.ts
+
 import { z } from "zod";
 
 export const CartConfig = {
@@ -3966,7 +4097,9 @@ export const CartConfig = {
 };
 
 export type CartConfig = z.infer<typeof CartConfig.schema>;
+
 ==> src/plugins/cart/types/Handing.ts
+
 import { z } from "zod";
 
 import { Bay } from "./Bay";
@@ -3976,7 +4109,9 @@ export const Handing = {
 };
 
 export type Handing = z.infer<typeof Handing.schema>;
+
 ==> src/plugins/cart/types/Line.ts
+
 import { z } from "zod";
 
 export const Line = {
@@ -3990,7 +4125,9 @@ export const Line = {
 };
 
 export type Line = z.infer<typeof Line.schema>;
+
 ==> src/plugins/cart/types/PickList.ts
+
 import { z } from "zod";
 
 import { Line } from "./Line";
@@ -4004,7 +4141,9 @@ export const PickList = {
 };
 
 export type PickList = z.infer<typeof PickList.schema>;
+
 ==> src/plugins/cart/types/Withdrawing.ts
+
 import { z } from "zod";
 
 export const Withdrawing = {
@@ -4012,7 +4151,9 @@ export const Withdrawing = {
 };
 
 export type Withdrawing = z.infer<typeof Withdrawing.schema>;
+
 ==> src/plugins/cart/types/Withdrawn.ts
+
 import { z } from "zod";
 
 export const Withdrawn = {
@@ -4020,7 +4161,9 @@ export const Withdrawn = {
 };
 
 export type Withdrawn = z.infer<typeof Withdrawn.schema>;
+
 ==> src/plugins/cart/utils/Lines.ts
+
 import type { Line } from "../types/Line";
 
 export const Lines = {
@@ -4043,7 +4186,9 @@ export const Lines = {
         return lines.some((line) => line.partId === partId && !line.gone);
     },
 };
+
 ==> src/plugins/cart/utils/Money.ts
+
 export const Money = {
     format: (cents: number, currency: string, locale?: string): string =>
     {

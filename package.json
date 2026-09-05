@@ -12,7 +12,9 @@
     "lint": "eslint src",
     "verify": "pnpm lint && pnpm typecheck && pnpm test && pnpm build",
     "pack:plugins": "node tools/pack/plugins.mjs pack",
-    "unpack:plugins": "node tools/pack/plugins.mjs unpack"
+    "unpack:plugins": "node tools/pack/plugins.mjs unpack",
+    "pack:docs": "node tools/pack/docs.mjs pack",
+    "unpack:docs": "node tools/pack/docs.mjs unpack"
   },
   "dependencies": {
     "@onetype/stack-app-kit": "^1.0.1",

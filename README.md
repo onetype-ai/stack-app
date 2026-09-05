@@ -50,6 +50,9 @@ folders from it; `pnpm pack:plugins` writes them back into it and removes the
 folders, so there is one copy rather than two that drift apart. Pack names
 other plugins to fold them away the same way: `pnpm pack:plugins billing`.
 
+`#docs/` packs the same way, into `docs.md`, through `pnpm pack:docs`. The
+checks that read the documents skip while they are packed, and say so.
+
 `src/ui` arrives with tokens and eight units: `Button`, `Field`, `Select`,
 `Badge`, `Empty`, `Skeleton`, `Spinner`, `Modal`. Anything past those is what
 this application needs and no other does.
