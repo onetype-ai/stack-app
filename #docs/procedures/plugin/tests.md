@@ -1,10 +1,7 @@
 # Procedure: plugin tests
 
-A plugin tests itself in its own `tests/`, without the application or a server.
-
-## What to test
-
-Through the public surface, never the implementation.
+A plugin tests itself in its own `tests/`, without the application or a server,
+through the public surface.
 
 - **Services**: what a caller gets back and what reached the transport. Give it
   a fake context; assert on the request made and the value returned.
@@ -21,14 +18,12 @@ The context is a fake, not a mock framework. Write one per plugin, giving it
 only what the cases need:
 
 - `http` returns canned responses and records every request.
-- `events.emit` records instead of dispatching, so a test asserts what was
-  announced.
+- `events.emit` records instead of dispatching.
 - `hooks.run` returns a rejection reason or `undefined`.
 - `permissions.has` answers from a list the test controls.
 
-Never reach the network: a test that needs a server is proving the server.
-
-A fake that accepts what a real one rejects is where bugs hide.
+Never reach the network. A fake that accepts what a real one rejects is where
+bugs hide.
 
 ## Shape
 
@@ -39,6 +34,5 @@ dependency, and no helper wrapping the assertion.
 
 Break the behaviour: remove the guard, invert the condition, delete the emit.
 Watch it fail naming the real cause, then put it back. If it stayed green, it
-tested nothing.
-
-The same for a bug: reproduce it, watch the test fail, then fix it.
+tested nothing. The same for a bug: reproduce it, watch the test fail, then fix
+it.

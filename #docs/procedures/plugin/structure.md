@@ -2,8 +2,6 @@
 
 One plugin is one capability: swap it and nothing notices.
 
-## Folders
-
 ```
 plugins/<name>/
 ├── plugin.ts       the contract: all that crosses the boundary
@@ -45,7 +43,5 @@ Allman braces for functions and blocks, arrows included: a named function's
 body is a block with a `return`, never one expression. An inline callback stays
 as it is. An object's brace stays on the key line. No comments.
 
-## Adding a plugin
-
 `plugin.ts` first, declaring only what it needs; `index.ts` last, the smallest
-surface a consumer needs. Prove it starts, and that a wrong contract is rejected.
+surface a consumer needs.

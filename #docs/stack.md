@@ -42,7 +42,5 @@ Any failure stops the boot naming the plugin and the cause.
 `services` is declared before anything reading `ctx.services`: inference runs
 left to right, so a callback above it sees `unknown`.
 
-## Verifying
-
 `pnpm verify` runs lint, typecheck, tests and build. Each check was broken on
 purpose to confirm it fails.

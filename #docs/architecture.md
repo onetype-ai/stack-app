@@ -18,11 +18,9 @@ Undeclared means absent, and the kernel refuses to start rather than warn.
 - **Slots** to extend another plugin without importing it.
 - **Hooks** to let a participant reject, by returning a reason.
 
-Refuses:
-
-- Request and response over the event bus, see `plugin/boundaries.md`.
-- A method emitting through someone else's `ctx`: an event carries the
-  identity of the context it went through. Emitting belongs to the service.
+Refused: request and response over the event bus, see `plugin/boundaries.md`;
+and a method emitting through someone else's `ctx`, because an event carries
+the identity of the context it went through.
 
 ## Failure is local
 

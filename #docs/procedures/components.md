@@ -14,9 +14,7 @@ nothing itself.
 
 A component keeps what nothing outside can name, a section what it shares, a
 page what comes from outside. An effect leaving a section exits through a
-callback prop.
-
-A level receiving a value as a prop never also stores it.
+callback prop. A level receiving a value as a prop never also stores it.
 
 ## Files
 
@@ -32,12 +30,8 @@ an element is, not how it looks.
 ## Rules
 
 Props in, markup out. No fetching, no global reads, no knowledge of what is
-above.
+above. Every control is keyboard-operable, visibly focused, and named. Every
+unit handles its empty, loading and error case, or renders nothing on purpose.
 
-Every control is keyboard-operable, visibly focused, and named. Every unit
-handles its empty, loading and error case, or renders nothing on purpose.
-
-## Proving it
-
-Render with the smallest legal props, then with everything supplied. Operate it
-by keyboard alone.
+Prove it by rendering with the smallest legal props, then with everything
+supplied, and operating it by keyboard alone.

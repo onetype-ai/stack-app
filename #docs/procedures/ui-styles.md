@@ -12,7 +12,8 @@ Order is fixed by `index.css`; a layer may only depend on ones above it.
 - `utilities.css`: reusable global classes.
 - `index.css`: imports only, never a rule.
 
-The app imports `index.css` once, at the entry. Nothing imports a layer directly.
+The app imports `index.css` once, at the entry. Nothing imports a layer
+directly.
 
 ## Where a style belongs
 
@@ -30,17 +31,15 @@ Re-declaring what `base.css` already gives you is a bug.
 Every value a component sees is a token, named for role, not appearance. A
 literal colour, length or duration outside `tokens.css` is a defect.
 
-A token nobody declared is worse than a literal: it resolves to nothing and
-the rule quietly does not apply. A test asserts every `var()` names something.
+A token nobody declared is worse than a literal: it resolves to nothing and the
+rule quietly does not apply. A test asserts every `var()` names something.
 
-A utility is one behaviour, prefixed `ui-` so a global class is never mistaken
-for a module one. Prove it needed in two unrelated places first; one used in a
-single place is a misfiled module rule.
+A utility is one behaviour, prefixed `ui-`. Prove it needed in two unrelated
+places first; one used in a single place is a misfiled module rule.
 
 Fonts load in `index.html`, never through CSS; the family name is a token.
 
 ## Proving it
 
-- Break a rule; the page must change. Nothing moving means it never applied.
-- Change a token; every consumer must move. One that did not is hardcoded.
-- Check smallest and largest viewport, and keyboard focus on every control.
+Break a rule and the page must change; nothing moving means it never applied.
+Change a token and every consumer must move; one that did not is hardcoded.
