@@ -2,10 +2,16 @@ import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, test } from "vitest";
 
-/** Every `var(--name)` under a directory, whatever it is nested in. */
+/**
+ * Every `var(--name)` a stylesheet asks for and does not set itself.
+ *
+ * A file may declare its own, and a component may hand one in through
+ * `style`, so a name set anywhere in its own folder is answered.
+ */
 function asked(at: string): Set<string>
 {
     const found = new Set<string>();
+    const own = new Set<string>();
 
     const walk = (path: string): void =>
     {
@@ -16,18 +22,41 @@ function asked(at: string): Set<string>
             if (statSync(one).isDirectory())
             {
                 walk(one);
+
+                continue;
             }
-            else if (one.endsWith(".css"))
+
+            if (one.endsWith(".css"))
             {
-                for (const match of readFileSync(one, "utf8").matchAll(/var\((--[a-z0-9-]+)/g))
+                const text = readFileSync(one, "utf8");
+
+                for (const match of text.matchAll(/var\((--[a-z0-9-]+)/g))
                 {
                     found.add(match[1] ?? "");
+                }
+
+                for (const match of text.matchAll(/^\s+(--[a-z0-9-]+):/gm))
+                {
+                    own.add(match[1] ?? "");
+                }
+            }
+
+            if (one.endsWith(".tsx"))
+            {
+                for (const match of readFileSync(one, "utf8").matchAll(/"(--[a-z0-9-]+)":/g))
+                {
+                    own.add(match[1] ?? "");
                 }
             }
         }
     };
 
     walk(at);
+
+    for (const one of own)
+    {
+        found.delete(one);
+    }
 
     return found;
 }
