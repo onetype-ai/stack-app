@@ -72,3 +72,38 @@ describe("this application", () =>
         await second.stop();
     });
 });
+
+describe("a start the kernel refuses", () =>
+{
+    /**
+     * The message names the plugin, the key and the fix, and reaches nobody
+     * unless the entry catches it. `main.tsx` does; this is what says so.
+     */
+    test("throws a message naming the plugin and what to do", async () =>
+    {
+        const { createKernel, definePlugin } = await import("@onetype/stack-app-kit");
+
+        const wrong = definePlugin("billing", {
+            version: "1.0.0",
+            describe: "Depends on nothing that exists.",
+            dependsOn: ["nowhere"],
+        });
+
+        const kernel = createKernel({ plugins: [wrong] });
+
+        await expect(kernel.start()).rejects.toThrow(/billing/);
+        await expect(kernel.start()).rejects.toThrow(/nowhere/);
+    });
+
+    test("and says so before anything started, so nothing is half up", async () =>
+    {
+        const { createKernel, definePlugin } = await import("@onetype/stack-app-kit");
+
+        const kernel = createKernel({
+            plugins: [definePlugin("bad", { version: "1.0.0", describe: "x", dependsOn: ["gone"] })],
+        });
+
+        await expect(kernel.start()).rejects.toThrow();
+        expect(kernel.started()).toBe(false);
+    });
+});
