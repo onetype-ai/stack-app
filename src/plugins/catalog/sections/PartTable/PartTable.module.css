@@ -1,0 +1,40 @@
+.root
+{
+    overflow: hidden;
+    background-color: var(--surface);
+    border: var(--edge) solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--lift-low);
+}
+
+.root .head
+{
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-room);
+    align-items: flex-end;
+    justify-content: space-between;
+    padding: var(--space-room);
+    border-bottom: var(--edge) solid var(--line);
+    background-color: var(--surface-sunken);
+}
+
+.root .count
+{
+    margin: 0;
+    color: var(--ink-soft);
+    font-size: var(--size-small);
+    font-variant-numeric: tabular-nums;
+}
+
+.root .waiting
+{
+    padding: var(--space-room);
+}
+
+.root .list
+{
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}

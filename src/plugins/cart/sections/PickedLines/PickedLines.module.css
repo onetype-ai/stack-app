@@ -1,0 +1,47 @@
+.root
+{
+    overflow: hidden;
+    background-color: var(--surface);
+    border: var(--edge) solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--lift-low);
+}
+
+.root .list
+{
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.root .foot
+{
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-room);
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-room);
+    border-top: var(--edge) solid var(--line-strong);
+    background-color: var(--surface-sunken);
+}
+
+.root .totals
+{
+    display: flex;
+    gap: var(--space-snug);
+    align-items: baseline;
+}
+
+.root .term
+{
+    color: var(--ink-soft);
+    font-size: var(--size-small);
+}
+
+.root .sum
+{
+    font-size: var(--size-title);
+    font-weight: var(--weight-strong);
+    font-variant-numeric: tabular-nums;
+}

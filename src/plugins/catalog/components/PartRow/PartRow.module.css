@@ -1,0 +1,78 @@
+.root
+{
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto auto;
+    align-items: center;
+    gap: var(--space-room);
+    padding: var(--space-snug) var(--space-room);
+    border-bottom: var(--edge) solid var(--line);
+    transition: background-color var(--pace-quick) var(--ease);
+}
+
+.root:last-child
+{
+    border-bottom: 0;
+}
+
+.root:hover
+{
+    background-color: var(--surface-sunken);
+}
+
+.root .identity
+{
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-hair);
+    min-width: 0;
+}
+
+.root .name
+{
+    overflow: hidden;
+    color: var(--ink);
+    font-weight: var(--weight-medium);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.root .kind
+{
+    color: var(--ink-faint);
+    font-size: var(--size-small);
+}
+
+.root .price
+{
+    color: var(--ink);
+    font-family: var(--family-mono);
+    font-size: var(--size-small);
+    font-variant-numeric: tabular-nums;
+}
+
+.root[data-stock="none"] .price
+{
+    color: var(--ink-faint);
+}
+
+.root .trailing
+{
+    display: flex;
+    justify-content: flex-end;
+    min-width: var(--space-open);
+}
+
+@media (max-width: 40rem)
+{
+    .root
+    {
+        grid-template-columns: minmax(0, 1fr) auto;
+        row-gap: var(--space-tight);
+    }
+
+    .root .trailing
+    {
+        grid-column: 1 / -1;
+        justify-content: flex-start;
+    }
+}

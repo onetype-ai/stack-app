@@ -1,0 +1,32 @@
+.root
+{
+    overflow: hidden;
+    background-color: var(--surface);
+    border: var(--edge) solid var(--line);
+    border-radius: var(--radius);
+}
+
+.root .title
+{
+    margin: 0;
+    padding: var(--space-snug) var(--space-room);
+    border-bottom: var(--edge) solid var(--line);
+    background-color: var(--surface-sunken);
+    color: var(--ink-soft);
+    font-size: var(--size-small);
+    font-weight: var(--weight-strong);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.root .waiting
+{
+    padding: var(--space-room);
+}
+
+.root .list
+{
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
