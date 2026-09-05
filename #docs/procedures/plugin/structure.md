@@ -41,12 +41,11 @@ cannot reference each other in a circle.
 Everything is an object with methods; no loose top-level `const`. A hook is the
 exception: React calls it, so it is a function `use…`, one per file.
 
-Allman braces for functions and blocks, arrows included: a named function's body
-is a block with a `return`, never one expression. An inline callback stays as
-it is. An object's brace stays on the key line. No comments.
+Allman braces for functions and blocks, arrows included: a named function's
+body is a block with a `return`, never one expression. An inline callback stays
+as it is. An object's brace stays on the key line. No comments.
 
 ## Adding a plugin
 
 `plugin.ts` first, declaring only what it needs; `index.ts` last, the smallest
-surface a consumer needs. Prove it starts, that a wrong contract is rejected,
-and that a test fails when behaviour breaks.
+surface a consumer needs. Prove it starts, and that a wrong contract is rejected.

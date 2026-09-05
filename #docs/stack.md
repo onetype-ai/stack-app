@@ -10,8 +10,8 @@ Vite 8, React 19, TypeScript 6 strict with `noUncheckedIndexedAccess` and
 server state, CSS Modules, Zod for schemas, Vitest with Testing Library, ESLint
 for boundaries.
 
-Routes are registered programmatically. File-based routing is forbidden: a route
-that exists because of where a file sits is a boundary nothing enforces.
+Routes are registered programmatically. File-based routing is forbidden: a
+route that exists because of where a file sits is a boundary nothing enforces.
 
 ## Layout
 
@@ -23,28 +23,26 @@ src/
 └── main.tsx    composition root
 ```
 
-Dependencies point one way. `ui` imports neither a plugin nor the kernel, and a
-plugin imports another only through its `index.ts`. ESLint rejects each.
+`ui` imports neither a plugin nor the kernel, and a plugin imports another only
+through its `index.ts`. ESLint rejects each.
 
 ## The kit
 
 `@onetype/stack-app-kit` has three entries. `.` is pure: registry, contracts,
-events, hooks, slots, permissions, transport: and runs without a DOM. `./react`
+events, hooks, slots, permissions, transport, and runs without a DOM. `./react`
 adds `KernelProvider`, `Slot`, `RouteGuard`, `usePlugin` and `StartupFailure`.
 `./testing` holds the checks a test calls.
 
-The split keeps the logic testable in plain Node.
-
 ## Startup
 
-`start` discovers every `plugins/*/plugin.ts`, validates every contract, resolves
-dependencies, rejects cycles, and runs `setup` in dependency order. Any failure
-stops the boot naming the plugin and the cause.
+`start` discovers every `plugins/*/plugin.ts`, validates every contract,
+resolves dependencies, rejects cycles, and runs `setup` in dependency order.
+Any failure stops the boot naming the plugin and the cause.
 
-`services` is declared before anything reading `ctx.services`: inference runs left
-to right, so a callback above it sees `unknown`.
+`services` is declared before anything reading `ctx.services`: inference runs
+left to right, so a callback above it sees `unknown`.
 
 ## Verifying
 
 `pnpm verify` runs lint, typecheck, tests and build. Each check was broken on
-purpose to confirm it fails; a green check never broken proves nothing.
+purpose to confirm it fails.

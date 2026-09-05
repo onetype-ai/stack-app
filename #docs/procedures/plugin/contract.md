@@ -10,9 +10,9 @@ export default definePlugin("demo", { ... });
 
 ## Keys
 
-- `version`: raised by a breaking change to a name or payload.
-- `describe`: one line naming the capability this owns.
-- `dependsOn`: plugins whose API or permissions it uses.
+- `version` raised by a breaking change to a name or payload, `describe` one
+  line naming what this owns, `dependsOn` the plugins whose API or permissions
+  it uses.
 - `config`: a schema, validated at startup. Never a secret.
 - `permissions`: those it defines, described. Others use them by key.
 - `services`: a factory returning what this plugin runs on.
@@ -22,17 +22,17 @@ export default definePlugin("demo", { ... });
 - `routes`: `path`, `title`, `component`, `requires`. Segments use `$param`.
 - `slots`: those it opens, with the payload schema contributions get.
 - `contributes`: slots in others it fills, with `order` and `requires`.
-- `emits`: events it announces, with a schema. Undeclared fails.
-- `listens`: events it reacts to; one that throws stays contained.
-- `hooks`: points this plugin owns and runs, with a schema.
-- `participates`: hooks in others; a returned string rejects.
+- `emits`, `listens`: announced and heard, each with a schema. Undeclared
+  fails; a listener that throws stays contained.
+- `hooks`, `participates`: points this plugin owns and runs, and others' it
+  joins. A returned string rejects.
 - `commands`: imperative entry points, with a schema and `requires`.
 - `setup` / `teardown`: run at start and stop.
 
 ## Rules
 
-`services` comes before anything reading `ctx.services`: inference runs left
-to right. What `ctx` carries is in the kit's `reference.md`.
+`services` comes before anything reading `ctx.services`: inference runs left to
+right. What `ctx` carries is in the kit's `reference.md`.
 
 Every crossing carries a description and a schema, and a payload failing it is
 rejected at the boundary. Referencing another plugin's permission makes it a
