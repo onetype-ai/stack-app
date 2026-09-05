@@ -50,7 +50,7 @@ the event bus.
 import { Button } from "@ui";
 ```
 
-`ui` knows no domain and imports no plugin. It arrives empty: `tokens.css` is
-the first thing to fill.
+`ui` knows no domain and imports no plugin. The styles are written; no unit
+is, so the first component is the first.
 
 `#docs/procedures/` holds how to build each part; `stack.md` the structure.
