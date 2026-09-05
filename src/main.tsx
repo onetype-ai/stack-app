@@ -8,36 +8,55 @@ import { KernelProvider, StartupFailure } from "@onetype/stack-app-kit/react";
 import { mount, queries, routes } from "./kernel";
 import "@ui/styles/index.css";
 
-const container = document.getElementById("root");
+import type { QueryClient } from "@tanstack/react-query";
+import type { Root } from "react-dom/client";
 
-if (!container)
+class AppRunner
 {
-    throw new Error("Mount failed: #root is missing from index.html.");
+    root: Root;
+    client: QueryClient;
+
+    constructor()
+    {
+        const container = document.getElementById("root");
+
+        if (!container)
+        {
+            throw new Error("Mount failed: #root is missing from index.html.");
+        }
+
+        this.root = createRoot(container);
+        this.client = queries();
+    }
+
+    async open(): Promise<void>
+    {
+        const app = await mount(this.client);
+
+        this.root.render(
+            <StrictMode>
+                <QueryClientProvider client={this.client}>
+                    <KernelProvider kernel={app.kernel}>
+                        <RouterProvider router={routes(app.kernel)} />
+                    </KernelProvider>
+                </QueryClientProvider>
+            </StrictMode>,
+        );
+    }
+
+    failed(cause: unknown): void
+    {
+        this.root.render(
+            <StrictMode>
+                <StartupFailure message={cause instanceof Error ? cause.message : String(cause)} />
+            </StrictMode>,
+        );
+    }
 }
 
-const root = createRoot(container);
-const client = queries();
+export const App = new AppRunner();
 
-const begin = async (): Promise<void> =>
+void App.open().catch((cause: unknown) =>
 {
-    const app = await mount(client);
-
-    root.render(
-        <StrictMode>
-            <QueryClientProvider client={client}>
-                <KernelProvider kernel={app.kernel}>
-                    <RouterProvider router={routes(app.kernel)} />
-                </KernelProvider>
-            </QueryClientProvider>
-        </StrictMode>,
-    );
-};
-
-void begin().catch((cause: unknown) =>
-{
-    root.render(
-        <StrictMode>
-            <StartupFailure message={cause instanceof Error ? cause.message : String(cause)} />
-        </StrictMode>,
-    );
+    App.failed(cause);
 });

@@ -5,17 +5,12 @@ enforces the boundaries between them.
 
 ## Setting up
 
-This repository holds the application only. It consumes one shared package that
-lives outside it, linked in rather than committed:
-
 ```sh
-mkdir -p packages
-ln -s /path/to/stack-app-kit packages/stack-app-kit
-
 pnpm install
 ```
 
-`packages/` is in `.gitignore`, so the link is set up per machine.
+The kernel is one package from npm, `@onetype/stack-app-kit`. Nothing else is
+shared, and nothing is linked.
 
 ## Running
 
@@ -34,25 +29,34 @@ it does not hold.
 
 ## Where to read
 
-- `#docs/usage.md`: how to add and use a plugin
-- `#docs/stack.md`: the exact structure and why
-- `#docs/architecture.md`: why plugins, why a declared boundary
-- `#docs/procedures/`: how each part is built
+`docs.md` is everything: how to add and use a plugin, the exact structure and
+why, why plugins at all, and a procedure for each part. It is one file so it
+can be read without walking a tree.
 
-`catalog` and `cart` are the worked pair: the first stands alone and opens a
-slot, the second depends on it and fills it. Between them they use every way
-across a boundary exactly once, so read one crossing where it actually runs
-rather than in a declaration with nothing on the other side.
+`src/plugins/example.txt` is the worked pair, the same way: `catalog` stands
+alone and opens a slot, `cart` depends on it and fills it. Between them they
+use every way across a boundary exactly once, so read one crossing where it
+actually runs rather than in a declaration with nothing on the other side.
 
-`src/plugins/example.txt` holds them as one file, every path and every line, so
-they can be read without walking the tree. `pnpm unpack:plugins` rebuilds the
-folders from it; `pnpm pack:plugins` writes them back into it and removes the
-folders, so there is one copy rather than two that drift apart. Pack names
-other plugins to fold them away the same way: `pnpm pack:plugins billing`.
-
-`#docs/` packs the same way, into `docs.md`, through `pnpm pack:docs`. The
-checks that read the documents skip while they are packed, and say so.
+Read them once, then pack them away for good.
 
 `src/ui` arrives with tokens and eight units: `Button`, `Field`, `Select`,
 `Badge`, `Empty`, `Skeleton`, `Spinner`, `Modal`. Anything past those is what
 this application needs and no other does.
+
+## Packing
+
+Each of those files is a folder folded into one, and folds back:
+
+```sh
+pnpm unpack:docs      # docs.md -> #docs/
+pnpm unpack:plugins   # example.txt -> the plugin folders
+```
+
+`pnpm pack:docs` and `pnpm pack:plugins` fold them back and remove what they
+read, so there is one copy rather than two that drift apart. Pack takes names,
+so any plugin folds away the same way: `pnpm pack:plugins billing`.
+
+The checks that read the documents skip while they are packed and say which
+command brings them back. Unpack before working on what is inside; pack when
+you are done.
