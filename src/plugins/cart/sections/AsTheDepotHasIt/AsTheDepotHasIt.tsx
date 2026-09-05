@@ -12,12 +12,8 @@ export type AsTheDepotHasItProps = {
     partIds: readonly string[];
 };
 
-/**
- * Each line as the depot itself holds it.
- *
- * The row is the catalog's own component, so a part looks the same wherever
- * it is shown, and the cart never learns what a part is made of.
- */
+// The row is the catalog's own component, so a part looks the same wherever
+// it is shown, and the cart never learns what a part is made of.
 export const AsTheDepotHasIt = ({ partIds }: AsTheDepotHasItProps) =>
 {
     const handle = Cart.use();

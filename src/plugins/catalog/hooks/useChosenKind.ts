@@ -9,12 +9,8 @@ export type ChosenKind = {
     choose: (kind: PartKind | undefined) => void;
 };
 
-/**
- * Which kind the reader is looking at, kept in the address.
- *
- * The address is where it belongs: a link carries it, a reload keeps it, and
- * back goes back to the last filter rather than out of the page.
- */
+// Kept in the address: a link carries it, a reload keeps it, and back goes
+// back to the last filter rather than out of the page.
 export const useChosenKind = (): ChosenKind =>
 {
     const navigate = useNavigate();

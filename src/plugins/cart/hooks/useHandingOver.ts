@@ -14,12 +14,8 @@ export type HandingOver = {
     refuse: (cause: unknown) => void;
 };
 
-/**
- * Where a list is going, and whether it may go there yet.
- *
- * The bay is checked as it is typed, so the refusal arrives beside the field
- * rather than after a modal has already been confirmed.
- */
+// The bay is checked as it is typed, so the refusal arrives beside the field
+// rather than after a modal has already been confirmed.
 export const useHandingOver = (): HandingOver =>
 {
     const [bay, setBay] = useState("");

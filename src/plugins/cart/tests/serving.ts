@@ -9,12 +9,8 @@ export type Fake = {
     refuse: string | undefined;
 };
 
-/**
- * A context whose catalog is written by the test.
- *
- * `use` is what a public API reaches through, so faking it is faking the whole
- * crossing: a cart that started inventing prices fails here.
- */
+// `use` is what a public API reaches through, so faking it is faking the whole
+// crossing: a cart that started inventing prices fails here.
 export const serving = (config: Readonly<Record<string, unknown>> = {}): Fake =>
 {
     const priced: string[] = [];

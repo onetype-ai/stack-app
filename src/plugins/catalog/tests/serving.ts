@@ -17,12 +17,8 @@ export type Fake = {
 
 export type Canned = Readonly<Record<string, unknown>>;
 
-/**
- * A context that reaches nothing.
- *
- * Every answer is written by the test, so a service that stopped calling the
- * transport fails here rather than passing on a cached truth.
- */
+// Every answer is written by the test, so a service that stopped calling the
+// transport fails here rather than passing on a cached truth.
 export const serving = (canned: Canned, config: Readonly<Record<string, unknown>> = {}): Fake =>
 {
     const asked: Asked[] = [];

@@ -7,13 +7,8 @@ import type { Kernel } from "@onetype/stack-app-kit";
 import type { CatalogServices } from "@plugins/catalog";
 import type { CartServices } from "../index";
 
-/**
- * The pair as it actually runs: both plugins started by the kernel, reaching
- * each other the way they will in a browser.
- *
- * Every other test here writes its own catalog, so a cart that only works
- * against a fake passes there and fails here.
- */
+// Every other test here writes its own catalog, so a cart that only works
+// against a fake passes there and fails here.
 const bolt = "5f1a0a3e-1c2b-4f0a-9a11-000000000001";
 const seal = "5f1a0a3e-1c2b-4f0a-9a11-000000000004";
 
