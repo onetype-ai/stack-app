@@ -11,9 +11,6 @@ export default defineConfig({
         alias: [
             { find: /^@ui$/, replacement: resolvePath("./src/ui/index.ts") },
             { find: /^@ui\//, replacement: `${resolvePath("./src/ui")}/` },
-            { find: /^@onetype\/stack-app-kit$/, replacement: resolvePath("./packages/stack-app-kit/src/index.ts") },
-            { find: /^@onetype\/stack-app-kit\/react$/, replacement: resolvePath("./packages/stack-app-kit/src/plugins/kernel/react/index.tsx") },
-            { find: /^@onetype\/stack-app-kit\/testing$/, replacement: resolvePath("./packages/stack-app-kit/src/testing.ts") },
             { find: /^@plugins\//, replacement: `${resolvePath("./src/plugins")}/` },
         ],
     },
