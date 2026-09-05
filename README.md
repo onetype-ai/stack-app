@@ -41,5 +41,6 @@ every guarded route renders 403. That is the app working, not a bug.
 then delete it. Its styles are deliberately plain: take the mechanics, never
 the look.
 
-`src/ui` arrives empty. `tokens.css` is the first thing to fill, and what fills
-it sets the quality of everything built after.
+`src/ui` arrives with tokens and eight units: `Button`, `Field`, `Select`,
+`Badge`, `Empty`, `Skeleton`, `Spinner`, `Modal`. Anything past those is what
+this application needs and no other does.
