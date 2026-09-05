@@ -14,6 +14,7 @@ import { QuickAction } from "./sections/QuickAction/QuickAction";
 import { createItemsService } from "./services/items";
 import { createSessionService } from "./services/session";
 import { DemoConfig } from "./types/DemoConfig";
+import { DemoStatus } from "./types/DemoStatus";
 import { DemoKeys } from "./utils/DemoKeys";
 
 export default definePlugin("demo", {
@@ -54,7 +55,13 @@ export default definePlugin("demo", {
     },
 
     routes: [
-        { path: "/demo", title: "Items", requires: ["demo.read"], component: Dashboard },
+        {
+            path: "/demo",
+            title: "Items",
+            requires: ["demo.read"],
+            component: Dashboard,
+            search: z.object({ status: DemoStatus.schema.optional() }),
+        },
         { path: "/demo/items/$id", title: "Item", requires: ["demo.read"], component: ItemDetail },
         { path: "/demo/settings", title: "Demo settings", requires: ["demo.configure"], component: Settings },
     ],
