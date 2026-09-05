@@ -11,8 +11,8 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint src",
     "verify": "pnpm lint && pnpm typecheck && pnpm test && pnpm build",
-    "plugins:pack": "node tools/plugins.mjs pack",
-    "plugins:unpack": "node tools/plugins.mjs unpack"
+    "pack:plugins": "node tools/pack/plugins.mjs pack",
+    "unpack:plugins": "node tools/pack/plugins.mjs unpack"
   },
   "dependencies": {
     "@onetype/stack-app-kit": "^1.0.1",

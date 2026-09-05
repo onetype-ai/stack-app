@@ -45,10 +45,10 @@ across a boundary exactly once, so read one crossing where it actually runs
 rather than in a declaration with nothing on the other side.
 
 `src/plugins/example.txt` holds them as one file, every path and every line, so
-they can be read without walking the tree. `pnpm plugins:unpack` rebuilds the
-folders from it; `pnpm plugins:pack` writes them back into it and removes the
+they can be read without walking the tree. `pnpm unpack:plugins` rebuilds the
+folders from it; `pnpm pack:plugins` writes them back into it and removes the
 folders, so there is one copy rather than two that drift apart. Pack names
-other plugins to fold them away the same way: `pnpm plugins:pack billing`.
+other plugins to fold them away the same way: `pnpm pack:plugins billing`.
 
 `src/ui` arrives with tokens and eight units: `Button`, `Field`, `Select`,
 `Badge`, `Empty`, `Skeleton`, `Spinner`, `Modal`. Anything past those is what

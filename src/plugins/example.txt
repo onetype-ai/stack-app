@@ -1,11 +1,11 @@
 # catalog, cart packed
 
-Every file of these plugins, one after another. A line starting with
-"==> " opens a file and names its path; everything until the next such
-line is that file, byte for byte.
+Every file of these plugins, one after another. A line starting
+with "==> " opens a file and names its path; everything until the next
+such line is that file, byte for byte.
 
-Rebuild the folders with:  node tools/plugins.mjs unpack
-Rewrite this file with:    node tools/plugins.mjs pack catalog cart
+Rebuild the folders with:  node tools/pack/plugins.mjs unpack
+Rewrite this file with:    node tools/pack/plugins.mjs pack catalog cart
 
 ==> src/plugins/catalog/plugin.ts
 import { definePlugin } from "@onetype/stack-app-kit";
