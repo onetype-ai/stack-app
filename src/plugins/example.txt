@@ -2929,12 +2929,12 @@ export const createPickingService = (ctx: Context<CartConfig>) =>
 
     const listeners = new Set<() => void>();
 
-    let answer: PickList = { lines: [], cents: 0, items: 0 };
+    let snapshot: PickList = { lines: [], cents: 0, items: 0 };
 
-    const settle = (next: readonly Line[]): void =>
+    const publish = (next: readonly Line[]): void =>
     {
         lines = next;
-        answer = { lines: [...next], cents: Lines.cents(next), items: Lines.items(next) };
+        snapshot = { lines: [...next], cents: Lines.cents(next), items: Lines.items(next) };
 
         for (const listener of listeners)
         {
@@ -2945,7 +2945,7 @@ export const createPickingService = (ctx: Context<CartConfig>) =>
     return {
         read: (): PickList =>
         {
-            return answer;
+            return snapshot;
         },
 
         watch: (listener: () => void): (() => void) =>
@@ -2965,16 +2965,16 @@ export const createPickingService = (ctx: Context<CartConfig>) =>
 
         add: async (partId: string, name: string): Promise<void> =>
         {
-            const already = lines.find((line) => line.partId === partId);
+            const onList = lines.find((line) => line.partId === partId);
 
-            if (already !== undefined)
+            if (onList !== undefined)
             {
-                if (already.quantity >= ctx.config.maxQuantity)
+                if (onList.quantity >= ctx.config.maxQuantity)
                 {
                     throw new Error(`A line may not ask for more than ${String(ctx.config.maxQuantity)} of one part.`);
                 }
 
-                settle(lines.map((line) =>
+                publish(lines.map((line) =>
                 {
                     return line.partId === partId
                         ? { ...line, quantity: line.quantity + 1, gone: false }
@@ -2991,12 +2991,31 @@ export const createPickingService = (ctx: Context<CartConfig>) =>
 
             const cents = await Catalog.priceOf(ctx, partId);
 
-            settle([...lines, { partId, name, cents, quantity: 1, gone: false }]);
+            // Read again after the await: another add may have answered while
+            // this one waited for a price, and both checked an emptier list.
+            const now = lines;
+
+            if (now.some((line) => line.partId === partId))
+            {
+                publish(now.map((line) =>
+                {
+                    return line.partId === partId ? { ...line, quantity: line.quantity + 1, gone: false } : line;
+                }));
+
+                return;
+            }
+
+            if (now.length >= ctx.config.maxLines)
+            {
+                throw new Error(`A pick list may not run past ${String(ctx.config.maxLines)} lines.`);
+            }
+
+            publish([...now, { partId, name, cents, quantity: 1, gone: false }]);
         },
 
         drop: (partId: string): void =>
         {
-            settle(lines.filter((line) => line.partId !== partId));
+            publish(lines.filter((line) => line.partId !== partId));
         },
 
         strike: (partId: string): void =>
@@ -3006,7 +3025,7 @@ export const createPickingService = (ctx: Context<CartConfig>) =>
                 return;
             }
 
-            settle(lines.map((line) =>
+            publish(lines.map((line) =>
             {
                 return line.partId === partId ? { ...line, gone: true } : line;
             }));
@@ -3014,7 +3033,7 @@ export const createPickingService = (ctx: Context<CartConfig>) =>
 
         empty: (): void =>
         {
-            settle([]);
+            publish([]);
         },
     };
 };
@@ -3776,6 +3795,22 @@ describe("putting a part on the pick list", () =>
         await expect(picking.add(seal, "O ring 12mm")).rejects.toThrow(/past 1 lines/);
 
         expect(picking.read().lines).toHaveLength(1);
+    });
+
+    /* Two clicks before the first price answers. The check and the write sit
+       either side of an await, so both saw an empty list and both wrote. */
+    test("and holds that limit when two adds are in flight at once", async () =>
+    {
+        const fake = fakeContext({ maxLines: 1 });
+        const picking = createPickingService(fake.ctx);
+
+        const both = await Promise.allSettled([
+            picking.add(bolt, "Hex bolt M8"),
+            picking.add(seal, "O ring 12mm"),
+        ]);
+
+        expect(picking.read().lines).toHaveLength(1);
+        expect(both.filter((settled) => settled.status === "rejected")).toHaveLength(1);
     });
 
     test("and to ask for more of one part than its config allows", async () =>
