@@ -237,7 +237,7 @@ export default definePlugin("catalog", { ... });
 ## Rules
 
 `services` comes before anything reading `ctx.services`: inference runs left to
-right. What `ctx` carries is in the kit's `reference.md`.
+right. What `ctx` carries is in this project's `docs.md`.
 
 Every crossing carries a description and a schema, and a payload failing it is
 rejected at the boundary. Referencing another plugin's permission makes it a
@@ -371,7 +371,8 @@ Every value a component sees is a token, named for role, not appearance. A
 literal colour, length or duration outside `tokens.css` is a defect.
 
 A token nobody declared is worse than a literal: it resolves to nothing and the
-rule quietly does not apply. A test asserts every `var()` names something.
+rule quietly does not apply. `Project.checks()` refuses one that names
+nothing, and a `styles.x` no module declares alongside it.
 
 A utility is one behaviour, prefixed `ui-`. Prove it needed in two unrelated
 places first; one used in a single place is a misfiled module rule.
@@ -387,8 +388,8 @@ Change a token and every consumer must move; one that did not is hardcoded.
 
 # Stack
 
-pnpm workspace. The application is the root; `packages/**` are what it consumes
-through `workspace:*`.
+One application, one package. The kernel arrives from npm as
+`@onetype/stack-app-kit`; nothing else is linked from next door.
 
 ## Tools
 
@@ -411,7 +412,9 @@ src/
 ```
 
 `ui` imports neither a plugin nor the kernel, and a plugin imports another only
-through its `index.ts`. ESLint rejects each.
+through its `index.ts`. ESLint rejects each. Whether that plugin is one it
+declared in `dependsOn` is a contract question, so `Project.checks()` answers
+it and the build fails there.
 
 ## The kit
 

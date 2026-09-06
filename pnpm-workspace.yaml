@@ -3,7 +3,7 @@ allowBuilds:
   unrs-resolver: true
 
 minimumReleaseAgeExclude:
-  - '@onetype/stack-app-kit@1.0.0 || 1.0.1'
+  - '@onetype/stack-app-kit'
 
 onlyBuiltDependencies:
   - unrs-resolver

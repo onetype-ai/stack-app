@@ -14,6 +14,22 @@ export const routes = (kernel: Kernel) =>
 
     const root = createRootRoute({ component: frame, notFoundComponent: NotFound });
 
+    const declared = kernel.routes();
+    const first = declared[0];
+
+    if (first === undefined)
+    {
+        throw new Error("No plugin declares a route. One must, or every address answers 404.");
+    }
+
+    // "/" belongs to no plugin, so it sends the reader to the first route
+    // declared rather than answering 404 at the address they were given.
+    const landing = createRoute({
+        getParentRoute: () => root,
+        path: "/",
+        component: () => <Navigate to={first.path} replace />,
+    });
+
     const pages = kernel.routes().map((route) =>
         createRoute({
             getParentRoute: () => root,
@@ -26,5 +42,5 @@ export const routes = (kernel: Kernel) =>
         }),
     );
 
-    return createRouter({ routeTree: root.addChildren(pages) });
+    return createRouter({ routeTree: root.addChildren([landing, ...pages]) });
 };

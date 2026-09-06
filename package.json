@@ -8,6 +8,7 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:browser": "node tests/browser/smoke.mjs",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src",
     "verify": "pnpm lint && pnpm typecheck && pnpm test && pnpm build"

@@ -7,7 +7,7 @@ import { findMissingDocs, findOversizedDocs, findUndocumentedKeys, findUnexplain
 const ROOT = process.cwd();
 
 // The documents pack into docs.md, and a check that reads them has nothing to
-// read until they are unpacked. `pnpm unpack:docs` is what makes these run.
+// read until they are unpacked, which is how a maintainer works on them.
 const unpacked = existsSync(join(ROOT, "#docs"));
 
 describe.skipIf(!unpacked)("the documents this application ships", () =>

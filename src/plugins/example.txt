@@ -1762,6 +1762,66 @@ describe("opening a part", () =>
     });
 });
 
+==> src/plugins/catalog/tests/viewer.test.ts
+
+import { describe, expect, test } from "vitest";
+
+import { fakeContext } from "./setup";
+import { createViewerService } from "../services/viewer";
+
+const desk = {
+    userId: "9c8b7a6d-5e4f-4a3b-8c1d-000000000010",
+    displayName: "Depot desk",
+    permissions: ["catalog.read", "catalog.write"],
+};
+
+describe("who is at the desk", () =>
+{
+    test("is whoever the session answers with", async () =>
+    {
+        const viewer = createViewerService(fakeContext({ "GET /session": desk }).ctx);
+
+        expect(await viewer.load()).toMatchObject({ displayName: "Depot desk" });
+        expect(viewer.permissions()).toEqual(["catalog.read", "catalog.write"]);
+    });
+
+    test("and nobody before anything has been loaded", () =>
+    {
+        const viewer = createViewerService(fakeContext({}).ctx);
+
+        expect(viewer.current()).toBeUndefined();
+        expect(viewer.permissions()).toEqual([]);
+    });
+
+    /* A session that fails to reload must not leave the previous viewer in
+       place: their permissions would keep answering for somebody no longer
+       signed in, and every permission check above this would agree. */
+    test("and nobody again once a reload fails, never whoever was there before", async () =>
+    {
+        const answers: Record<string, unknown> = { "GET /session": desk };
+        const fake = fakeContext(answers);
+        const viewer = createViewerService(fake.ctx);
+
+        await viewer.load();
+
+        expect(viewer.permissions()).toHaveLength(2);
+
+        delete answers["GET /session"];
+
+        expect(await viewer.load()).toBeUndefined();
+        expect(viewer.current()).toBeUndefined();
+        expect(viewer.permissions()).toEqual([]);
+    });
+
+    test("and a session answering a shape it never promised is nobody, not a crash", async () =>
+    {
+        const viewer = createViewerService(fakeContext({ "GET /session": { userId: "not-a-uuid" } }).ctx);
+
+        expect(await viewer.load()).toBeUndefined();
+        expect(viewer.permissions()).toEqual([]);
+    });
+});
+
 ==> src/plugins/catalog/types/Beside.ts
 
 import { z } from "zod";

@@ -17,15 +17,20 @@ shared, and nothing is linked.
 ```sh
 pnpm dev              # http://localhost:5173
 pnpm verify           # lint, typecheck, test, build
+pnpm test:browser     # opens the app in a real browser and reads the page
 ```
 
 `VITE_API_URL` sets the backend base URL and defaults to `/api`; `VITE_WS_URL`
 sets the websocket, and without one the transport stays on HTTP.
 
-There is no server yet, so `src/kernel/source.ts` answers over `fetch`: the
-plugins take the same path they will take once one exists. Point
-`VITE_API_URL` at a real backend and the stand-in steps aside for every path
-it does not hold.
+There is no server yet, so `src/kernel/source.ts` answers over `fetch` in
+development only: the plugins take the same path they will take once one
+exists, and nothing of it reaches a production build. Point `VITE_API_URL` at
+a real backend and the stand-in steps aside for every path it does not hold.
+
+`pnpm verify` runs in jsdom, which renders components but runs no build, no
+router and no real network. `pnpm test:browser` opens the built application in
+Chromium and reads what a person would see.
 
 ## Where to read
 
