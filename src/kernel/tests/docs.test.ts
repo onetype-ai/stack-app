@@ -2,7 +2,7 @@ import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, test } from "vitest";
 
-import { findMissingDocs, findOversizedDocs, findUndocumentedKeys } from "@onetype/stack-app-kit/testing";
+import { findMissingDocs, findOversizedDocs, findUndocumentedKeys, findUnexplainedPlugins } from "@onetype/stack-app-kit/testing";
 
 const ROOT = process.cwd();
 
@@ -20,14 +20,14 @@ describe.skipIf(!unpacked)("the documents this application ships", () =>
         });
 
         expect(over).toEqual([]);
-});
+    });
 
-test("the root documents are present and say something", () =>
-{
-    const required = ["#docs/usage.md", "#docs/stack.md", "#docs/architecture.md"];
+    test("the root documents are present and say something", () =>
+    {
+        const required = ["#docs/usage.md", "#docs/stack.md", "#docs/architecture.md"];
 
-    expect(findMissingDocs(ROOT, required)).toEqual([]);
-});
+        expect(findMissingDocs(ROOT, required)).toEqual([]);
+    });
 
 // The kit is a dependency, so the contract is read from its published types.
 // tsup names the shared chunk with a build hash, so the file is found by what
@@ -57,4 +57,11 @@ const declared = (): string =>
         // An empty answer means the shape parsed; a shape that vanished throws above.
         expect(findUndocumentedKeys(contract, procedure)).toEqual([]);
     });
+});
+
+/* Reads src/plugins, not #docs, so it holds whether the documents are packed
+   or not: a plugin nobody can read is one nobody can depend on. */
+test("every plugin explains itself in its own usage.md", () =>
+{
+    expect(findUnexplainedPlugins(join(ROOT, "src", "plugins"))).toEqual([]);
 });
