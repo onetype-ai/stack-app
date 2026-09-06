@@ -1,4 +1,8 @@
-# catalog, cart packed
+# EXAMPLES START HERE: catalog, cart
+
+These are example plugins, here to be read, not the application you are
+building. Take the mechanics from them and leave the domain alone: yours has
+its own nouns.
 
 Every file of these plugins, one after another. A line starting
 with "==> " opens a file and names its path; everything until the next
@@ -403,8 +407,7 @@ export type ChosenKind = {
     choose: (kind: PartKind | undefined) => void;
 };
 
-// Kept in the address: a link carries it, a reload keeps it, and back goes
-// back to the last filter rather than out of the page.
+/* In the address, so a link carries it and back goes to the last filter. */
 export const useChosenKind = (): ChosenKind =>
 {
     const navigate = useNavigate();
@@ -1534,8 +1537,7 @@ export type Fake = {
 
 export type Answers = Readonly<Record<string, unknown>>;
 
-// Every answer is written by the test, so a service that stopped calling the
-// transport fails here rather than passing on a cached truth.
+/* Every answer is the test's, so a service that stopped calling fails here. */
 export const fakeContext = (answers: Answers, config: Readonly<Record<string, unknown>> = {}): Fake =>
 {
     const asked: Asked[] = [];
@@ -2326,8 +2328,7 @@ export type HandoverForm = {
     refuse: (cause: unknown) => void;
 };
 
-// The bay is checked as it is typed, so the refusal arrives beside the field
-// rather than after a modal has already been confirmed.
+/* Checked as it is typed, so the refusal arrives beside the field. */
 export const useHandoverForm = (): HandoverForm =>
 {
     const [bay, setBay] = useState("");
@@ -2931,8 +2932,7 @@ export type AsTheDepotHasItProps = {
     partIds: readonly string[];
 };
 
-// The row is the catalog's own component, so a part looks the same wherever
-// it is shown, and the cart never learns what a part is made of.
+/* The catalog's own row: the cart never learns what a part is made of. */
 export const PickedParts = ({ partIds }: AsTheDepotHasItProps) =>
 {
     const handle = Cart.use();
@@ -3051,8 +3051,7 @@ export const createPickingService = (ctx: Context<CartConfig>) =>
 
             const cents = await Catalog.priceOf(ctx, partId);
 
-            // Read again after the await: another add may have answered while
-            // this one waited for a price, and both checked an emptier list.
+            /* Read again: another add may have answered while this waited. */
             const now = lines;
 
             if (now.some((line) => line.partId === partId))
@@ -3434,9 +3433,7 @@ export type Depot = {
     get?: (id: string) => Promise<Stocked>;
 };
 
-// The cart names it in `dependsOn`, so nothing here may be left out: the
-// kernel refuses a slot, event or hook no plugin declared, which is what makes
-// a stand-in prove anything.
+/* Nothing here may be left out: the kernel refuses what no plugin declared. */
 export const fakeCatalog = (answers: Depot = {}): Plugin =>
 {
     return definePlugin("catalog", {
@@ -4016,8 +4013,7 @@ export type Fake = {
     refuse: string | undefined;
 };
 
-// `use` is what a public API reaches through, so faking it is faking the whole
-// crossing: a cart that started inventing prices fails here.
+/* Faking `use` fakes the whole crossing: an invented price fails here. */
 export const fakeContext = (config: Readonly<Record<string, unknown>> = {}): Fake =>
 {
     const priced: string[] = [];
@@ -4100,14 +4096,13 @@ export const fakeContext = (config: Readonly<Record<string, unknown>> = {}): Fak
 import { QueryClient } from "@tanstack/react-query";
 import { afterEach, describe, expect, test } from "vitest";
 
-import { mount, source } from "../../../kernel";
+import { Mount, Source } from "../../../kernel";
 
 import type { Kernel } from "@onetype/stack-app-kit";
 import type { CatalogServices } from "@plugins/catalog";
 import type { CartServices } from "../index";
 
-// Every other test here writes its own catalog, so a cart that only works
-// against a fake passes there and fails here.
+/* The real catalog: a cart that only works against a fake fails here. */
 const bolt = "5f1a0a3e-1c2b-4f0a-9a11-000000000001";
 const seal = "5f1a0a3e-1c2b-4f0a-9a11-000000000004";
 
@@ -4123,14 +4118,14 @@ const partsOf = (kernel: Kernel): CatalogServices["parts"] =>
 
 afterEach(() =>
 {
-    source.reset();
+    Source.reset();
 });
 
 describe("the cart and the catalog together", () =>
 {
     test("price a line from the catalog and from nowhere else", async () =>
     {
-        const app = await mount(new QueryClient());
+        const app = await Mount.open(new QueryClient());
 
         await pickingOf(app.kernel).add(bolt, "Hex bolt M8");
 
@@ -4145,7 +4140,7 @@ describe("the cart and the catalog together", () =>
      */
     test("stop a part leaving the shelves while a pick list holds it", async () =>
     {
-        const app = await mount(new QueryClient());
+        const app = await Mount.open(new QueryClient());
 
         await pickingOf(app.kernel).add(bolt, "Hex bolt M8");
 
@@ -4157,7 +4152,7 @@ describe("the cart and the catalog together", () =>
 
     test("but let one nobody holds go, and leave the held line standing", async () =>
     {
-        const app = await mount(new QueryClient());
+        const app = await Mount.open(new QueryClient());
 
         await pickingOf(app.kernel).add(bolt, "Hex bolt M8");
         await partsOf(app.kernel).withdraw(seal);
@@ -4172,7 +4167,7 @@ describe("the catalog behind the depot this application ships", () =>
 {
     test("answers the shelves through its own service", async () =>
     {
-        const app = await mount(new QueryClient());
+        const app = await Mount.open(new QueryClient());
 
         expect((await partsOf(app.kernel).list({})).total).toBeGreaterThan(0);
 
@@ -4181,7 +4176,7 @@ describe("the catalog behind the depot this application ships", () =>
 
     test("narrows them to the kind that was asked for", async () =>
     {
-        const app = await mount(new QueryClient());
+        const app = await Mount.open(new QueryClient());
         const page = await partsOf(app.kernel).list({ kind: "seal" });
 
         expect(page.parts.length).toBeGreaterThan(0);
@@ -4192,7 +4187,7 @@ describe("the catalog behind the depot this application ships", () =>
 
     test("and answers nothing for a part it never stocked", async () =>
     {
-        const app = await mount(new QueryClient());
+        const app = await Mount.open(new QueryClient());
 
         await expect(partsOf(app.kernel).get("5f1a0a3e-1c2b-4f0a-9a11-000000000999")).rejects.toThrow();
 
@@ -4326,3 +4321,8 @@ export const Lines = {
         return lines.some((line) => line.partId === partId && !line.gone);
     },
 };
+
+# EXAMPLES END HERE
+
+Everything above was an example. What you write goes in its own
+folder beside them, and nothing here is yours to edit.

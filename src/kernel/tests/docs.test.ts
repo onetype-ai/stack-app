@@ -6,8 +6,7 @@ import { findMissingDocs, findOversizedDocs, findUndocumentedKeys, findUnexplain
 
 const ROOT = process.cwd();
 
-// The documents pack into docs.md, and a check that reads them has nothing to
-// read until they are unpacked, which is how a maintainer works on them.
+/* Packed into docs.md, so a check that reads them has nothing until unpacked. */
 const unpacked = existsSync(join(ROOT, "#docs"));
 
 describe.skipIf(!unpacked)("the documents this application ships", () =>
@@ -29,9 +28,7 @@ describe.skipIf(!unpacked)("the documents this application ships", () =>
         expect(findMissingDocs(ROOT, required)).toEqual([]);
     });
 
-// The kit is a dependency, so the contract is read from its published types.
-// tsup names the shared chunk with a build hash, so the file is found by what
-// it holds rather than by a name that changes on every build.
+/* Found by what it holds: tsup's chunk name carries a hash that moves. */
 const declared = (): string =>
 {
     const at = join(ROOT, "node_modules", "@onetype", "stack-app-kit", "dist");
@@ -54,7 +51,7 @@ const declared = (): string =>
         const contract = declared();
         const procedure = readFileSync(join(ROOT, "#docs", "procedures", "plugin", "contract.md"), "utf8");
 
-        // An empty answer means the shape parsed; a shape that vanished throws above.
+        /* An empty answer means it parsed; a vanished shape throws above. */
         expect(findUndocumentedKeys(contract, procedure)).toEqual([]);
     });
 });

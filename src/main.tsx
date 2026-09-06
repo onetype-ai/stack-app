@@ -5,13 +5,13 @@ import { createRoot } from "react-dom/client";
 
 import { KernelProvider, StartupFailure } from "@onetype/stack-app-kit/react";
 
-import { mount, queries, routes } from "./kernel";
+import { Mount, Queries, Routes } from "./kernel";
 import "@ui/styles/index.css";
 
 import type { QueryClient } from "@tanstack/react-query";
 import type { Root } from "react-dom/client";
 
-class AppRunner
+class Application
 {
     root: Root;
     client: QueryClient;
@@ -26,18 +26,18 @@ class AppRunner
         }
 
         this.root = createRoot(container);
-        this.client = queries();
+        this.client = Queries.create();
     }
 
     async open(): Promise<void>
     {
-        const app = await mount(this.client);
+        const app = await Mount.open(this.client);
 
         this.root.render(
             <StrictMode>
                 <QueryClientProvider client={this.client}>
                     <KernelProvider kernel={app.kernel}>
-                        <RouterProvider router={routes(app.kernel)} />
+                        <RouterProvider router={Routes.build(app.kernel)} />
                     </KernelProvider>
                 </QueryClientProvider>
             </StrictMode>,
@@ -54,9 +54,9 @@ class AppRunner
     }
 }
 
-export const App = new AppRunner();
+export const app = new Application();
 
-void App.open().catch((cause: unknown) =>
+void app.open().catch((cause: unknown) =>
 {
-    App.failed(cause);
+    app.failed(cause);
 });

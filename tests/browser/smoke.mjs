@@ -19,13 +19,13 @@ const AT = `http://localhost:${PORT}`;
 // Packed, there are no plugin folders for the bundler's glob to find, so the
 // application boots with no routes at all. That is the repository resting,
 // not a defect: say so and stop rather than reporting a 404 nobody caused.
-const folders = existsSync("src/plugins")
-    ? readdirSync("src/plugins", { withFileTypes: true }).filter((entry) => entry.isDirectory())
-    : [];
+const unpacked = (at) => (existsSync(at)
+    ? readdirSync(at, { withFileTypes: true }).filter((entry) => entry.isDirectory() || entry.name.endsWith(".ts"))
+    : []).length > 0;
 
-if (folders.length === 0)
+if (!unpacked("src/plugins") || !unpacked("src/utils"))
 {
-    console.log("the plugins are packed away, so there is no application to open. Unpack them first.");
+    console.log("the examples are packed away, so there is no application to open. Unpack the plugins and the utils first.");
     process.exit(0);
 }
 

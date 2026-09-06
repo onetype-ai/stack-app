@@ -1,7 +1,7 @@
 import { QueryClient } from "@tanstack/react-query";
 import { describe, expect, test } from "vitest";
 
-import { mount, routes } from "../index";
+import { Mount, Routes } from "../index";
 
 /**
  * The one case that boots what ships, rather than a plugin a test wrote.
@@ -13,7 +13,7 @@ describe("this application", () =>
 {
     test("starts with the plugins it ships, or says which one refused", async () =>
     {
-        const app = await mount(new QueryClient());
+        const app = await Mount.open(new QueryClient());
 
         expect(app.kernel.started()).toBe(true);
 
@@ -26,7 +26,7 @@ describe("this application", () =>
      */
     test("registers each declared page once, and never a path twice", async () =>
     {
-        const app = await mount(new QueryClient());
+        const app = await Mount.open(new QueryClient());
         const paths = app.kernel.routes().map((route) => route.path);
 
         expect(new Set(paths).size).toBe(paths.length);
@@ -36,7 +36,7 @@ describe("this application", () =>
 
     test("and every route names the plugin that declared it", async () =>
     {
-        const app = await mount(new QueryClient());
+        const app = await Mount.open(new QueryClient());
 
         for (const route of app.kernel.routes())
         {
@@ -54,15 +54,15 @@ describe("this application", () =>
      */
     test("builds a router when a plugin frames it, and says so when none does", async () =>
     {
-        const app = await mount(new QueryClient());
+        const app = await Mount.open(new QueryClient());
 
         if (app.kernel.frame() === undefined)
         {
-            expect(() => routes(app.kernel)).toThrow(/frame/);
+            expect(() => Routes.build(app.kernel)).toThrow(/frame/);
         }
         else
         {
-            expect(() => routes(app.kernel)).not.toThrow();
+            expect(() => Routes.build(app.kernel)).not.toThrow();
         }
 
         await app.stop();
@@ -74,10 +74,9 @@ describe("this application", () =>
      */
     test("carries the permissions its plugins granted, and only those", async () =>
     {
-        const app = await mount(new QueryClient());
+        const app = await Mount.open(new QueryClient());
 
-        // Whatever ships, a plugin declared it, so every route's requirement
-        // is answerable. What nobody declared is refused.
+        /* Whatever ships was declared, so every requirement is answerable. */
         const required = app.kernel.routes().flatMap((route) => route.requires ?? []);
 
         expect(app.kernel.permissions.all(required)).toBe(true);
@@ -88,13 +87,13 @@ describe("this application", () =>
 
     test("closes what it opened, so a second start is a fresh one", async () =>
     {
-        const first = await mount(new QueryClient());
+        const first = await Mount.open(new QueryClient());
 
         await first.stop();
 
         expect(first.kernel.started()).toBe(false);
 
-        const second = await mount(new QueryClient());
+        const second = await Mount.open(new QueryClient());
 
         expect(second.kernel.started()).toBe(true);
 

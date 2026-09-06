@@ -98,7 +98,7 @@ const answer = (path: string, parameters: URLSearchParams, method: string): Answ
  * through some other door would be exercising a path it will never take once
  * a server exists.
  */
-export const source = {
+export const Source = {
     install: (baseUrl: string): (() => void) =>
     {
         const realFetch = globalThis.fetch.bind(globalThis);

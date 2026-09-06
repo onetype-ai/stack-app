@@ -1,16 +1,30 @@
-export const env = (name: string, fallback?: string): string | undefined =>
-{
-    const value: unknown = import.meta.env[name];
-
-    if (value === undefined)
+export const Env = {
+    text: (name: string, fallback?: string): string | undefined =>
     {
-        return fallback;
-    }
+        const value: unknown = import.meta.env[name];
 
-    if (typeof value !== "string" || value.length === 0)
+        if (value === undefined)
+        {
+            return fallback;
+        }
+
+        if (typeof value !== "string" || value.length === 0)
+        {
+            throw new Error(`${name} must be a non-empty string when it is set.`);
+        }
+
+        return value;
+    },
+
+    required: (name: string): string =>
     {
-        throw new Error(`${name} must be a non-empty string when it is set.`);
-    }
+        const value = Env.text(name);
 
-    return value;
+        if (value === undefined)
+        {
+            throw new Error(`${name} is required and was not set.`);
+        }
+
+        return value;
+    },
 };
