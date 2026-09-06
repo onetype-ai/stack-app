@@ -350,10 +350,10 @@ export type PartRowProps = {
 
 export const PartRow = ({ part, currency, lowStock, href, trailing, onOpen }: PartRowProps) =>
 {
-    const shortage = part.stock === 0 ? "none" : part.stock <= lowStock ? "low" : "held";
+    const stock = part.stock === 0 ? "none" : part.stock <= lowStock ? "low" : "ample";
 
     return (
-        <li className={styles.root} data-stock={shortage}>
+        <li className={styles.root} data-stock={stock}>
             <div className={styles.identity}>
                 {href === undefined
                     ? <span className={styles.name}>{part.name}</span>
@@ -381,8 +381,8 @@ export const PartRow = ({ part, currency, lowStock, href, trailing, onOpen }: Pa
 
             <span className={styles.price}>{Money.format(part.cents, currency)}</span>
 
-            <Badge tone={shortage === "none" ? "danger" : shortage === "low" ? "caution" : "neutral"}>
-                {shortage === "none" ? "Out of stock" : `${String(part.stock)} in stock`}
+            <Badge tone={stock === "none" ? "danger" : stock === "low" ? "caution" : "neutral"}>
+                {stock === "none" ? "Out of stock" : `${String(part.stock)} in stock`}
             </Badge>
 
             <div className={styles.trailing}>{trailing}</div>
@@ -1201,7 +1201,7 @@ import { PartId } from "../types/PartId";
  */
 describe("what the stock route takes from the address", () =>
 {
-    const routes = catalog.definition.routes?.find((one) => one.path === "/catalog");
+    const routes = catalog.definition.routes?.find((route) => route.path === "/catalog");
 
     test("is declared, so the kernel parses it before the page renders", () =>
     {
@@ -1470,7 +1470,7 @@ describe("withdrawing a part from stock", () =>
         await parts.list();
         await parts.withdraw(bolt.id);
 
-        expect(fake.asked.map((one) => one.method)).toEqual(["GET", "DELETE"]);
+        expect(fake.asked.map((call) => call.method)).toEqual(["GET", "DELETE"]);
         expect(fake.emitted).toEqual([{ event: "catalog.part.withdrawn", payload: { id: bolt.id, name: bolt.name } }]);
     });
 
@@ -1493,7 +1493,7 @@ describe("withdrawing a part from stock", () =>
 
         await expect(parts.withdraw(bolt.id)).rejects.toThrow(/somebody has it on a pick list/);
 
-        expect(fake.asked.map((one) => one.method)).toEqual(["GET"]);
+        expect(fake.asked.map((call) => call.method)).toEqual(["GET"]);
         expect(fake.emitted).toEqual([]);
     });
 
@@ -1542,7 +1542,7 @@ export const fakeContext = (answers: Answers, config: Readonly<Record<string, un
     const emitted: { event: string; payload: unknown }[] = [];
     const dropped: (readonly unknown[])[] = [];
 
-    const held: Fake = {
+    const fake: Fake = {
         asked,
         emitted,
         dropped,
@@ -1567,7 +1567,7 @@ export const fakeContext = (answers: Answers, config: Readonly<Record<string, un
         };
     };
 
-    held.ctx = {
+    fake.ctx = {
         name: "catalog",
         config: { currency: "EUR", lowStock: 20, sessionPath: "/session", ...config },
         services: {},
@@ -1603,7 +1603,7 @@ export const fakeContext = (answers: Answers, config: Readonly<Record<string, un
         },
 
         hooks: {
-            run: () => Promise.resolve(held.refusal),
+            run: () => Promise.resolve(fake.refusal),
         },
 
         permissions: {
@@ -1618,7 +1618,7 @@ export const fakeContext = (answers: Answers, config: Readonly<Record<string, un
         use: () => ({}) as never,
     } as Context<CatalogConfig>;
 
-    return held;
+    return fake;
 };
 
 ==> src/plugins/catalog/tests/table.test.tsx
@@ -2955,7 +2955,7 @@ export const PickedParts = ({ partIds }: AsTheDepotHasItProps) =>
         <section className={styles.root} aria-label="Each line as the depot holds it">
             <h2 className={styles.title}>As the depot holds them</h2>
 
-            {parts.some((one) => one.isPending)
+            {parts.some((query) => query.isPending)
                 ? <div className={styles.waiting}><Skeleton lines={partIds.length} /></div>
                 : (
                     <ul className={styles.list}>
@@ -3437,7 +3437,7 @@ export type Depot = {
 // The cart names it in `dependsOn`, so nothing here may be left out: the
 // kernel refuses a slot, event or hook no plugin declared, which is what makes
 // a stand-in prove anything.
-export const fakeCatalog = (held: Depot = {}): Plugin =>
+export const fakeCatalog = (answers: Depot = {}): Plugin =>
 {
     return definePlugin("catalog", {
         version: "1.0.0",
@@ -3450,15 +3450,15 @@ export const fakeCatalog = (held: Depot = {}): Plugin =>
 
         grants: () =>
         {
-            return held.granting ?? ["catalog.read", "catalog.write", "cart.use"];
+            return answers.granting ?? ["catalog.read", "catalog.write", "cart.use"];
         },
 
         services: () =>
         {
             return {
                 parts: {
-                    price: held.price ?? ((): Promise<number> => Promise.resolve(140)),
-                    get: held.get ?? ((): Promise<Stocked> => Promise.reject(new Error("Nothing was stocked for this test."))),
+                    price: answers.price ?? ((): Promise<number> => Promise.resolve(140)),
+                    get: answers.get ?? ((): Promise<Stocked> => Promise.reject(new Error("Nothing was stocked for this test."))),
                 },
             };
         },
@@ -4023,7 +4023,7 @@ export const fakeContext = (config: Readonly<Record<string, unknown>> = {}): Fak
     const priced: string[] = [];
     const ran: { command: string; input: unknown }[] = [];
 
-    const held: Fake = {
+    const fake: Fake = {
         priced,
         ran,
         price: 140,
@@ -4037,14 +4037,14 @@ export const fakeContext = (config: Readonly<Record<string, unknown>> = {}): Fak
             {
                 priced.push(id);
 
-                return held.refuse === undefined
-                    ? Promise.resolve(held.price)
-                    : Promise.reject(new Error(held.refuse));
+                return fake.refuse === undefined
+                    ? Promise.resolve(fake.price)
+                    : Promise.reject(new Error(fake.refuse));
             },
         },
     };
 
-    held.ctx = {
+    fake.ctx = {
         name: "cart",
         config: { currency: "EUR", maxLines: 20, maxQuantity: 99, ...config },
         services: {},
@@ -4092,7 +4092,7 @@ export const fakeContext = (config: Readonly<Record<string, unknown>> = {}): Fak
         },
     } as Context<CartConfig>;
 
-    return held;
+    return fake;
 };
 
 ==> src/plugins/cart/tests/with-catalog.test.ts

@@ -28,8 +28,8 @@ export const Select = ({ label, choices, placeholder, ...rest }: SelectProps) =>
             <select {...rest} id={id} className={styles.select}>
                 {placeholder !== undefined && <option value="">{placeholder}</option>}
 
-                {choices.map((one) => (
-                    <option key={one.value} value={one.value}>{one.label}</option>
+                {choices.map((choice) => (
+                    <option key={choice.value} value={choice.value}>{choice.label}</option>
                 ))}
             </select>
         </div>
