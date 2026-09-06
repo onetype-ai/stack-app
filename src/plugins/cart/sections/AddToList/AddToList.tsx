@@ -17,7 +17,7 @@ export const AddToList = ({ payload }: AddToListProps) =>
     const { services } = Cart.use();
     const part = payload as Beside;
 
-    const [wrong, setWrong] = useState<string | undefined>(undefined);
+    const [problem, setProblem] = useState<string | undefined>(undefined);
     const [pulled, setPulled] = useState(false);
 
     const list = useStore(services.picking.watch, services.picking.read);
@@ -33,11 +33,11 @@ export const AddToList = ({ payload }: AddToListProps) =>
 
     const add = (): void =>
     {
-        setWrong(undefined);
+        setProblem(undefined);
 
         services.picking.add(part.id, part.name).catch((cause: unknown) =>
         {
-            setWrong(cause instanceof Error ? cause.message : String(cause));
+            setProblem(cause instanceof Error ? cause.message : String(cause));
         });
     };
 
@@ -65,7 +65,7 @@ export const AddToList = ({ payload }: AddToListProps) =>
                 </p>
             )}
 
-            {wrong !== undefined && <p className={styles.wrong} role="alert">{wrong}</p>}
+            {problem !== undefined && <p className={styles.problem} role="alert">{problem}</p>}
         </div>
     );
 };

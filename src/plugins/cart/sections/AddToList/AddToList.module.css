@@ -30,7 +30,7 @@
     font-size: var(--size-small);
 }
 
-.root .wrong
+.root .problem
 {
     margin: 0;
     color: var(--danger);

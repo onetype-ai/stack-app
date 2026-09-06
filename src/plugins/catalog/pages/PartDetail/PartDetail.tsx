@@ -30,7 +30,7 @@ export const PartDetail = () =>
 
     return (
         <article className={styles.root}>
-            <header className={styles.head}>
+            <header>
                 <p className={styles.eyebrow}>{part.data === undefined ? "Part" : PartKind.label(part.data.kind)}</p>
 
                 <h1 className={styles.title}>
