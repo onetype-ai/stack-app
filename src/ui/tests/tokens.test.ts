@@ -1,7 +1,7 @@
 import { join } from "node:path";
 import { expect, test } from "vitest";
 
-import { styling } from "@onetype/stack-app-kit/testing";
+import { findUnknownTokens } from "@onetype/stack-app-kit/testing";
 
 /**
  * A token nobody declared is not an error anywhere: CSS resolves it to
@@ -10,5 +10,5 @@ import { styling } from "@onetype/stack-app-kit/testing";
  */
 test("every token a stylesheet asks for is declared", () =>
 {
-    expect(styling(join(process.cwd(), "src"))).toEqual([]);
+    expect(findUnknownTokens(join(process.cwd(), "src"))).toEqual([]);
 });

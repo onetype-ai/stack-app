@@ -4,7 +4,7 @@ import { Catalog, PartRow } from "@plugins/catalog";
 import { Skeleton } from "@ui";
 
 import { Cart } from "../../index";
-import styles from "./AsTheDepotHasIt.module.css";
+import styles from "./PickedParts.module.css";
 
 import type { Part } from "@plugins/catalog";
 
@@ -14,7 +14,7 @@ export type AsTheDepotHasItProps = {
 
 // The row is the catalog's own component, so a part looks the same wherever
 // it is shown, and the cart never learns what a part is made of.
-export const AsTheDepotHasIt = ({ partIds }: AsTheDepotHasItProps) =>
+export const PickedParts = ({ partIds }: AsTheDepotHasItProps) =>
 {
     const handle = Cart.use();
 

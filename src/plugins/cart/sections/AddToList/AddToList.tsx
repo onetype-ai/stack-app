@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import { useHearing, useKept } from "@onetype/stack-app-kit/react";
+import { useHearing, useStore } from "@onetype/stack-app-kit/react";
 import { Badge, Button } from "@ui";
 
 import { Cart } from "../../index";
@@ -20,7 +20,7 @@ export const AddToList = ({ payload }: AddToListProps) =>
     const [wrong, setWrong] = useState<string | undefined>(undefined);
     const [pulled, setPulled] = useState(false);
 
-    const list = useKept(services.picking.watch, services.picking.read);
+    const list = useStore(services.picking.watch, services.picking.read);
     const holding = list.lines.find((line) => line.partId === part.id && !line.gone);
 
     useHearing("cart", "catalog.part.withdrawn", (told) =>

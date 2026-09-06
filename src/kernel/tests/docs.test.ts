@@ -2,7 +2,7 @@ import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, test } from "vitest";
 
-import { missing, oversized, undocumented } from "@onetype/stack-app-kit/testing";
+import { findMissingDocs, findOversizedDocs, findUndocumentedKeys } from "@onetype/stack-app-kit/testing";
 
 const ROOT = process.cwd();
 
@@ -14,7 +14,7 @@ describe.skipIf(!unpacked)("the documents this application ships", () =>
 {
     test("every contract document stays within 1800 characters", () =>
     {
-        const over = oversized(join(ROOT, "#docs")).map((doc) =>
+        const over = findOversizedDocs(join(ROOT, "#docs")).map((doc) =>
         {
             return `${doc.path.replace(`${ROOT}/`, "")}: ${doc.size}`;
         });
@@ -26,7 +26,7 @@ test("the root documents are present and say something", () =>
 {
     const required = ["#docs/usage.md", "#docs/stack.md", "#docs/architecture.md"];
 
-    expect(missing(ROOT, required)).toEqual([]);
+    expect(findMissingDocs(ROOT, required)).toEqual([]);
 });
 
 // The kit is a dependency, so the contract is read from its published types.
@@ -55,6 +55,6 @@ const declared = (): string =>
         const procedure = readFileSync(join(ROOT, "#docs", "procedures", "plugin", "contract.md"), "utf8");
 
         // An empty answer means the shape parsed; a shape that vanished throws above.
-        expect(undocumented(contract, procedure)).toEqual([]);
+        expect(findUndocumentedKeys(contract, procedure)).toEqual([]);
     });
 });

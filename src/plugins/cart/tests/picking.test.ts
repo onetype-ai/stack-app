@@ -156,7 +156,7 @@ describe("what the cart tells anyone watching", () =>
     });
 
     /**
-     * `useKept` re-renders forever when the value it reads is a new object
+     * `useStore` re-renders forever when the value it reads is a new object
      * each call. This is what keeps it one object between moves.
      */
     test("and answers the same object until something moves", async () =>

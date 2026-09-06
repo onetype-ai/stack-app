@@ -1,24 +1,24 @@
 import { act, renderHook } from "@testing-library/react";
 import { describe, expect, test } from "vitest";
 
-import { useHandingOver } from "../hooks/useHandingOver";
+import { useHandoverForm } from "../hooks/useHandoverForm";
 
 describe("where a list is going", () =>
 {
     test("is nowhere until something is typed, so nothing can be handed over yet", () =>
     {
-        const { result } = renderHook(() => useHandingOver());
+        const { result } = renderHook(() => useHandoverForm());
 
         expect(result.current.ready).toBe(false);
     });
 
     test("takes a bay as it is painted, however it was typed", () =>
     {
-        const { result } = renderHook(() => useHandingOver());
+        const { result } = renderHook(() => useHandoverForm());
 
         act(() => { result.current.type("ac-12"); });
 
-        expect(result.current.named).toBe("AC-12");
+        expect(result.current.bayName).toBe("AC-12");
         expect(result.current.ready).toBe(true);
     });
 
@@ -28,7 +28,7 @@ describe("where a list is going", () =>
      */
     test("and stays not ready for something that is not a bay", () =>
     {
-        const { result } = renderHook(() => useHandingOver());
+        const { result } = renderHook(() => useHandoverForm());
 
         act(() => { result.current.type("aisle twelve"); });
 
@@ -37,22 +37,22 @@ describe("where a list is going", () =>
 
     test("asks before it hands anything over", () =>
     {
-        const { result } = renderHook(() => useHandingOver());
+        const { result } = renderHook(() => useHandoverForm());
 
-        expect(result.current.asking).toBe(false);
+        expect(result.current.sending).toBe(false);
 
         act(() => { result.current.ask(); });
 
-        expect(result.current.asking).toBe(true);
+        expect(result.current.sending).toBe(true);
 
         act(() => { result.current.drop(); });
 
-        expect(result.current.asking).toBe(false);
+        expect(result.current.sending).toBe(false);
     });
 
     test("shows what refused it, and stops asking", () =>
     {
-        const { result } = renderHook(() => useHandingOver());
+        const { result } = renderHook(() => useHandoverForm());
 
         act(() =>
         {
@@ -60,17 +60,17 @@ describe("where a list is going", () =>
             result.current.refuse(new Error("That bay is closed."));
         });
 
-        expect(result.current.asking).toBe(false);
-        expect(result.current.wrong).toBe("That bay is closed.");
+        expect(result.current.sending).toBe(false);
+        expect(result.current.problem).toBe("That bay is closed.");
     });
 
     test("and clears it the moment the reader types again", () =>
     {
-        const { result } = renderHook(() => useHandingOver());
+        const { result } = renderHook(() => useHandoverForm());
 
         act(() => { result.current.refuse(new Error("That bay is closed.")); });
         act(() => { result.current.type("AC-13"); });
 
-        expect(result.current.wrong).toBeUndefined();
+        expect(result.current.problem).toBeUndefined();
     });
 });

@@ -1,11 +1,11 @@
 import { useNavigate } from "@tanstack/react-router";
 
-import { useKept } from "@onetype/stack-app-kit/react";
+import { useStore } from "@onetype/stack-app-kit/react";
 import { Button, Field, Modal } from "@ui";
 
-import { useHandingOver } from "../../hooks/useHandingOver";
+import { useHandoverForm } from "../../hooks/useHandoverForm";
 import { Cart } from "../../index";
-import { AsTheDepotHasIt } from "../../sections/AsTheDepotHasIt/AsTheDepotHasIt";
+import { PickedParts } from "../../sections/PickedParts/PickedParts";
 import { PickedLines } from "../../sections/PickedLines/PickedLines";
 import styles from "./Handover.module.css";
 
@@ -14,13 +14,13 @@ export const Handover = () =>
     const handle = Cart.use();
     const navigate = useNavigate();
 
-    const list = useKept(handle.services.picking.watch, handle.services.picking.read);
+    const list = useStore(handle.services.picking.watch, handle.services.picking.read);
 
-    const handing = useHandingOver();
+    const handing = useHandoverForm();
 
     const hand = (): void =>
     {
-        Cart.handOver(handle, handing.named).then(
+        Cart.handOver(handle, handing.bayName).then(
             () =>
             {
                 handing.drop();
@@ -40,14 +40,14 @@ export const Handover = () =>
 
             <PickedLines list={list} currency={handle.config.currency} />
 
-            <AsTheDepotHasIt partIds={list.lines.filter((line) => !line.gone).map((line) => line.partId)} />
+            <PickedParts partIds={list.lines.filter((line) => !line.gone).map((line) => line.partId)} />
 
             <div className={styles.form}>
                 <Field
                     label="Bay"
                     value={handing.bay}
                     hint="Two letters, a hyphen and a number, as painted on the aisle."
-                    {...(handing.wrong !== undefined && { wrong: handing.wrong })}
+                    {...(handing.problem !== undefined && { wrong: handing.problem })}
                     onChange={(event) => { handing.type(event.target.value); }}
                 />
 
@@ -57,13 +57,13 @@ export const Handover = () =>
             </div>
 
             <Modal
-                open={handing.asking}
+                open={handing.sending}
                 title="Hand this list over?"
                 onClose={handing.drop}
                 footer={(
                     <div className={styles.choices}>
                         <Button tone="quiet" onClick={handing.drop}>Keep it here</Button>
-                        <Button tone="accent" onClick={hand}>{`Hand it to ${handing.named}`}</Button>
+                        <Button tone="accent" onClick={hand}>{`Hand it to ${handing.bayName}`}</Button>
                     </div>
                 )}
             >

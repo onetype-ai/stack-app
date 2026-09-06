@@ -47,7 +47,7 @@ describe("what the cart puts beside a part", () =>
     });
 
     /**
-     * `useKept` is what makes this move. Reading the list once at render
+     * `useStore` is what makes this move. Reading the list once at render
      * would leave the badge behind the moment anything changed it.
      */
     test("and says how many are on the list once one is", async () =>

@@ -2,12 +2,12 @@ import { useState } from "react";
 
 import { Bay } from "../types/Bay";
 
-export type HandingOver = {
+export type HandoverForm = {
     bay: string;
-    named: string;
+    bayName: string;
     ready: boolean;
-    asking: boolean;
-    wrong: string | undefined;
+    sending: boolean;
+    problem: string | undefined;
     type: (raw: string) => void;
     ask: () => void;
     drop: () => void;
@@ -16,42 +16,42 @@ export type HandingOver = {
 
 // The bay is checked as it is typed, so the refusal arrives beside the field
 // rather than after a modal has already been confirmed.
-export const useHandingOver = (): HandingOver =>
+export const useHandoverForm = (): HandoverForm =>
 {
     const [bay, setBay] = useState("");
-    const [asking, setAsking] = useState(false);
-    const [wrong, setWrong] = useState<string | undefined>(undefined);
+    const [sending, setSending] = useState(false);
+    const [problem, setProblem] = useState<string | undefined>(undefined);
 
-    const named = bay.trim().toUpperCase();
-    const ready = Bay.schema.safeParse(named).success;
+    const bayName = bay.trim().toUpperCase();
+    const ready = Bay.schema.safeParse(bayName).success;
 
     return {
         bay,
-        named,
+        bayName,
         ready,
-        asking,
-        wrong,
+        sending,
+        problem,
 
         type: (raw: string): void =>
         {
-            setWrong(undefined);
+            setProblem(undefined);
             setBay(raw);
         },
 
         ask: (): void =>
         {
-            setAsking(true);
+            setSending(true);
         },
 
         drop: (): void =>
         {
-            setAsking(false);
+            setSending(false);
         },
 
         refuse: (cause: unknown): void =>
         {
-            setAsking(false);
-            setWrong(cause instanceof Error ? cause.message : String(cause));
+            setSending(false);
+            setProblem(cause instanceof Error ? cause.message : String(cause));
         },
     };
 };

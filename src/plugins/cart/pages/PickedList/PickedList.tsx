@@ -1,6 +1,6 @@
 import { useNavigate } from "@tanstack/react-router";
 
-import { useKept } from "@onetype/stack-app-kit/react";
+import { useStore } from "@onetype/stack-app-kit/react";
 import { Button } from "@ui";
 
 import { Cart } from "../../index";
@@ -12,7 +12,7 @@ export const PickedList = () =>
     const { services, config } = Cart.use();
     const navigate = useNavigate();
 
-    const list = useKept(services.picking.watch, services.picking.read);
+    const list = useStore(services.picking.watch, services.picking.read);
 
     return (
         <div className={styles.root}>

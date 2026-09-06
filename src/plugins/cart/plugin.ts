@@ -6,8 +6,8 @@ import { AddToList } from "./sections/AddToList/AddToList";
 import { CartTrouble } from "./sections/CartTrouble/CartTrouble";
 import { createPickingService } from "./services/picking";
 import { CartConfig } from "./types/CartConfig";
-import { Handing } from "./types/Handing";
-import { Withdrawing } from "./types/Withdrawing";
+import { HandoverRequest } from "./types/HandoverRequest";
+import { Withdrawal } from "./types/Withdrawal";
 import { Withdrawn } from "./types/Withdrawn";
 
 export default definePlugin("cart", {
@@ -76,7 +76,7 @@ export default definePlugin("cart", {
             describe: "Refuses to withdraw a part somebody has already put on a pick list.",
             handle: (asked, ctx) =>
             {
-                const part = Withdrawing.schema.parse(asked);
+                const part = Withdrawal.schema.parse(asked);
 
                 return ctx.services.picking.holds(part.id)
                     ? `"${part.name}" is on a pick list, so it cannot leave the shelves yet.`
@@ -89,10 +89,10 @@ export default definePlugin("cart", {
         "cart.hand-over": {
             describe: "Hands the pick list to a bay and empties it.",
             requires: ["cart.use"],
-            schema: Handing.schema,
+            schema: HandoverRequest.schema,
             run: (given, ctx) =>
             {
-                const asked = Handing.schema.parse(given);
+                const asked = HandoverRequest.schema.parse(given);
                 const list = ctx.services.picking.read();
 
                 if (list.items === 0)

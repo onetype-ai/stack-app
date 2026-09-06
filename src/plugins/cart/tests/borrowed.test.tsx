@@ -6,7 +6,7 @@ import { createKernel } from "@onetype/stack-app-kit";
 import { KernelProvider } from "@onetype/stack-app-kit/react";
 
 import cart from "../plugin";
-import { AsTheDepotHasIt } from "../sections/AsTheDepotHasIt/AsTheDepotHasIt";
+import { PickedParts } from "../sections/PickedParts/PickedParts";
 import { depot } from "./depot";
 
 import type { Kernel } from "@onetype/stack-app-kit";
@@ -35,7 +35,7 @@ const showing = (kernel: Kernel, ids: readonly string[]): ReactNode =>
     return (
         <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
             <KernelProvider kernel={kernel}>
-                <AsTheDepotHasIt partIds={ids} />
+                <PickedParts partIds={ids} />
             </KernelProvider>
         </QueryClientProvider>
     );
