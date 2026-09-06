@@ -21,7 +21,7 @@ const bolt: Part = {
     stock: 220,
 };
 
-const serving = async (answer: (id: string) => Promise<Part>): Promise<Kernel> =>
+const startKernel = async (answer: (id: string) => Promise<Part>): Promise<Kernel> =>
 {
     const kernel = createKernel({ plugins: [fakeCatalog({ get: answer }), cart] });
 
@@ -30,7 +30,7 @@ const serving = async (answer: (id: string) => Promise<Part>): Promise<Kernel> =
     return kernel;
 };
 
-const showing = (kernel: Kernel, ids: readonly string[]): ReactNode =>
+const rendered = (kernel: Kernel, ids: readonly string[]): ReactNode =>
 {
     return (
         <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
@@ -51,14 +51,14 @@ describe("a line shown as the depot holds it", () =>
     {
         const asked: string[] = [];
 
-        const kernel = await serving((id) =>
+        const kernel = await startKernel((id) =>
         {
             asked.push(id);
 
             return Promise.resolve(bolt);
         });
 
-        render(showing(kernel, [bolt.id]));
+        render(rendered(kernel, [bolt.id]));
 
         expect(await screen.findByText("Hex bolt M8")).toBeDefined();
         expect(asked).toEqual([bolt.id]);
@@ -68,9 +68,9 @@ describe("a line shown as the depot holds it", () =>
 
     test("and draws it with the catalog's own row, price and stock included", async () =>
     {
-        const kernel = await serving(() => Promise.resolve(bolt));
+        const kernel = await startKernel(() => Promise.resolve(bolt));
 
-        render(showing(kernel, [bolt.id]));
+        render(rendered(kernel, [bolt.id]));
 
         expect(await screen.findByText("Fasteners")).toBeDefined();
         expect(screen.getByText(/1[.,]40/)).toBeDefined();
@@ -81,9 +81,9 @@ describe("a line shown as the depot holds it", () =>
 
     test("shows nothing but the waiting shape until every part has answered", async () =>
     {
-        const kernel = await serving(() => new Promise<Part>(() => undefined));
+        const kernel = await startKernel(() => new Promise<Part>(() => undefined));
 
-        render(showing(kernel, [bolt.id]));
+        render(rendered(kernel, [bolt.id]));
 
         expect(screen.queryByRole("listitem")).toBeNull();
         expect(screen.getByRole("region", { name: "Each line as the depot holds it" })).toBeDefined();
@@ -93,14 +93,14 @@ describe("a line shown as the depot holds it", () =>
 
     test("and leaves out a part the catalog could not answer for, rather than a blank row", async () =>
     {
-        const kernel = await serving((id) =>
+        const kernel = await startKernel((id) =>
         {
             return id === bolt.id
                 ? Promise.resolve(bolt)
                 : Promise.reject(new Error("No part carries that number."));
         });
 
-        render(showing(kernel, [bolt.id, "5f1a0a3e-1c2b-4f0a-9a11-000000000999"]));
+        render(rendered(kernel, [bolt.id, "5f1a0a3e-1c2b-4f0a-9a11-000000000999"]));
 
         expect(await screen.findByText("Hex bolt M8")).toBeDefined();
         expect(screen.getAllByRole("listitem")).toHaveLength(1);

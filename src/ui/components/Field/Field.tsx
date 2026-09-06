@@ -8,7 +8,7 @@ export type FieldProps = Omit<InputHTMLAttributes<HTMLInputElement>, "className"
     label: string;
 
     /** What to do, when the value will not do. Read aloud when it appears. */
-    wrong?: string;
+    problem?: string;
 
     /** What the field wants, before anything is wrong. */
     hint?: string;
@@ -22,10 +22,10 @@ export type FieldProps = Omit<InputHTMLAttributes<HTMLInputElement>, "className"
  * it for a field it does not enclose. `aria-describedby` carries the hint and
  * the error together: a reader hears both, in that order.
  */
-export const Field = ({ label, wrong, hint, ...rest }: FieldProps) =>
+export const Field = ({ label, problem, hint, ...rest }: FieldProps) =>
 {
     const id = useId();
-    const says = [hint !== undefined ? `${id}-hint` : "", wrong !== undefined ? `${id}-wrong` : ""]
+    const describedBy = [hint !== undefined ? `${id}-hint` : "", problem !== undefined ? `${id}-problem` : ""]
         .filter(Boolean)
         .join(" ");
 
@@ -37,14 +37,14 @@ export const Field = ({ label, wrong, hint, ...rest }: FieldProps) =>
                 {...rest}
                 id={id}
                 className={styles.input}
-                aria-invalid={wrong !== undefined || undefined}
-                aria-describedby={says === "" ? undefined : says}
+                aria-invalid={problem !== undefined || undefined}
+                aria-describedby={describedBy === "" ? undefined : describedBy}
             />
 
             {hint !== undefined && <p id={`${id}-hint`} className={styles.hint}>{hint}</p>}
 
-            {wrong !== undefined && (
-                <p id={`${id}-wrong`} className={styles.wrong} role="alert">{wrong}</p>
+            {problem !== undefined && (
+                <p id={`${id}-problem`} className={styles.problem} role="alert">{problem}</p>
             )}
         </div>
     );

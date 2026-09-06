@@ -28,9 +28,9 @@ export const PickedParts = ({ partIds }: AsTheDepotHasItProps) =>
         }),
     });
 
-    const found = parts
-        .map((one) => one.data)
-        .filter((one): one is Part => one !== undefined);
+    const answered = parts
+        .map((query) => query.data)
+        .filter((part): part is Part => part !== undefined);
 
     return (
         <section className={styles.root} aria-label="Each line as the depot holds it">
@@ -40,7 +40,7 @@ export const PickedParts = ({ partIds }: AsTheDepotHasItProps) =>
                 ? <div className={styles.waiting}><Skeleton lines={partIds.length} /></div>
                 : (
                     <ul className={styles.list}>
-                        {found.map((part) => (
+                        {answered.map((part) => (
                             <PartRow
                                 key={part.id}
                                 part={part}

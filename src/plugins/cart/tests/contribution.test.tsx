@@ -13,7 +13,7 @@ import type { ReactNode } from "react";
 
 const bolt = "5f1a0a3e-1c2b-4f0a-9a11-000000000001";
 
-const serving = async (granting?: readonly string[]): Promise<Kernel> =>
+const startKernel = async (granting?: readonly string[]): Promise<Kernel> =>
 {
     const kernel = createKernel({
         plugins: [fakeCatalog(granting === undefined ? {} : { granting }), cart],
@@ -24,7 +24,7 @@ const serving = async (granting?: readonly string[]): Promise<Kernel> =>
     return kernel;
 };
 
-const showing = (kernel: Kernel): ReactNode =>
+const rendered = (kernel: Kernel): ReactNode =>
 {
     return (
         <KernelProvider kernel={kernel}>
@@ -37,9 +37,9 @@ describe("what the cart puts beside a part", () =>
 {
     test("offers to add it, without the catalog importing the cart to say so", async () =>
     {
-        const kernel = await serving();
+        const kernel = await startKernel();
 
-        render(showing(kernel));
+        render(rendered(kernel));
 
         expect(screen.getByRole("button", { name: "Add to pick list" })).toBeDefined();
 
@@ -52,9 +52,9 @@ describe("what the cart puts beside a part", () =>
      */
     test("and says how many are on the list once one is", async () =>
     {
-        const kernel = await serving();
+        const kernel = await startKernel();
 
-        render(showing(kernel));
+        render(rendered(kernel));
 
         await userEvent.click(screen.getByRole("button", { name: "Add to pick list" }));
 
@@ -74,9 +74,9 @@ describe("what the cart puts beside a part", () =>
      */
     test("and stops offering once that part leaves the shelves while it is on screen", async () =>
     {
-        const kernel = await serving();
+        const kernel = await startKernel();
 
-        render(showing(kernel));
+        render(rendered(kernel));
 
         expect(screen.getByRole("button", { name: "Add to pick list" })).not.toBeDisabled();
 
@@ -90,9 +90,9 @@ describe("what the cart puts beside a part", () =>
 
     test("but pays no attention to a different part leaving", async () =>
     {
-        const kernel = await serving();
+        const kernel = await startKernel();
 
-        render(showing(kernel));
+        render(rendered(kernel));
 
         kernel.context("catalog").events.emit("catalog.part.withdrawn", {
             id: "5f1a0a3e-1c2b-4f0a-9a11-000000000004",
@@ -110,9 +110,9 @@ describe("a contribution the viewer may not make", () =>
 {
     test("is not rendered at all, because the slot filters by what it requires", async () =>
     {
-        const kernel = await serving(["catalog.read"]);
+        const kernel = await startKernel(["catalog.read"]);
 
-        render(showing(kernel));
+        render(rendered(kernel));
 
         expect(screen.queryByRole("button", { name: "Add to pick list" })).toBeNull();
 

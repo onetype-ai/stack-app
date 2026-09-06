@@ -33,7 +33,7 @@
     color: var(--ink-faint);
 }
 
-.wrong
+.problem
 {
     font-size: var(--size-small);
     color: var(--danger);

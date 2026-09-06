@@ -21,7 +21,7 @@ export const AddToList = ({ payload }: AddToListProps) =>
     const [pulled, setPulled] = useState(false);
 
     const list = useStore(services.picking.watch, services.picking.read);
-    const holding = list.lines.find((line) => line.partId === part.id && !line.gone);
+    const onList = list.lines.find((line) => line.partId === part.id && !line.gone);
 
     useHearing("cart", "catalog.part.withdrawn", (told) =>
     {
@@ -46,8 +46,8 @@ export const AddToList = ({ payload }: AddToListProps) =>
             <div className={styles.line}>
                 <p className={styles.label}>Pick list</p>
 
-                {holding !== undefined && (
-                    <Badge tone="accent">{`${String(holding.quantity)} on the list`}</Badge>
+                {onList !== undefined && (
+                    <Badge tone="accent">{`${String(onList.quantity)} on the list`}</Badge>
                 )}
             </div>
 
@@ -56,7 +56,7 @@ export const AddToList = ({ payload }: AddToListProps) =>
                 disabled={pulled}
                 onClick={add}
             >
-                {holding === undefined ? "Add to pick list" : "Add another"}
+                {onList === undefined ? "Add to pick list" : "Add another"}
             </Button>
 
             {pulled && (

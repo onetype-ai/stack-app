@@ -19,7 +19,7 @@ export const createPartsService = (ctx: Context) =>
     };
 
     return {
-        held: (id: string): Part | undefined =>
+        cached: (id: string): Part | undefined =>
         {
             return seen.get(id);
         },
@@ -57,8 +57,8 @@ export const createPartsService = (ctx: Context) =>
         {
             const known = seen.get(id);
             const part = known ?? remember(await partsApi.get(ctx, id));
-            const asking = Withdrawal.schema.parse({ id: part.id, name: part.name });
-            const refused = await ctx.hooks.run("catalog.part.before-withdraw", asking);
+            const withdrawal = Withdrawal.schema.parse({ id: part.id, name: part.name });
+            const refused = await ctx.hooks.run("catalog.part.before-withdraw", withdrawal);
 
             if (refused !== undefined)
             {

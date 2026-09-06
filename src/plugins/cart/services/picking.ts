@@ -8,18 +8,18 @@ import { Lines } from "../utils/Lines";
 
 export const createPickingService = (ctx: Context<CartConfig>) =>
 {
-    let held: readonly Line[] = [];
+    let lines: readonly Line[] = [];
 
-    const watching = new Set<() => void>();
+    const listeners = new Set<() => void>();
 
     let answer: PickList = { lines: [], cents: 0, items: 0 };
 
     const settle = (next: readonly Line[]): void =>
     {
-        held = next;
+        lines = next;
         answer = { lines: [...next], cents: Lines.cents(next), items: Lines.items(next) };
 
-        for (const told of watching)
+        for (const told of listeners)
         {
             told();
         }
@@ -33,22 +33,22 @@ export const createPickingService = (ctx: Context<CartConfig>) =>
 
         watch: (told: () => void): (() => void) =>
         {
-            watching.add(told);
+            listeners.add(told);
 
             return () =>
             {
-                watching.delete(told);
+                listeners.delete(told);
             };
         },
 
         holds: (partId: string): boolean =>
         {
-            return Lines.holds(held, partId);
+            return Lines.holds(lines, partId);
         },
 
         add: async (partId: string, name: string): Promise<void> =>
         {
-            const already = held.find((line) => line.partId === partId);
+            const already = lines.find((line) => line.partId === partId);
 
             if (already !== undefined)
             {
@@ -57,7 +57,7 @@ export const createPickingService = (ctx: Context<CartConfig>) =>
                     throw new Error(`A line may not ask for more than ${String(ctx.config.maxQuantity)} of one part.`);
                 }
 
-                settle(held.map((line) =>
+                settle(lines.map((line) =>
                 {
                     return line.partId === partId
                         ? { ...line, quantity: line.quantity + 1, gone: false }
@@ -67,29 +67,29 @@ export const createPickingService = (ctx: Context<CartConfig>) =>
                 return;
             }
 
-            if (held.length >= ctx.config.maxLines)
+            if (lines.length >= ctx.config.maxLines)
             {
                 throw new Error(`A pick list may not run past ${String(ctx.config.maxLines)} lines.`);
             }
 
             const cents = await Catalog.priceOf(ctx, partId);
 
-            settle([...held, { partId, name, cents, quantity: 1, gone: false }]);
+            settle([...lines, { partId, name, cents, quantity: 1, gone: false }]);
         },
 
         drop: (partId: string): void =>
         {
-            settle(held.filter((line) => line.partId !== partId));
+            settle(lines.filter((line) => line.partId !== partId));
         },
 
         strike: (partId: string): void =>
         {
-            if (!Lines.holds(held, partId))
+            if (!Lines.holds(lines, partId))
             {
                 return;
             }
 
-            settle(held.map((line) =>
+            settle(lines.map((line) =>
             {
                 return line.partId === partId ? { ...line, gone: true } : line;
             }));

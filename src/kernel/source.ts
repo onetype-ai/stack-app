@@ -7,12 +7,12 @@ type Part = {
     withdrawn: boolean;
 };
 
-type Answering = {
+type Answer = {
     status: number;
     body: unknown;
 };
 
-const held: Part[] = [
+const parts: Part[] = [
     { id: "5f1a0a3e-1c2b-4f0a-9a11-000000000001", name: "Hex bolt M8", kind: "fastener", cents: 140, stock: 220, withdrawn: false },
     { id: "5f1a0a3e-1c2b-4f0a-9a11-000000000002", name: "Hex nut M8", kind: "fastener", cents: 60, stock: 480, withdrawn: false },
     { id: "5f1a0a3e-1c2b-4f0a-9a11-000000000003", name: "Washer M8", kind: "fastener", cents: 25, stock: 900, withdrawn: false },
@@ -30,32 +30,32 @@ const viewer = {
     permissions: ["catalog.read", "catalog.write", "cart.use"],
 };
 
-const shown = (part: Part) =>
+const asJson = (part: Part) =>
 {
     return { id: part.id, name: part.name, kind: part.kind, cents: part.cents, stock: part.stock };
 };
 
-const listing = (parameters: URLSearchParams): Answering =>
+const listParts = (parameters: URLSearchParams): Answer =>
 {
     const kind = parameters.get("kind");
-    const open = held.filter((part) => !part.withdrawn);
-    const wanted = kind === null || kind === "" ? open : open.filter((part) => part.kind === kind);
+    const open = parts.filter((part) => !part.withdrawn);
+    const matching = kind === null || kind === "" ? open : open.filter((part) => part.kind === kind);
 
-    return { status: 200, body: { parts: wanted.map(shown), total: wanted.length } };
+    return { status: 200, body: { parts: matching.map(asJson), total: matching.length } };
 };
 
-const one = (id: string): Answering =>
+const partById = (id: string): Answer =>
 {
-    const part = held.find((candidate) => candidate.id === id && !candidate.withdrawn);
+    const part = parts.find((candidate) => candidate.id === id && !candidate.withdrawn);
 
     return part === undefined
         ? { status: 404, body: { message: "No part carries that number." } }
-        : { status: 200, body: shown(part) };
+        : { status: 200, body: asJson(part) };
 };
 
-const withdraw = (id: string): Answering =>
+const withdraw = (id: string): Answer =>
 {
-    const part = held.find((candidate) => candidate.id === id && !candidate.withdrawn);
+    const part = parts.find((candidate) => candidate.id === id && !candidate.withdrawn);
 
     if (part === undefined)
     {
@@ -64,10 +64,10 @@ const withdraw = (id: string): Answering =>
 
     part.withdrawn = true;
 
-    return { status: 200, body: shown(part) };
+    return { status: 200, body: asJson(part) };
 };
 
-const answer = (path: string, parameters: URLSearchParams, method: string): Answering =>
+const answer = (path: string, parameters: URLSearchParams, method: string): Answer =>
 {
     if (path === "/session")
     {
@@ -76,7 +76,7 @@ const answer = (path: string, parameters: URLSearchParams, method: string): Answ
 
     if (path === "/catalog/parts" && method === "GET")
     {
-        return listing(parameters);
+        return listParts(parameters);
     }
 
     const detail = /^\/catalog\/parts\/([^/]+)$/.exec(path);
@@ -85,7 +85,7 @@ const answer = (path: string, parameters: URLSearchParams, method: string): Answ
     {
         const id = decodeURIComponent(detail[1] ?? "");
 
-        return method === "DELETE" ? withdraw(id) : one(id);
+        return method === "DELETE" ? withdraw(id) : partById(id);
     }
 
     return { status: 404, body: { message: `Nothing here answers ${method} ${path}.` } };
@@ -101,24 +101,24 @@ const answer = (path: string, parameters: URLSearchParams, method: string): Answ
 export const source = {
     install: (baseUrl: string): (() => void) =>
     {
-        const passed = globalThis.fetch.bind(globalThis);
+        const realFetch = globalThis.fetch.bind(globalThis);
         const prefix = baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
 
         globalThis.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> =>
         {
-            const asked = new URL(
+            const url = new URL(
                 typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url,
                 "http://depot.invalid",
             );
 
-            if (!asked.pathname.startsWith(`${prefix}/`))
+            if (!url.pathname.startsWith(`${prefix}/`))
             {
-                return passed(input, init);
+                return realFetch(input, init);
             }
 
             const answered = answer(
-                asked.pathname.slice(prefix.length),
-                asked.searchParams,
+                url.pathname.slice(prefix.length),
+                url.searchParams,
                 (init?.method ?? "GET").toUpperCase(),
             );
 
@@ -130,13 +130,13 @@ export const source = {
 
         return () =>
         {
-            globalThis.fetch = passed;
+            globalThis.fetch = realFetch;
         };
     },
 
     reset: (): void =>
     {
-        for (const part of held)
+        for (const part of parts)
         {
             part.withdrawn = false;
         }

@@ -8,7 +8,7 @@ import type { PickList } from "../types/PickList";
 
 const bolt = "5f1a0a3e-1c2b-4f0a-9a11-000000000001";
 
-const carrying = (lines: PickList["lines"]): PickList =>
+const pickList = (lines: PickList["lines"]): PickList =>
 {
     const live = lines.filter((line) => !line.gone);
 
@@ -23,7 +23,7 @@ describe("a pick list on screen", () =>
 {
     test("says what is not there rather than showing an empty box", () =>
     {
-        render(<PickedLines list={carrying([])} currency="EUR" />);
+        render(<PickedLines list={pickList([])} currency="EUR" />);
 
         expect(screen.getByText("Nothing picked yet")).toBeDefined();
     });
@@ -32,7 +32,7 @@ describe("a pick list on screen", () =>
     {
         render(
             <PickedLines
-                list={carrying([{ partId: bolt, name: "Hex bolt M8", cents: 140, quantity: 3, gone: false }])}
+                list={pickList([{ partId: bolt, name: "Hex bolt M8", cents: 140, quantity: 3, gone: false }])}
                 currency="EUR"
             />,
         );
@@ -52,7 +52,7 @@ describe("a pick list on screen", () =>
     {
         render(
             <PickedLines
-                list={carrying([{ partId: bolt, name: "Hex bolt M8", cents: 140, quantity: 3, gone: true }])}
+                list={pickList([{ partId: bolt, name: "Hex bolt M8", cents: 140, quantity: 3, gone: true }])}
                 currency="EUR"
             />,
         );
@@ -66,7 +66,7 @@ describe("a pick list on screen", () =>
     {
         render(
             <PickedLines
-                list={carrying([{ partId: bolt, name: "Hex bolt M8", cents: 140, quantity: 1, gone: false }])}
+                list={pickList([{ partId: bolt, name: "Hex bolt M8", cents: 140, quantity: 1, gone: false }])}
                 currency="EUR"
                 onDrop={() => undefined}
             />,
@@ -81,7 +81,7 @@ describe("a pick list on screen", () =>
 
         render(
             <PickedLines
-                list={carrying([{ partId: bolt, name: "Hex bolt M8", cents: 140, quantity: 1, gone: false }])}
+                list={pickList([{ partId: bolt, name: "Hex bolt M8", cents: 140, quantity: 1, gone: false }])}
                 currency="EUR"
                 onDrop={dropped}
             />,
@@ -97,7 +97,7 @@ describe("a pick list on screen", () =>
     {
         render(
             <PickedLines
-                list={carrying([{ partId: bolt, name: "Hex bolt M8", cents: 140, quantity: 1, gone: false }])}
+                list={pickList([{ partId: bolt, name: "Hex bolt M8", cents: 140, quantity: 1, gone: false }])}
                 currency="EUR"
             />,
         );

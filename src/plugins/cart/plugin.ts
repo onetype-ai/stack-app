@@ -92,7 +92,7 @@ export default definePlugin("cart", {
             schema: HandoverRequest.schema,
             run: (given, ctx) =>
             {
-                const asked = HandoverRequest.schema.parse(given);
+                const request = HandoverRequest.schema.parse(given);
                 const list = ctx.services.picking.read();
 
                 if (list.items === 0)
@@ -102,7 +102,7 @@ export default definePlugin("cart", {
 
                 ctx.services.picking.empty();
 
-                ctx.log.info("pick list handed over", { bay: asked.bay, items: list.items });
+                ctx.log.info("pick list handed over", { bay: request.bay, items: list.items });
             },
         },
     },

@@ -12,12 +12,12 @@ import type { CartServices } from "../index";
 const bolt = "5f1a0a3e-1c2b-4f0a-9a11-000000000001";
 const seal = "5f1a0a3e-1c2b-4f0a-9a11-000000000004";
 
-const held = (kernel: Kernel): CartServices["picking"] =>
+const pickingOf = (kernel: Kernel): CartServices["picking"] =>
 {
     return kernel.context("cart").use<CartServices>("cart").picking;
 };
 
-const shelves = (kernel: Kernel): CatalogServices["parts"] =>
+const partsOf = (kernel: Kernel): CatalogServices["parts"] =>
 {
     return kernel.context("cart").use<CatalogServices>("catalog").parts;
 };
@@ -33,9 +33,9 @@ describe("the cart and the catalog together", () =>
     {
         const app = await mount(new QueryClient());
 
-        await held(app.kernel).add(bolt, "Hex bolt M8");
+        await pickingOf(app.kernel).add(bolt, "Hex bolt M8");
 
-        expect(held(app.kernel).read().cents).toBe(140);
+        expect(pickingOf(app.kernel).read().cents).toBe(140);
 
         await app.stop();
     });
@@ -48,10 +48,10 @@ describe("the cart and the catalog together", () =>
     {
         const app = await mount(new QueryClient());
 
-        await held(app.kernel).add(bolt, "Hex bolt M8");
+        await pickingOf(app.kernel).add(bolt, "Hex bolt M8");
 
-        await expect(shelves(app.kernel).withdraw(bolt)).rejects.toThrow(/on a pick list/);
-        await expect(shelves(app.kernel).get(bolt)).resolves.toBeDefined();
+        await expect(partsOf(app.kernel).withdraw(bolt)).rejects.toThrow(/on a pick list/);
+        await expect(partsOf(app.kernel).get(bolt)).resolves.toBeDefined();
 
         await app.stop();
     });
@@ -60,10 +60,10 @@ describe("the cart and the catalog together", () =>
     {
         const app = await mount(new QueryClient());
 
-        await held(app.kernel).add(bolt, "Hex bolt M8");
-        await shelves(app.kernel).withdraw(seal);
+        await pickingOf(app.kernel).add(bolt, "Hex bolt M8");
+        await partsOf(app.kernel).withdraw(seal);
 
-        expect(held(app.kernel).read().lines.find((one) => one.partId === bolt)?.gone).toBe(false);
+        expect(pickingOf(app.kernel).read().lines.find((line) => line.partId === bolt)?.gone).toBe(false);
 
         await app.stop();
     });
@@ -75,7 +75,7 @@ describe("the catalog behind the depot this application ships", () =>
     {
         const app = await mount(new QueryClient());
 
-        expect((await shelves(app.kernel).list({})).total).toBeGreaterThan(0);
+        expect((await partsOf(app.kernel).list({})).total).toBeGreaterThan(0);
 
         await app.stop();
     });
@@ -83,10 +83,10 @@ describe("the catalog behind the depot this application ships", () =>
     test("narrows them to the kind that was asked for", async () =>
     {
         const app = await mount(new QueryClient());
-        const page = await shelves(app.kernel).list({ kind: "seal" });
+        const page = await partsOf(app.kernel).list({ kind: "seal" });
 
         expect(page.parts.length).toBeGreaterThan(0);
-        expect(page.parts.every((one) => one.kind === "seal")).toBe(true);
+        expect(page.parts.every((part) => part.kind === "seal")).toBe(true);
 
         await app.stop();
     });
@@ -95,7 +95,7 @@ describe("the catalog behind the depot this application ships", () =>
     {
         const app = await mount(new QueryClient());
 
-        await expect(shelves(app.kernel).get("5f1a0a3e-1c2b-4f0a-9a11-000000000999")).rejects.toThrow();
+        await expect(partsOf(app.kernel).get("5f1a0a3e-1c2b-4f0a-9a11-000000000999")).rejects.toThrow();
 
         await app.stop();
     });

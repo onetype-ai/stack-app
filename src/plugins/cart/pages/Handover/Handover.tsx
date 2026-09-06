@@ -16,17 +16,17 @@ export const Handover = () =>
 
     const list = useStore(handle.services.picking.watch, handle.services.picking.read);
 
-    const handing = useHandoverForm();
+    const form = useHandoverForm();
 
     const hand = (): void =>
     {
-        Cart.handOver(handle, handing.bayName).then(
+        Cart.handOver(handle, form.bayName).then(
             () =>
             {
-                handing.drop();
+                form.drop();
                 void navigate({ to: "/catalog" });
             },
-            handing.refuse,
+            form.refuse,
         );
     };
 
@@ -45,25 +45,25 @@ export const Handover = () =>
             <div className={styles.form}>
                 <Field
                     label="Bay"
-                    value={handing.bay}
+                    value={form.bay}
                     hint="Two letters, a hyphen and a number, as painted on the aisle."
-                    {...(handing.problem !== undefined && { wrong: handing.problem })}
-                    onChange={(event) => { handing.type(event.target.value); }}
+                    {...(form.problem !== undefined && { wrong: form.problem })}
+                    onChange={(event) => { form.type(event.target.value); }}
                 />
 
-                <Button tone="accent" disabled={!handing.ready} onClick={handing.ask}>
+                <Button tone="accent" disabled={!form.ready} onClick={form.ask}>
                     Hand over
                 </Button>
             </div>
 
             <Modal
-                open={handing.sending}
+                open={form.sending}
                 title="Hand this list over?"
-                onClose={handing.drop}
+                onClose={form.drop}
                 footer={(
                     <div className={styles.choices}>
-                        <Button tone="quiet" onClick={handing.drop}>Keep it here</Button>
-                        <Button tone="accent" onClick={hand}>{`Hand it to ${handing.bayName}`}</Button>
+                        <Button tone="quiet" onClick={form.drop}>Keep it here</Button>
+                        <Button tone="accent" onClick={hand}>{`Hand it to ${form.bayName}`}</Button>
                     </div>
                 )}
             >

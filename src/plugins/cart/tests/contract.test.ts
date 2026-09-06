@@ -139,7 +139,7 @@ describe("a part that left the shelves while a list held it", () =>
 
 describe("the handover page", () =>
 {
-    const handover = cart.definition.routes?.find((one) => one.path === "/cart/handover");
+    const handover = cart.definition.routes?.find((route) => route.path === "/cart/handover");
 
     /**
      * An empty list is not forbidden, it is early. Answering a path sends the
@@ -171,7 +171,7 @@ describe("the handover page", () =>
 
 describe("what the cart puts beside a part", () =>
 {
-    const contribution = cart.definition.contributes?.find((one) => one.slot === "catalog.part.aside");
+    const contribution = cart.definition.contributes?.find((contribution) => contribution.slot === "catalog.part.aside");
 
     test("goes into the slot the catalog opened, and asks for the cart's permission", () =>
     {

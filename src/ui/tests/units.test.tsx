@@ -51,18 +51,18 @@ describe("Field", () =>
      */
     test("says what is wrong where a screen reader will find it", () =>
     {
-        render(<Field label="Email" wrong="Enter an address we can reach." />);
+        render(<Field label="Email" problem="Enter an address we can reach." />);
 
         const input = screen.getByRole("textbox");
 
         expect(input.getAttribute("aria-invalid")).toBe("true");
-        expect(input.getAttribute("aria-describedby")).toContain("wrong");
+        expect(input.getAttribute("aria-describedby")).toContain("problem");
         expect(screen.getByRole("alert").textContent).toBe("Enter an address we can reach.");
     });
 
     test("and carries the hint too, without losing the error", () =>
     {
-        render(<Field label="Email" hint="Work address." wrong="Required." />);
+        render(<Field label="Email" hint="Work address." problem="Required." />);
 
         const said = screen.getByRole("textbox").getAttribute("aria-describedby") ?? "";
 

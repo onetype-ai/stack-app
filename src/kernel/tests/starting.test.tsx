@@ -27,7 +27,7 @@ describe("this application", () =>
     test("registers each declared page once, and never a path twice", async () =>
     {
         const app = await mount(new QueryClient());
-        const paths = app.kernel.routes().map((one) => one.path);
+        const paths = app.kernel.routes().map((route) => route.path);
 
         expect(new Set(paths).size).toBe(paths.length);
 
@@ -78,9 +78,9 @@ describe("this application", () =>
 
         // Whatever ships, a plugin declared it, so every route's requirement
         // is answerable. What nobody declared is refused.
-        const asked = app.kernel.routes().flatMap((route) => route.requires ?? []);
+        const required = app.kernel.routes().flatMap((route) => route.requires ?? []);
 
-        expect(app.kernel.permissions.all(asked)).toBe(true);
+        expect(app.kernel.permissions.all(required)).toBe(true);
         expect(app.kernel.permissions.has("nobody.granted.this")).toBe(false);
 
         await app.stop();

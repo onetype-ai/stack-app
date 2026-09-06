@@ -10,26 +10,26 @@ import { PartId } from "../types/PartId";
  */
 describe("what the stock route takes from the address", () =>
 {
-    const listing = catalog.definition.routes?.find((one) => one.path === "/catalog");
+    const routes = catalog.definition.routes?.find((one) => one.path === "/catalog");
 
     test("is declared, so the kernel parses it before the page renders", () =>
     {
-        expect(listing?.search).toBeDefined();
+        expect(routes?.search).toBeDefined();
     });
 
     test("takes a kind the depot stocks", () =>
     {
-        expect(listing?.search?.parse({ kind: "seal" })).toEqual({ kind: "seal" });
+        expect(routes?.search?.parse({ kind: "seal" })).toEqual({ kind: "seal" });
     });
 
     test("and refuses one it does not, rather than handing it to a request", () =>
     {
-        expect(() => listing?.search?.parse({ kind: "sprocket" })).toThrow();
+        expect(() => routes?.search?.parse({ kind: "sprocket" })).toThrow();
     });
 
     test("with nothing at all meaning everything stocked", () =>
     {
-        expect(listing?.search?.parse({})).toEqual({});
+        expect(routes?.search?.parse({})).toEqual({});
     });
 });
 

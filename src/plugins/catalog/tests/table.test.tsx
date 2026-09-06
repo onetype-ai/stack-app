@@ -22,7 +22,7 @@ const thrust: Part = {
     stock: 0,
 };
 
-const showing = (held: Partial<Parameters<typeof PartTable>[0]> = {}) =>
+const rendered = (props: Partial<Parameters<typeof PartTable>[0]> = {}) =>
 {
     return render(
         <PartTable
@@ -32,7 +32,7 @@ const showing = (held: Partial<Parameters<typeof PartTable>[0]> = {}) =>
             loading={false}
             onKind={() => undefined}
             onOpen={() => undefined}
-            {...held}
+            {...props}
         />,
     );
 };
@@ -41,7 +41,7 @@ describe("the shelves on screen", () =>
 {
     test("say they are busy while they are, and show no rows", () =>
     {
-        showing({ parts: [], loading: true });
+        rendered({ parts: [], loading: true });
 
         expect(screen.getByRole("region", { name: "Stocked parts" })).toHaveAttribute("aria-busy", "true");
         expect(screen.queryByRole("listitem")).toBeNull();
@@ -49,21 +49,21 @@ describe("the shelves on screen", () =>
 
     test("say what is missing rather than showing an empty box", () =>
     {
-        showing({ parts: [] });
+        rendered({ parts: [] });
 
         expect(screen.getByText("Nothing stocked here")).toBeDefined();
     });
 
     test("and say it differently when a kind was chosen, so the filter is the suspect", () =>
     {
-        showing({ parts: [], kind: "seal" });
+        rendered({ parts: [], kind: "seal" });
 
         expect(screen.getByText("No part of that kind is stocked.")).toBeDefined();
     });
 
     test("show a part's name and its price in the reader's money", () =>
     {
-        showing();
+        rendered();
 
         expect(screen.getByText("Hex bolt M8")).toBeDefined();
         expect(screen.getByText(/1[.,]40/)).toBeDefined();
@@ -75,7 +75,7 @@ describe("the shelves on screen", () =>
      */
     test("and say when a part has none left", () =>
     {
-        showing({ parts: [thrust] });
+        rendered({ parts: [thrust] });
 
         expect(screen.getByText("Out of stock")).toBeDefined();
     });
@@ -87,7 +87,7 @@ describe("choosing a kind", () =>
     {
         const chosen = vi.fn();
 
-        showing({ onKind: chosen });
+        rendered({ onKind: chosen });
 
         await userEvent.selectOptions(screen.getByLabelText("Kind"), "seal");
 
@@ -98,7 +98,7 @@ describe("choosing a kind", () =>
     {
         const chosen = vi.fn();
 
-        showing({ kind: "seal", onKind: chosen });
+        rendered({ kind: "seal", onKind: chosen });
 
         await userEvent.selectOptions(screen.getByLabelText("Kind"), "");
 
@@ -112,7 +112,7 @@ describe("opening a part", () =>
     {
         const opened = vi.fn();
 
-        showing({ onOpen: opened });
+        rendered({ onOpen: opened });
 
         await userEvent.tab();
         await userEvent.tab();
@@ -129,7 +129,7 @@ describe("opening a part", () =>
     {
         const opened = vi.fn();
 
-        showing({ onOpen: opened });
+        rendered({ onOpen: opened });
 
         fireEvent.click(screen.getByRole("link", { name: "Hex bolt M8" }), { metaKey: true });
 
