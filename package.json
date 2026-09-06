@@ -10,11 +10,7 @@
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src",
-    "verify": "pnpm lint && pnpm typecheck && pnpm test && pnpm build",
-    "pack:plugins": "node tools/pack/plugins.mjs pack",
-    "unpack:plugins": "node tools/pack/plugins.mjs unpack",
-    "pack:docs": "node tools/pack/docs.mjs pack",
-    "unpack:docs": "node tools/pack/docs.mjs unpack"
+    "verify": "pnpm lint && pnpm typecheck && pnpm test && pnpm build"
   },
   "dependencies": {
     "@onetype/stack-app-kit": "^2.0.0",

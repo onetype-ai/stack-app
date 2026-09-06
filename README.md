@@ -38,25 +38,14 @@ alone and opens a slot, `cart` depends on it and fills it. Between them they
 use every way across a boundary exactly once, so read one crossing where it
 actually runs rather than in a declaration with nothing on the other side.
 
-Read them once, then pack them away for good.
+Read them where they are.
 
 `src/ui` arrives with tokens and eight units: `Button`, `Field`, `Select`,
 `Badge`, `Empty`, `Skeleton`, `Spinner`, `Modal`. Anything past those is what
 this application needs and no other does.
 
-## Packing
+Each of those files is a folder folded into one: every path and every line,
+in the order somebody would read them. Read them where they are.
 
-Each of those files is a folder folded into one, and folds back:
-
-```sh
-pnpm unpack:docs      # docs.md -> #docs/
-pnpm unpack:plugins   # example.txt -> the plugin folders
-```
-
-`pnpm pack:docs` and `pnpm pack:plugins` fold them back and remove what they
-read, so there is one copy rather than two that drift apart. Pack takes names,
-so any plugin folds away the same way: `pnpm pack:plugins billing`.
-
-The checks that read the documents skip while they are packed and say which
-command brings them back. Unpack before working on what is inside; pack when
-you are done.
+The checks that read `#docs` skip while it is folded away. The ones that read
+code, which is most of them, run either way.
