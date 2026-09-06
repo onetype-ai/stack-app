@@ -12,6 +12,7 @@ export default defineConfig({
             { find: /^@ui$/, replacement: resolvePath("./src/ui/index.ts") },
             { find: /^@ui\//, replacement: `${resolvePath("./src/ui")}/` },
             { find: /^@plugins\//, replacement: `${resolvePath("./src/plugins")}/` },
+            { find: /^@utils\//, replacement: `${resolvePath("./src/utils")}/` },
         ],
     },
     css: {

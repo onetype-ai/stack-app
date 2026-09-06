@@ -1,6 +1,6 @@
 import { Badge, Button } from "@ui";
 
-import { Money } from "../../utils/Money";
+import { Money } from "@utils/Money";
 import styles from "./LineRow.module.css";
 
 import type { Line } from "../../types/Line";

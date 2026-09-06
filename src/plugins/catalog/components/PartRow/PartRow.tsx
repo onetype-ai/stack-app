@@ -1,7 +1,7 @@
 import { Badge } from "@ui";
 
 import { PartKind } from "../../types/PartKind";
-import { Money } from "../../utils/Money";
+import { Money } from "@utils/Money";
 import styles from "./PartRow.module.css";
 
 import type { ReactNode } from "react";

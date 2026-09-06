@@ -8,7 +8,7 @@ import { Catalog } from "../../index";
 import { PartId } from "../../types/PartId";
 import { PartKind } from "../../types/PartKind";
 import { CatalogKeys } from "../../utils/CatalogKeys";
-import { Money } from "../../utils/Money";
+import { Money } from "@utils/Money";
 import styles from "./PartDetail.module.css";
 
 export const PartDetail = () =>

@@ -1,7 +1,7 @@
 import { Empty } from "@ui";
 
 import { LineRow } from "../../components/LineRow/LineRow";
-import { Money } from "../../utils/Money";
+import { Money } from "@utils/Money";
 import styles from "./PickedLines.module.css";
 
 import type { ReactNode } from "react";
