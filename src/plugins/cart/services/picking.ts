@@ -19,9 +19,9 @@ export const createPickingService = (ctx: Context<CartConfig>) =>
         lines = next;
         answer = { lines: [...next], cents: Lines.cents(next), items: Lines.items(next) };
 
-        for (const told of listeners)
+        for (const listener of listeners)
         {
-            told();
+            listener();
         }
     };
 
@@ -31,13 +31,13 @@ export const createPickingService = (ctx: Context<CartConfig>) =>
             return answer;
         },
 
-        watch: (told: () => void): (() => void) =>
+        watch: (listener: () => void): (() => void) =>
         {
-            listeners.add(told);
+            listeners.add(listener);
 
             return () =>
             {
-                listeners.delete(told);
+                listeners.delete(listener);
             };
         },
 

@@ -97,7 +97,7 @@ describe("withdrawing a part from stock", () =>
         await parts.withdraw(bolt.id);
 
         expect(fake.asked.map((one) => one.method)).toEqual(["GET", "DELETE"]);
-        expect(fake.told).toEqual([{ event: "catalog.part.withdrawn", payload: { id: bolt.id, name: bolt.name } }]);
+        expect(fake.emitted).toEqual([{ event: "catalog.part.withdrawn", payload: { id: bolt.id, name: bolt.name } }]);
     });
 
     /**
@@ -120,7 +120,7 @@ describe("withdrawing a part from stock", () =>
         await expect(parts.withdraw(bolt.id)).rejects.toThrow(/somebody has it on a pick list/);
 
         expect(fake.asked.map((one) => one.method)).toEqual(["GET"]);
-        expect(fake.told).toEqual([]);
+        expect(fake.emitted).toEqual([]);
     });
 
     test("and drops the cached shelves, so a list does not still show it", async () =>

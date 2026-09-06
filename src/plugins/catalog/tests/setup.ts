@@ -10,7 +10,7 @@ export type Asked = {
 export type Fake = {
     ctx: Context<CatalogConfig>;
     asked: Asked[];
-    told: { event: string; payload: unknown }[];
+    emitted: { event: string; payload: unknown }[];
     dropped: (readonly unknown[])[];
     refusal: string | undefined;
 };
@@ -22,12 +22,12 @@ export type Answers = Readonly<Record<string, unknown>>;
 export const fakeContext = (answers: Answers, config: Readonly<Record<string, unknown>> = {}): Fake =>
 {
     const asked: Asked[] = [];
-    const told: { event: string; payload: unknown }[] = [];
+    const emitted: { event: string; payload: unknown }[] = [];
     const dropped: (readonly unknown[])[] = [];
 
     const held: Fake = {
         asked,
-        told,
+        emitted,
         dropped,
         refusal: undefined,
         ctx: undefined as unknown as Context<CatalogConfig>,
@@ -80,7 +80,7 @@ export const fakeContext = (answers: Answers, config: Readonly<Record<string, un
         events: {
             emit: (event, payload) =>
             {
-                told.push({ event, payload });
+                emitted.push({ event, payload });
             },
             on: () => () => undefined,
         },

@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import { useHearing, useStore } from "@onetype/stack-app-kit/react";
+import { useEvent, useStore } from "@onetype/stack-app-kit/react";
 import { Badge, Button } from "@ui";
 
 import { Cart } from "../../index";
@@ -23,9 +23,9 @@ export const AddToList = ({ payload }: AddToListProps) =>
     const list = useStore(services.picking.watch, services.picking.read);
     const onList = list.lines.find((line) => line.partId === part.id && !line.gone);
 
-    useHearing("cart", "catalog.part.withdrawn", (told) =>
+    useEvent("cart", "catalog.part.withdrawn", (payload) =>
     {
-        if ((told as Withdrawal).id === part.id)
+        if ((payload as Withdrawal).id === part.id)
         {
             setPulled(true);
         }

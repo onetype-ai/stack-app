@@ -62,9 +62,9 @@ export default definePlugin("cart", {
     listens: {
         "catalog.part.withdrawn": {
             describe: "Strikes a line whose part left the shelves, so nobody is sent to pull what is gone.",
-            handle: (told, ctx) =>
+            handle: (payload, ctx) =>
             {
-                const gone = Withdrawn.schema.parse(told);
+                const gone = Withdrawn.schema.parse(payload);
 
                 ctx.services.picking.strike(gone.id);
             },
