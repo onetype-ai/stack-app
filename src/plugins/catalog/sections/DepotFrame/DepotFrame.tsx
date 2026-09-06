@@ -6,7 +6,7 @@ export const DepotFrame = () =>
 {
     return (
         <div className={styles.root}>
-            <a className="ui-only-heard" href="#work">Skip to the page</a>
+            <a className="ui-visually-hidden" href="#work">Skip to the page</a>
 
             <header className={styles.bar}>
                 <Link to="/catalog" className={styles.mark}>

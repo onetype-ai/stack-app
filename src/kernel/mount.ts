@@ -10,7 +10,12 @@ export const mount = (client: QueryClient): Promise<Started> =>
 {
     const baseUrl = env("VITE_API_URL", "/api") ?? "/api";
 
-    source.install(baseUrl);
+    /* Development only: the fake takes over fetch, so shipping it would answer
+       every request from memory however real the server behind baseUrl is. */
+    if (import.meta.env.DEV)
+    {
+        source.install(baseUrl);
+    }
 
     return start({
         plugins: discover(import.meta.glob("../plugins/*/plugin.ts", { eager: true })),

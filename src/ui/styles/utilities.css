@@ -4,7 +4,7 @@
  */
 
 /* Reachable by a screen reader, invisible to everyone else. */
-.ui-only-heard
+.ui-visually-hidden
 {
     position: absolute;
     width: 1px;
@@ -17,7 +17,7 @@
 }
 
 /* Hidden until focused: a skip link, and nothing else so far. */
-.ui-only-heard:focus-visible
+.ui-visually-hidden:focus-visible
 {
     position: static;
     width: auto;
@@ -28,7 +28,7 @@
 }
 
 /* One line, cut with an ellipsis rather than wrapped. */
-.ui-one-line
+.ui-truncate
 {
     overflow: hidden;
     white-space: nowrap;
@@ -36,7 +36,7 @@
 }
 
 /* Wide content scrolls inside itself, so the page never does. */
-.ui-scrolls-across
+.ui-scroll-x
 {
     overflow-x: auto;
     max-width: 100%;
