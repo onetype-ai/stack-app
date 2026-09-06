@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 
 import { createPickingService } from "../services/picking";
-import { serving } from "./serving";
+import { fakeContext } from "./setup";
 
 const bolt = "5f1a0a3e-1c2b-4f0a-9a11-000000000001";
 const seal = "5f1a0a3e-1c2b-4f0a-9a11-000000000004";
@@ -14,7 +14,7 @@ describe("putting a part on the pick list", () =>
      */
     test("takes the price from the catalog and never from itself", async () =>
     {
-        const fake = serving();
+        const fake = fakeContext();
 
         fake.price = 310;
 
@@ -28,7 +28,7 @@ describe("putting a part on the pick list", () =>
 
     test("counts the same part again rather than listing it twice", async () =>
     {
-        const fake = serving();
+        const fake = fakeContext();
         const picking = createPickingService(fake.ctx);
 
         await picking.add(bolt, "Hex bolt M8");
@@ -40,7 +40,7 @@ describe("putting a part on the pick list", () =>
 
     test("and asks the catalog only once for a part it already carries", async () =>
     {
-        const fake = serving();
+        const fake = fakeContext();
         const picking = createPickingService(fake.ctx);
 
         await picking.add(bolt, "Hex bolt M8");
@@ -51,7 +51,7 @@ describe("putting a part on the pick list", () =>
 
     test("refuses to run past the lines its config allows", async () =>
     {
-        const fake = serving({ maxLines: 1 });
+        const fake = fakeContext({ maxLines: 1 });
         const picking = createPickingService(fake.ctx);
 
         await picking.add(bolt, "Hex bolt M8");
@@ -63,7 +63,7 @@ describe("putting a part on the pick list", () =>
 
     test("and to ask for more of one part than its config allows", async () =>
     {
-        const fake = serving({ maxQuantity: 1 });
+        const fake = fakeContext({ maxQuantity: 1 });
         const picking = createPickingService(fake.ctx);
 
         await picking.add(bolt, "Hex bolt M8");
@@ -75,7 +75,7 @@ describe("putting a part on the pick list", () =>
 
     test("and adds nothing when the catalog could not answer what it costs", async () =>
     {
-        const fake = serving();
+        const fake = fakeContext();
 
         fake.refuse = "no part carries that number";
 
@@ -91,7 +91,7 @@ describe("what the pick list adds up to", () =>
 {
     test("counts every line by what it asks for", async () =>
     {
-        const fake = serving();
+        const fake = fakeContext();
         const picking = createPickingService(fake.ctx);
 
         fake.price = 140;
@@ -111,7 +111,7 @@ describe("what the pick list adds up to", () =>
      */
     test("but leaves out a line whose part left the shelves", async () =>
     {
-        const fake = serving();
+        const fake = fakeContext();
         const picking = createPickingService(fake.ctx);
 
         await picking.add(bolt, "Hex bolt M8");
@@ -127,7 +127,7 @@ describe("what the cart tells anyone watching", () =>
 {
     test("says so when a line arrives", async () =>
     {
-        const fake = serving();
+        const fake = fakeContext();
         const picking = createPickingService(fake.ctx);
 
         let moves = 0;
@@ -141,7 +141,7 @@ describe("what the cart tells anyone watching", () =>
 
     test("and stops telling whoever stopped listening", async () =>
     {
-        const fake = serving();
+        const fake = fakeContext();
         const picking = createPickingService(fake.ctx);
 
         let moves = 0;
@@ -161,7 +161,7 @@ describe("what the cart tells anyone watching", () =>
      */
     test("and answers the same object until something moves", async () =>
     {
-        const fake = serving();
+        const fake = fakeContext();
         const picking = createPickingService(fake.ctx);
 
         expect(picking.read()).toBe(picking.read());
@@ -178,7 +178,7 @@ describe("striking a part off", () =>
 {
     test("does nothing when the list never carried it", () =>
     {
-        const fake = serving();
+        const fake = fakeContext();
         const picking = createPickingService(fake.ctx);
 
         let moves = 0;

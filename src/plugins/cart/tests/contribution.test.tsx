@@ -6,7 +6,7 @@ import { createKernel } from "@onetype/stack-app-kit";
 import { KernelProvider, Slot } from "@onetype/stack-app-kit/react";
 
 import cart from "../plugin";
-import { depot } from "./depot";
+import { fakeCatalog } from "./fake-catalog";
 
 import type { Kernel } from "@onetype/stack-app-kit";
 import type { ReactNode } from "react";
@@ -16,7 +16,7 @@ const bolt = "5f1a0a3e-1c2b-4f0a-9a11-000000000001";
 const serving = async (granting?: readonly string[]): Promise<Kernel> =>
 {
     const kernel = createKernel({
-        plugins: [depot(granting === undefined ? {} : { granting }), cart],
+        plugins: [fakeCatalog(granting === undefined ? {} : { granting }), cart],
     });
 
     await kernel.start();

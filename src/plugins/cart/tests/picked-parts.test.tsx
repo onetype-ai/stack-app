@@ -7,7 +7,7 @@ import { KernelProvider } from "@onetype/stack-app-kit/react";
 
 import cart from "../plugin";
 import { PickedParts } from "../sections/PickedParts/PickedParts";
-import { depot } from "./depot";
+import { fakeCatalog } from "./fake-catalog";
 
 import type { Kernel } from "@onetype/stack-app-kit";
 import type { Part } from "@plugins/catalog";
@@ -23,7 +23,7 @@ const bolt: Part = {
 
 const serving = async (answer: (id: string) => Promise<Part>): Promise<Kernel> =>
 {
-    const kernel = createKernel({ plugins: [depot({ get: answer }), cart] });
+    const kernel = createKernel({ plugins: [fakeCatalog({ get: answer }), cart] });
 
     await kernel.start();
 

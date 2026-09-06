@@ -3,7 +3,7 @@ import { describe, expect, test } from "vitest";
 import cart from "../plugin";
 import { createPickingService } from "../services/picking";
 import { Bay } from "../types/Bay";
-import { serving } from "./serving";
+import { fakeContext } from "./setup";
 
 import type { Context } from "@onetype/stack-app-kit";
 import type { PickingService } from "../services/picking";
@@ -11,7 +11,7 @@ import type { CartConfig } from "../types/CartConfig";
 
 const bolt = "5f1a0a3e-1c2b-4f0a-9a11-000000000001";
 
-const inside = (fake: ReturnType<typeof serving>): Context<CartConfig, { picking: PickingService }> =>
+const inside = (fake: ReturnType<typeof fakeContext>): Context<CartConfig, { picking: PickingService }> =>
 {
     const picking = createPickingService(fake.ctx);
 
@@ -57,7 +57,7 @@ describe("handing the list over", () =>
 
     test("empties the list once it has gone", async () =>
     {
-        const fake = serving();
+        const fake = fakeContext();
         const ctx = inside(fake);
         const picking = ctx.services.picking;
 
@@ -74,7 +74,7 @@ describe("handing the list over", () =>
      */
     test("but refuses an empty one, whatever the page allowed", () =>
     {
-        const fake = serving();
+        const fake = fakeContext();
         const ctx = inside(fake);
 
         expect(() => command?.run({ bay: "AC-12" }, ctx)).toThrow(/empty pick list/);
@@ -87,7 +87,7 @@ describe("a part somebody means to pull", () =>
 
     test("stops the catalog from withdrawing it, and says which part", async () =>
     {
-        const fake = serving();
+        const fake = fakeContext();
         const ctx = inside(fake);
         const picking = ctx.services.picking;
 
@@ -98,14 +98,14 @@ describe("a part somebody means to pull", () =>
 
     test("and lets one nobody holds go", () =>
     {
-        const fake = serving();
+        const fake = fakeContext();
 
         expect(participant?.handle({ id: bolt, name: "Hex bolt M8" }, inside(fake))).toBeUndefined();
     });
 
     test("and refuses a payload that is not a part, rather than answering about nothing", () =>
     {
-        const fake = serving();
+        const fake = fakeContext();
 
         expect(() => participant?.handle({ id: "bolt" }, inside(fake))).toThrow();
     });
@@ -117,7 +117,7 @@ describe("a part that left the shelves while a list held it", () =>
 
     test("is struck off, so nobody is sent to pull what is gone", async () =>
     {
-        const fake = serving();
+        const fake = fakeContext();
         const ctx = inside(fake);
         const picking = ctx.services.picking;
 
@@ -131,7 +131,7 @@ describe("a part that left the shelves while a list held it", () =>
 
     test("and a payload that is not one is refused rather than striking nothing quietly", () =>
     {
-        const fake = serving();
+        const fake = fakeContext();
 
         expect(() => listener?.handle({ id: "gone" }, inside(fake))).toThrow();
     });
@@ -147,14 +147,14 @@ describe("the handover page", () =>
      */
     test("sends a reader with an empty list back to the list itself", () =>
     {
-        const fake = serving();
+        const fake = fakeContext();
 
         expect(handover?.instead?.(inside(fake))).toBe("/cart");
     });
 
     test("and lets one with something on it through", async () =>
     {
-        const fake = serving();
+        const fake = fakeContext();
         const ctx = inside(fake);
         const picking = ctx.services.picking;
 

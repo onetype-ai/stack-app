@@ -11,7 +11,7 @@ export type Fake = {
 
 // `use` is what a public API reaches through, so faking it is faking the whole
 // crossing: a cart that started inventing prices fails here.
-export const serving = (config: Readonly<Record<string, unknown>> = {}): Fake =>
+export const fakeContext = (config: Readonly<Record<string, unknown>> = {}): Fake =>
 {
     const priced: string[] = [];
     const ran: { command: string; input: unknown }[] = [];

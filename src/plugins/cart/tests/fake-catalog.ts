@@ -20,7 +20,7 @@ export type Depot = {
 // The cart names it in `dependsOn`, so nothing here may be left out: the
 // kernel refuses a slot, event or hook no plugin declared, which is what makes
 // a stand-in prove anything.
-export const depot = (held: Depot = {}): Plugin =>
+export const fakeCatalog = (held: Depot = {}): Plugin =>
 {
     return definePlugin("catalog", {
         version: "1.0.0",

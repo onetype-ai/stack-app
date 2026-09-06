@@ -15,11 +15,11 @@ export type Fake = {
     refusal: string | undefined;
 };
 
-export type Canned = Readonly<Record<string, unknown>>;
+export type Answers = Readonly<Record<string, unknown>>;
 
 // Every answer is written by the test, so a service that stopped calling the
 // transport fails here rather than passing on a cached truth.
-export const serving = (canned: Canned, config: Readonly<Record<string, unknown>> = {}): Fake =>
+export const fakeContext = (answers: Answers, config: Readonly<Record<string, unknown>> = {}): Fake =>
 {
     const asked: Asked[] = [];
     const told: { event: string; payload: unknown }[] = [];
@@ -39,14 +39,14 @@ export const serving = (canned: Canned, config: Readonly<Record<string, unknown>
         {
             asked.push({ method, path, ...(request?.query !== undefined && { query: request.query }) });
 
-            const canning = canned[`${method} ${path}`];
+            const answer = answers[`${method} ${path}`];
 
-            if (canning === undefined)
+            if (answer === undefined)
             {
-                return Promise.reject(new Error(`Nothing canned answers ${method} ${path}.`));
+                return Promise.reject(new Error(`Nothing answers ${method} ${path}.`));
             }
 
-            return Promise.resolve(canning);
+            return Promise.resolve(answer);
         };
     };
 

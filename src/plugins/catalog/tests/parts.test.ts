@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 
 import { createPartsService } from "../services/parts";
-import { serving } from "./serving";
+import { fakeContext } from "./setup";
 
 const bolt = {
     id: "5f1a0a3e-1c2b-4f0a-9a11-000000000001",
@@ -23,7 +23,7 @@ describe("listing what the depot stocks", () =>
 {
     test("asks the shelves and answers what came back", async () =>
     {
-        const fake = serving({ "GET /catalog/parts": { parts: [bolt, seal], total: 2 } });
+        const fake = fakeContext({ "GET /catalog/parts": { parts: [bolt, seal], total: 2 } });
 
         const page = await createPartsService(fake.ctx).list();
 
@@ -33,7 +33,7 @@ describe("listing what the depot stocks", () =>
 
     test("carries the kind into the request, so the server filters and not the page", async () =>
     {
-        const fake = serving({ "GET /catalog/parts": { parts: [seal], total: 1 } });
+        const fake = fakeContext({ "GET /catalog/parts": { parts: [seal], total: 1 } });
 
         await createPartsService(fake.ctx).list({ kind: "seal" });
 
@@ -42,7 +42,7 @@ describe("listing what the depot stocks", () =>
 
     test("and refuses a kind the depot does not stock, before any request is made", async () =>
     {
-        const fake = serving({ "GET /catalog/parts": { parts: [], total: 0 } });
+        const fake = fakeContext({ "GET /catalog/parts": { parts: [], total: 0 } });
 
         await expect(createPartsService(fake.ctx).list({ kind: "sprocket" } as never)).rejects.toThrow();
 
@@ -51,7 +51,7 @@ describe("listing what the depot stocks", () =>
 
     test("and refuses a page the server malformed, rather than rendering half a shelf", async () =>
     {
-        const fake = serving({ "GET /catalog/parts": { parts: [{ ...bolt, cents: -4 }], total: 1 } });
+        const fake = fakeContext({ "GET /catalog/parts": { parts: [{ ...bolt, cents: -4 }], total: 1 } });
 
         await expect(createPartsService(fake.ctx).list()).rejects.toThrow();
     });
@@ -61,7 +61,7 @@ describe("what a part costs", () =>
 {
     test("comes from the shelves the first time it is asked", async () =>
     {
-        const fake = serving({ [`GET /catalog/parts/${bolt.id}`]: bolt });
+        const fake = fakeContext({ [`GET /catalog/parts/${bolt.id}`]: bolt });
 
         expect(await createPartsService(fake.ctx).price(bolt.id)).toBe(140);
     });
@@ -72,7 +72,7 @@ describe("what a part costs", () =>
      */
     test("and from what the listing already carried, once it has been listed", async () =>
     {
-        const fake = serving({ "GET /catalog/parts": { parts: [bolt], total: 1 } });
+        const fake = fakeContext({ "GET /catalog/parts": { parts: [bolt], total: 1 } });
         const parts = createPartsService(fake.ctx);
 
         await parts.list();
@@ -86,7 +86,7 @@ describe("withdrawing a part from stock", () =>
 {
     test("asks first, and says so afterwards", async () =>
     {
-        const fake = serving({
+        const fake = fakeContext({
             "GET /catalog/parts": { parts: [bolt], total: 1 },
             [`DELETE /catalog/parts/${bolt.id}`]: bolt,
         });
@@ -106,7 +106,7 @@ describe("withdrawing a part from stock", () =>
      */
     test("stops when a participant refuses, and nothing is written or announced", async () =>
     {
-        const fake = serving({
+        const fake = fakeContext({
             "GET /catalog/parts": { parts: [bolt], total: 1 },
             [`DELETE /catalog/parts/${bolt.id}`]: bolt,
         });
@@ -125,7 +125,7 @@ describe("withdrawing a part from stock", () =>
 
     test("and drops the cached shelves, so a list does not still show it", async () =>
     {
-        const fake = serving({
+        const fake = fakeContext({
             "GET /catalog/parts": { parts: [bolt], total: 1 },
             [`DELETE /catalog/parts/${bolt.id}`]: bolt,
         });
