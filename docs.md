@@ -30,8 +30,8 @@ export default definePlugin("billing", {
 ```
 
 A fresh application has no frame, no 403, no 404 and grants nothing, so the
-first plugin declares all four or the router refuses to build and every route
-answers 403. One plugin owns each.
+first plugin declares all four or the kernel refuses to start. One plugin owns
+each.
 
 Everything it declares is named `plugin.thing`, and one outside its own
 namespace is refused. A route requiring another plugin's permission makes them
@@ -219,8 +219,8 @@ export default definePlugin("documents", { ... });
 - `version`, `describe`, `dependsOn`, `config` a schema, `services` a factory,
   `fallback` when it throws.
 - `permissions`: those it defines, named `plugin.thing` like everything else.
-- `grants`: what the viewer may do, read on every check. One plugin owns it;
-  until one does, every guarded route is a 403.
+- `grants`: what the viewer may do, read on every check. One plugin owns it,
+  and a guarded route with none is refused at startup.
 - `frame`, `pages`: the shell, the 403 and the 404. One plugin owns each, and
   without a frame the router refuses to build.
 - `routes`: `path` (`$param` segments), `component`, `title?`, `requires?`,
