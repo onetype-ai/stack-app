@@ -16,7 +16,8 @@ this one, which is how it is developed.
 ## Running
 
 ```sh
-pnpm dev              # http://localhost:7380, proxying /api to 7280
+pnpm dev              # http://localhost:7380, proxying /api to 7280,
+                      # watching the boundaries
 pnpm verify           # lint, typecheck, test, build
 pnpm test:browser     # opens the app in a real browser and reads the page
 
