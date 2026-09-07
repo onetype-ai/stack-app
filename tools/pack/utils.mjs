@@ -5,6 +5,6 @@
 //   node tools/pack/utils.mjs unpack           rebuilds the files
 //
 
-import { Packer } from "./index.mjs";
+import { Packer } from "@onetype/stack-app-kit/packing";
 
 new Packer({ at: "src/utils", demo: ["Words"], name: "util", tool: "utils" }).ran(process.argv.slice(2));

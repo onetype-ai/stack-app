@@ -5,6 +5,6 @@
 //   node tools/pack/plugins.mjs unpack         rebuilds the folders
 //
 
-import { Packer } from "./index.mjs";
+import { Packer } from "@onetype/stack-app-kit/packing";
 
 new Packer({ at: "src/plugins", demo: ["documents", "comments"], name: "plugin", tool: "plugins" }).ran(process.argv.slice(2));

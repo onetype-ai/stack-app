@@ -4,6 +4,6 @@
 //   node tools/pack/ui.mjs unpack      rebuilds the folder
 //
 
-import { Packer } from "./index.mjs";
+import { Packer } from "@onetype/stack-app-kit/packing";
 
 new Packer({ at: "src/ui", into: "src/ui/example.txt", name: "unit", tool: "ui" }).ran(process.argv.slice(2));
