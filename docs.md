@@ -298,14 +298,13 @@ surface a consumer needs.
 
 # Procedure: plugin tests
 
-A plugin tests itself in `tests/`, without the application or a server,
-through its public surface.
+A plugin tests itself in `tests/`, without the application or a server.
 
 - **Services**: what a caller gets back, and what reached the transport.
 - **Components**: what a user can see and do, never internal state.
-- **Pages**: loading, empty, error and loaded each rendering their own state.
-- **The contract**: that the kernel accepts `plugin.ts`, and refuses it when a
-  declaration is wrong.
+- **Pages**: loading, empty, error and loaded, each rendering its own state.
+- **The contract**: that the kernel accepts `plugin.ts`, and refuses a wrong
+  declaration.
 
 Test what a schema must reject, not what it takes.
 
@@ -322,25 +321,25 @@ const fake = fakeContext({ "GET /documents": { documents: [], total: 0 } }, { co
 A bare value is a 200 carrying it; `{ status: 204 }` is nothing; `{ status,
 body }` refuses the way a server does. It records `asked`, `announced`,
 `invalidated` and `commanded`, answers a hook with `fake.refusal`, and refuses
-a path nothing answers.
+an unanswered path.
 
 Its own tests compare it against the real transport, which is the point: a
-fake each plugin wrote drifted from it and left two hundred tests green over
+fake each plugin wrote drifted and left two hundred tests green over
 thirty-nine broken calls. Never reach the network.
 
 It answers no services of its own: spread it and supply them, as
-`{ ...fake.ctx, services: { billing } }`. What another plugin offers goes in
-`offering`. Booting the real kernel instead, `createKernel` takes
-`permissions: { granted: () => [...] }` — the only way past a `requires`.
+`{ ...fake.ctx, services: { billing } }`; another plugin's go in `offering`.
+`asked` records headers too, so a test can prove a closed route was signed.
+Booting the real kernel instead, `createKernel` takes `permissions: { granted:
+() => [...] }` — the only way past a `requires`.
 
-No shared setup hiding a dependency, and no helper wrapping the assertion.
+No shared setup hiding a dependency, no helper wrapping the assertion.
 
 ## Proving a test
 
 Break the behaviour: remove the guard, invert the condition, delete the emit.
-Watch it fail naming the real cause, then put it back. If it stayed green, it
-tested nothing. The same for a bug: reproduce it, watch the test fail, then fix
-it.
+Watch it fail naming the cause, then put it back. If it stayed green, it tested
+nothing. Same for a bug: reproduce it, watch the test fail, then fix it.
 
 ==> #docs/procedures/ui-styles.md
 

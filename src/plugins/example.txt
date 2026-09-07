@@ -2309,6 +2309,7 @@ export const DraftRow = ({ draft, locale, onDrop }: DraftRowProps) =>
 import { useState } from "react";
 
 import { Board } from "../types/Board";
+import { Refused } from "../types/Refused";
 
 export type PublishForm = {
     board: string;
@@ -2316,6 +2317,7 @@ export type PublishForm = {
     ready: boolean;
     sending: boolean;
     problem: string | undefined;
+    wrong: Readonly<Record<string, string>>;
     type: (typed: string) => void;
     ask: () => void;
     drop: () => void;
@@ -2327,6 +2329,7 @@ export const usePublishForm = (): PublishForm =>
     const [board, setBoard] = useState("");
     const [sending, setSending] = useState(false);
     const [problem, setProblem] = useState<string | undefined>(undefined);
+    const [wrong, setWrong] = useState<Readonly<Record<string, string>>>({});
 
     const boardName = board.trim().toLowerCase();
     const ready = Board.schema.safeParse(boardName).success;
@@ -2337,10 +2340,12 @@ export const usePublishForm = (): PublishForm =>
         ready,
         sending,
         problem,
+        wrong,
 
         type: (typed: string): void =>
         {
             setProblem(undefined);
+            setWrong({});
             setBoard(typed);
         },
 
@@ -2356,8 +2361,11 @@ export const usePublishForm = (): PublishForm =>
 
         refuse: (cause: unknown): void =>
         {
+            const said = Refused.read(cause);
+
             setSending(false);
-            setProblem(cause instanceof Error ? cause.message : String(cause));
+            setWrong(said.fields);
+            setProblem(Object.keys(said.fields).length > 0 ? undefined : said.saying);
         },
     };
 };
@@ -2661,11 +2669,15 @@ export const Publish = () =>
                     <input
                         className={styles.input}
                         value={form.board}
-                        aria-invalid={form.problem !== undefined || undefined}
+                        aria-invalid={form.problem !== undefined || form.wrong["board"] !== undefined || undefined}
                         onChange={(event) => { form.type(event.target.value); }}
                     />
 
                     <span className={styles.hint}>One of review, editing or legal.</span>
+
+                    {form.wrong["board"] !== undefined && (
+                        <span className={styles.problem} role="alert">{form.wrong["board"]}</span>
+                    )}
 
                     {form.problem !== undefined && (
                         <span className={styles.problem} role="alert">{form.problem}</span>
@@ -3634,6 +3646,83 @@ describe("a document that was filed while a draft stood against it", () =>
     });
 });
 
+==> src/plugins/comments/tests/refusal.test.ts
+
+import { transport } from "@onetype/stack-app-kit";
+import { act, renderHook } from "@testing-library/react";
+import { describe, expect, test } from "vitest";
+
+import { usePublishForm } from "../hooks/usePublishForm";
+
+import { Refused } from "../types/Refused";
+
+describe("a server refusing one field", () =>
+{
+    const refused = (body: unknown): unknown =>
+    {
+        return transport.TransportFault.fromStatus(409, { method: "POST", path: "/drafts", body });
+    };
+
+    test("reaches the field it named, so the reader sees it under the input", () =>
+    {
+        const read = Refused.read(refused({ code: "TAKEN", message: "That board is closed.", fields: { board: "Closed on Fridays." } }));
+
+        expect(read.fields["board"]).toBe("Closed on Fridays.");
+    });
+
+    test("and its sentence stands alone when the server named no field", () =>
+    {
+        const read = Refused.read(refused({ code: "TOO_MANY", message: "That is one too many." }));
+
+        expect(read.fields).toEqual({});
+        expect(read.saying).toBe("That is one too many.");
+    });
+
+    test("while something that never reached a server still says something a reader can act on", () =>
+    {
+        const read = Refused.read(new Error("The request could not reach the server."));
+
+        expect(read.saying).toContain("could not reach");
+    });
+});
+
+describe("the form that sends the drafts", () =>
+{
+    test("puts the server's sentence under the field the server named", () =>
+    {
+        const { result } = renderHook(() => usePublishForm());
+
+        act(() =>
+        {
+            result.current.refuse(transport.TransportFault.fromStatus(409, {
+                method: "POST",
+                path: "/drafts",
+                body: { code: "TAKEN", message: "Somewhere else.", fields: { board: "Closed on Fridays." } },
+            }));
+        });
+
+        expect(result.current.wrong["board"]).toBe("Closed on Fridays.");
+        expect(result.current.problem).toBeUndefined();
+    });
+
+    test("and shows one sentence for the whole form when the server named no field", () =>
+    {
+        const { result } = renderHook(() => usePublishForm());
+
+        act(() =>
+        {
+            result.current.refuse(transport.TransportFault.fromStatus(409, {
+                method: "POST",
+                path: "/drafts",
+                body: { code: "TOO_MANY", message: "That is one too many." },
+            }));
+        });
+
+        expect(result.current.problem).toBe("That is one too many.");
+        expect(result.current.wrong).toEqual({});
+    });
+});
+
 ==> src/plugins/comments/tests/with-documents.test.ts
 
 import { QueryClient } from "@tanstack/react-query";
@@ -3938,6 +4027,44 @@ export const PublishRequest = {
 };
 
 export type PublishRequest = z.infer<typeof PublishRequest.schema>;
+
+==> src/plugins/comments/types/Refused.ts
+
+import { z } from "zod";
+
+const schema = z.object({
+    code: z.string().optional(),
+    message: z.string().optional(),
+    fields: z.record(z.string(), z.string()).optional(),
+});
+
+export type Refused = {
+    saying: string;
+    fields: Readonly<Record<string, string>>;
+};
+
+export const Refused = {
+    schema,
+
+    read: (cause: unknown): Refused =>
+    {
+        const body = (cause as { body?: unknown }).body;
+        const said = schema.safeParse(body);
+
+        if (!said.success)
+        {
+            return {
+                saying: cause instanceof Error ? cause.message : String(cause),
+                fields: {},
+            };
+        }
+
+        return {
+            saying: said.data.message ?? (cause instanceof Error ? cause.message : String(cause)),
+            fields: said.data.fields ?? {},
+        };
+    },
+};
 
 ==> src/plugins/comments/utils/Drafts.ts
 
