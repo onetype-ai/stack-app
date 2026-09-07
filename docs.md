@@ -223,7 +223,7 @@ export default definePlugin("documents", { ... });
   and a guarded route with none is refused at startup.
 - `frame`, `pages`: the shell, the 403 and the 404. One plugin owns each, and
   without a frame the router refuses to build.
-- `routes`: `path` (`$param` segments), `component`, `title?`, `requires?`,
+- `routes`: `path` (`$param` segments), `component`, `title`, `requires?`,
   `search?` a schema for the query string, `instead?` a path they belong at —
   asked before `requires`, so signed out sends to sign in, not a 403.
 - `slots`: a record of those it opens, each with a payload schema.
