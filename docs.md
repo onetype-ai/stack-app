@@ -377,8 +377,8 @@ and giving them values is the first day's work. A literal colour, length or
 duration outside `tokens.css` is a defect.
 
 A token nobody declared is worse than a literal: it resolves to nothing and the
-rule quietly does not apply. `Project.checks()` refuses one that names
-nothing, and a `styles.x` no module declares alongside it.
+rule quietly does not apply. `Project.checks()` refuses both, and a `styles.x`
+no module declares alongside them.
 
 Fonts load in `index.html`, never through CSS; the family name is a token.
 
