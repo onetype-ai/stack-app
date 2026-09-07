@@ -6,7 +6,6 @@ import { createRoot } from "react-dom/client";
 import { KernelProvider, StartupFailure } from "@onetype/stack-app-kit/react";
 
 import { Mount, Queries, Routes } from "./kernel";
-import "@ui/styles/index.css";
 
 import type { QueryClient } from "@tanstack/react-query";
 import type { Root } from "react-dom/client";

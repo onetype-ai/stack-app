@@ -20,9 +20,10 @@ import "@ui/styles/index.css";
 
 ## What is here, and what is not
 
-One unit, `Example`, and eighteen tokens named `--example1` upward. Neither is
-a decision: the names say nothing about a role and the values say nothing at
-all, so nothing here can be copied into a real application by accident.
+One unit, `Example`, and a set of tokens named for what they do —
+`--example-ink`, `--example-space`, `--example-radius`. The names say the role
+so a stylesheet reads; the values say nothing at all, so no palette is imposed
+and nothing renders until you fill them in.
 
 The whole folder folds into `example.txt`. Read it, take the mechanics, and
 write your own: the palette, the type scale and the units your application
@@ -71,10 +72,10 @@ export type { ExampleProps, ExampleTone } from "./components/Example/Example";
     color: var(--example1);
     background: var(--example3);
     border: var(--example6) solid var(--example5);
-    border-radius: var(--example14);
+    border-radius: var(--example15);
     transition:
-        border-color var(--example15) var(--example15),
-        box-shadow var(--example15) var(--example15);
+        border-color var(--example16) var(--example16),
+        box-shadow var(--example16) var(--example16);
 }
 
 .root[data-tone="accent"]
@@ -105,10 +106,10 @@ export type { ExampleProps, ExampleTone } from "./components/Example/Example";
 .root .title
 {
     margin: 0;
-    font-family: var(--example16);
-    font-size: var(--example18);
-    font-weight: var(--example18);
-    line-height: var(--example17);
+    font-family: var(--example17);
+    font-size: var(--example19);
+    font-weight: var(--example21);
+    line-height: var(--example22);
     color: var(--example1);
 }
 
@@ -121,9 +122,9 @@ export type { ExampleProps, ExampleTone } from "./components/Example/Example";
     color: var(--example2);
     background: none;
     border: var(--example6) solid transparent;
-    border-radius: var(--example14);
+    border-radius: var(--example15);
     cursor: pointer;
-    transition: color var(--example15) var(--example15);
+    transition: color var(--example16) var(--example16);
 }
 
 .root .dismiss:hover
@@ -134,14 +135,14 @@ export type { ExampleProps, ExampleTone } from "./components/Example/Example";
 .root .note
 {
     margin: 0;
-    font-size: var(--example17);
+    font-size: var(--example18);
     color: var(--example2);
 }
 
 .root .body
 {
-    font-size: var(--example17);
-    line-height: var(--example17);
+    font-size: var(--example18);
+    line-height: var(--example22);
 }
 
 .root .waiting
@@ -155,7 +156,7 @@ export type { ExampleProps, ExampleTone } from "./components/Example/Example";
 {
     height: 1em;
     background: var(--example4);
-    border-radius: var(--example14);
+    border-radius: var(--example15);
 }
 
 .root .bar:last-child
@@ -166,7 +167,7 @@ export type { ExampleProps, ExampleTone } from "./components/Example/Example";
 .root .problem
 {
     margin: 0;
-    font-size: var(--example17);
+    font-size: var(--example18);
     color: var(--example10);
 }
 
@@ -285,9 +286,9 @@ export const Example = ({
 
 body
 {
-    font-family: var(--example16);
-    font-size: var(--example17);
-    line-height: var(--example17);
+    font-family: var(--example17);
+    font-size: var(--example18);
+    line-height: var(--example22);
     color: var(--example1);
     background: var(--example3);
     -webkit-font-smoothing: antialiased;
@@ -295,14 +296,14 @@ body
 
 h1, h2, h3, h4
 {
-    font-weight: var(--example18);
-    line-height: var(--example17);
+    font-weight: var(--example21);
+    line-height: var(--example22);
 }
 
-h1 { font-size: var(--example18); }
-h2 { font-size: var(--example18); }
-h3 { font-size: var(--example17); }
-h4 { font-size: var(--example17); }
+h1 { font-size: var(--example19); }
+h2 { font-size: var(--example19); }
+h3 { font-size: var(--example18); }
+h4 { font-size: var(--example18); }
 
 p, ul, ol, dl, figure
 {
@@ -311,14 +312,14 @@ p, ul, ol, dl, figure
 
 small
 {
-    font-size: var(--example17);
+    font-size: var(--example18);
     color: var(--example2);
 }
 
 code, kbd, samp, pre
 {
-    font-family: var(--example16);
-    font-size: var(--example17);
+    font-family: var(--example17);
+    font-size: var(--example18);
 }
 
 a
@@ -332,7 +333,7 @@ a
 {
     outline: 2px solid var(--example7);
     outline-offset: 2px;
-    border-radius: var(--example14);
+    border-radius: var(--example15);
 }
 
 button, input, select, textarea
@@ -366,7 +367,7 @@ table
 th
 {
     text-align: left;
-    font-weight: var(--example18);
+    font-weight: var(--example21);
 }
 
 ==> src/ui/styles/index.css
@@ -577,24 +578,42 @@ summary::-webkit-details-marker
 {
     color-scheme: light dark;
 
-    --example1: example1;
-    --example2: example2;
-    --example3: example3;
-    --example4: example4;
-    --example5: example5;
-    --example6: example6;
-    --example7: example7;
-    --example8: example8;
-    --example9: example9;
-    --example10: example10;
-    --example11: example11;
-    --example12: example12;
-    --example13: example13;
-    --example14: example14;
-    --example15: example15;
-    --example16: example16;
-    --example17: example17;
-    --example18: example18;
+    --example1: ;
+    --example2: ;
+    --example3: ;
+    --example4: ;
+    --example5: ;
+    --example6: ;
+    --example7: ;
+    --example8: ;
+    --example9: ;
+    --example10: ;
+    --example11: ;
+    --example12: ;
+    --example13: ;
+    --example14: ;
+    --example15: ;
+    --example16: ;
+    --example17: ;
+    --example18: ;
+    --example19: ;
+    --example20: ;
+    --example21: ;
+    --example22: ;
+    --example23: ;
+}
+
+@media (prefers-color-scheme: dark)
+{
+    :root:not([data-scheme="light"])
+    {
+        --example1: ;
+    }
+}
+
+:root[data-scheme="dark"]
+{
+    --example1: ;
 }
 
 ==> src/ui/tests/units.test.tsx

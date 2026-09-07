@@ -26,6 +26,7 @@ import { Beside } from "./types/Beside";
 import { DocumentQuery } from "./types/DocumentQuery";
 import { DocumentsConfig } from "./types/DocumentsConfig";
 import { Filing } from "./types/Filing";
+import { NavPlace } from "./types/NavPlace";
 
 export default definePlugin("documents", {
     version: "1.0.0",
@@ -78,6 +79,11 @@ export default definePlugin("documents", {
     ],
 
     slots: {
+        "documents.nav": {
+            describe: "A way into another plugin, in the bar. Contribute a link; the desk only places it.",
+            schema: NavPlace.schema,
+        },
+
         "documents.beside": {
             describe: "What another plugin shows beside one document, given its id and title.",
             schema: Beside.schema,
@@ -296,7 +302,7 @@ export const readerApi = {
     gap: var(--example13);
     padding: var(--example12) var(--example13);
     border-bottom: var(--example6) solid var(--example5);
-    transition: background-color var(--example15) var(--example15);
+    transition: background-color var(--example16) var(--example16);
 }
 
 .root:last-child
@@ -321,7 +327,7 @@ export const readerApi = {
 {
     overflow: hidden;
     color: var(--example1);
-    font-weight: var(--example17);
+    font-weight: var(--example20);
     text-overflow: ellipsis;
     white-space: nowrap;
 }
@@ -329,14 +335,14 @@ export const readerApi = {
 .root .kind
 {
     color: var(--example2);
-    font-size: var(--example17);
+    font-size: var(--example18);
 }
 
 .root .length
 {
     color: var(--example1);
-    font-family: var(--example16);
-    font-size: var(--example17);
+    font-family: var(--example17);
+    font-size: var(--example18);
     font-variant-numeric: tabular-nums;
 }
 
@@ -349,7 +355,7 @@ export const readerApi = {
 {
     display: flex;
     justify-content: flex-end;
-    min-width: var(--example13);
+    min-width: var(--example14);
 }
 
 @media (max-width: 40rem)
@@ -371,10 +377,10 @@ export const readerApi = {
 {
     display: inline-flex;
     padding: var(--example12);
-    font-size: var(--example17);
+    font-size: var(--example18);
     color: var(--example2);
     background: var(--example4);
-    border-radius: var(--example14);
+    border-radius: var(--example15);
 }
 
 .root .open[data-open]
@@ -481,15 +487,15 @@ export const useKindInAddress = (): KindInAddress =>
     display: flex;
     flex-direction: column;
     gap: var(--example13);
-    max-width: var(--example13);
+    max-width: var(--example14);
 }
 
 .root .eyebrow
 {
     margin: 0 0 var(--example12);
     color: var(--example7);
-    font-size: var(--example17);
-    font-weight: var(--example18);
+    font-size: var(--example18);
+    font-weight: var(--example21);
     letter-spacing: 0.08em;
     text-transform: uppercase;
 }
@@ -497,10 +503,10 @@ export const useKindInAddress = (): KindInAddress =>
 .root .title
 {
     margin: 0;
-    font-size: var(--example18);
-    font-weight: var(--example18);
+    font-size: var(--example19);
+    font-weight: var(--example21);
     letter-spacing: -0.02em;
-    line-height: var(--example17);
+    line-height: var(--example22);
 }
 
 .root .body
@@ -511,7 +517,7 @@ export const useKindInAddress = (): KindInAddress =>
     padding: var(--example13);
     background-color: var(--example3);
     border: var(--example6) solid var(--example5);
-    border-radius: var(--example14);
+    border-radius: var(--example15);
     box-shadow: var(--example5);
 }
 
@@ -533,7 +539,7 @@ export const useKindInAddress = (): KindInAddress =>
 .root .term
 {
     color: var(--example2);
-    font-size: var(--example17);
+    font-size: var(--example18);
     text-transform: uppercase;
     letter-spacing: 0.06em;
 }
@@ -541,8 +547,8 @@ export const useKindInAddress = (): KindInAddress =>
 .root .value
 {
     margin: 0;
-    font-size: var(--example18);
-    font-weight: var(--example17);
+    font-size: var(--example19);
+    font-weight: var(--example20);
     font-variant-numeric: tabular-nums;
 }
 
@@ -571,10 +577,10 @@ export const useKindInAddress = (): KindInAddress =>
     margin: 0;
     padding: var(--example12) var(--example13);
     border: var(--example6) solid var(--example10);
-    border-radius: var(--example14);
+    border-radius: var(--example15);
     background-color: var(--example11);
     color: var(--example10);
-    font-size: var(--example17);
+    font-size: var(--example18);
 }
 
 .root .action
@@ -584,7 +590,7 @@ export const useKindInAddress = (): KindInAddress =>
     color: var(--example9);
     background: var(--example10);
     border: var(--example6) solid transparent;
-    border-radius: var(--example14);
+    border-radius: var(--example15);
     cursor: pointer;
 }
 
@@ -600,17 +606,17 @@ export const useKindInAddress = (): KindInAddress =>
     width: 12ch;
     height: 1em;
     background: var(--example4);
-    border-radius: var(--example14);
+    border-radius: var(--example15);
 }
 
 .root .open
 {
     display: inline-flex;
     padding: var(--example12);
-    font-size: var(--example17);
+    font-size: var(--example18);
     color: var(--example2);
     background: var(--example4);
-    border-radius: var(--example14);
+    border-radius: var(--example15);
 }
 
 .root .open[data-open]
@@ -724,15 +730,15 @@ export const DocumentDetail = () =>
 
 .root .head
 {
-    max-width: var(--example13);
+    max-width: var(--example14);
 }
 
 .root .eyebrow
 {
     margin: 0 0 var(--example12);
     color: var(--example7);
-    font-size: var(--example17);
-    font-weight: var(--example18);
+    font-size: var(--example18);
+    font-weight: var(--example21);
     letter-spacing: 0.08em;
     text-transform: uppercase;
 }
@@ -740,17 +746,17 @@ export const DocumentDetail = () =>
 .root .title
 {
     margin: 0;
-    font-size: var(--example18);
-    font-weight: var(--example18);
+    font-size: var(--example19);
+    font-weight: var(--example21);
     letter-spacing: -0.02em;
-    line-height: var(--example17);
+    line-height: var(--example22);
 }
 
 .root .lead
 {
     margin: var(--example12) 0 0;
     color: var(--example2);
-    line-height: var(--example17);
+    line-height: var(--example22);
 }
 
 .root .wrong
@@ -758,7 +764,7 @@ export const DocumentDetail = () =>
     margin: 0;
     padding: var(--example13);
     border: var(--example6) solid var(--example10);
-    border-radius: var(--example14);
+    border-radius: var(--example15);
     background-color: var(--example11);
     color: var(--example10);
 }
@@ -832,7 +838,7 @@ export const Documents = () =>
 {
     position: sticky;
     top: 0;
-    z-index: var(--example15);
+    z-index: var(--example23);
     display: flex;
     flex-wrap: wrap;
     gap: var(--example13);
@@ -859,18 +865,18 @@ export const Documents = () =>
     place-items: center;
     width: 1.75rem;
     height: 1.75rem;
-    border-radius: var(--example14);
+    border-radius: var(--example15);
     background-color: var(--example7);
     color: var(--example9);
-    font-size: var(--example17);
-    font-weight: var(--example18);
+    font-size: var(--example18);
+    font-weight: var(--example21);
     letter-spacing: 0.02em;
 }
 
 .root .wordmark
 {
-    font-size: var(--example17);
-    font-weight: var(--example18);
+    font-size: var(--example18);
+    font-weight: var(--example21);
     letter-spacing: -0.01em;
 }
 
@@ -884,12 +890,12 @@ export const Documents = () =>
 .root .link
 {
     padding: var(--example12) var(--example12);
-    border-radius: var(--example14);
+    border-radius: var(--example15);
     color: var(--example2);
-    font-size: var(--example17);
-    font-weight: var(--example17);
+    font-size: var(--example18);
+    font-weight: var(--example20);
     text-decoration: none;
-    transition: background-color var(--example15) var(--example15), color var(--example15) var(--example15);
+    transition: background-color var(--example16) var(--example16), color var(--example16) var(--example16);
 }
 
 .root .link:hover
@@ -907,7 +913,7 @@ export const Documents = () =>
 .root .work
 {
     width: 100%;
-    max-width: var(--example13);
+    max-width: var(--example14);
     margin-inline: auto;
     padding: var(--example13) var(--example13) var(--example13);
 }
@@ -921,17 +927,42 @@ export const Documents = () =>
 }
 
 
+.root .skip
+{
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
+
+.root .skip:focus-visible
+{
+    position: static;
+    width: auto;
+    height: auto;
+    margin: 0;
+    overflow: visible;
+    clip-path: none;
+}
+
 ==> src/plugins/documents/sections/DeskFrame/DeskFrame.tsx
 
 import { Link, Outlet } from "@tanstack/react-router";
 
+import { Slot } from "@onetype/stack-app-kit/react";
+
+import "@ui/styles/index.css";
 import styles from "./DeskFrame.module.css";
 
 export const DeskFrame = () =>
 {
     return (
         <div className={styles.root}>
-            <a className="ui-visually-hidden" href="#work">Skip to the page</a>
+            <a className={styles.skip} href="#work">Skip to the page</a>
 
             <header className={styles.bar}>
                 <Link to="/documents" className={styles.mark}>
@@ -944,9 +975,7 @@ export const DeskFrame = () =>
                         Documents
                     </Link>
 
-                    <Link to="/comments" className={styles.link} activeProps={{ className: styles.here }}>
-                        Drafts
-                    </Link>
+                    <Slot name="documents.nav" />
                 </nav>
             </header>
 
@@ -964,7 +993,7 @@ export const DeskFrame = () =>
     overflow: hidden;
     background-color: var(--example3);
     border: var(--example6) solid var(--example5);
-    border-radius: var(--example14);
+    border-radius: var(--example15);
     box-shadow: var(--example5);
 }
 
@@ -984,7 +1013,7 @@ export const DeskFrame = () =>
 {
     margin: 0;
     color: var(--example2);
-    font-size: var(--example17);
+    font-size: var(--example18);
     font-variant-numeric: tabular-nums;
 }
 
@@ -1009,8 +1038,8 @@ export const DeskFrame = () =>
 
 .root .what
 {
-    font-size: var(--example17);
-    font-weight: var(--example18);
+    font-size: var(--example18);
+    font-weight: var(--example21);
     color: var(--example2);
 }
 
@@ -1021,14 +1050,14 @@ export const DeskFrame = () =>
     color: var(--example1);
     background: var(--example3);
     border: var(--example6) solid var(--example5);
-    border-radius: var(--example14);
+    border-radius: var(--example15);
 }
 
 .root .bar
 {
     height: 1em;
     background: var(--example4);
-    border-radius: var(--example14);
+    border-radius: var(--example15);
 }
 
 .root .nothing
@@ -1044,14 +1073,14 @@ export const DeskFrame = () =>
 .root .title
 {
     margin: 0;
-    font-size: var(--example18);
-    font-weight: var(--example18);
+    font-size: var(--example19);
+    font-weight: var(--example21);
 }
 
 .root .hint
 {
     margin: 0;
-    font-size: var(--example17);
+    font-size: var(--example18);
     color: var(--example2);
 }
 
@@ -1166,14 +1195,14 @@ export const DocumentTable = ({
 .root .title
 {
     margin: 0;
-    font-size: var(--example18);
-    font-weight: var(--example18);
+    font-size: var(--example19);
+    font-weight: var(--example21);
 }
 
 .root .hint
 {
     margin: 0;
-    font-size: var(--example17);
+    font-size: var(--example18);
     color: var(--example2);
 }
 
@@ -1214,11 +1243,11 @@ export const NoEntry = ({ permission }: NoEntryProps) =>
     display: inline-block;
     margin-top: var(--example13);
     padding: var(--example12) var(--example13);
-    border-radius: var(--example14);
+    border-radius: var(--example15);
     background-color: var(--example7);
     color: var(--example9);
-    font-size: var(--example17);
-    font-weight: var(--example17);
+    font-size: var(--example18);
+    font-weight: var(--example20);
     text-decoration: none;
 }
 
@@ -1230,14 +1259,14 @@ export const NoEntry = ({ permission }: NoEntryProps) =>
 .root .title
 {
     margin: 0;
-    font-size: var(--example18);
-    font-weight: var(--example18);
+    font-size: var(--example19);
+    font-weight: var(--example21);
 }
 
 .root .hint
 {
     margin: 0;
-    font-size: var(--example17);
+    font-size: var(--example18);
     color: var(--example2);
 }
 
@@ -1508,11 +1537,15 @@ describe("filing a document away", () =>
 
 ==> src/plugins/documents/tests/frame.test.tsx
 
+import { createKernel } from "@onetype/stack-app-kit";
+import { KernelProvider } from "@onetype/stack-app-kit/react";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, test, vi } from "vitest";
 
+import documents from "../plugin";
 import { DeskFrame } from "../sections/DeskFrame/DeskFrame";
 
+import type { Kernel } from "@onetype/stack-app-kit";
 import type { ReactNode } from "react";
 
 vi.mock("@tanstack/react-router", () => ({
@@ -1520,30 +1553,55 @@ vi.mock("@tanstack/react-router", () => ({
     Outlet: () => <p>the page</p>,
 }));
 
+const framed = async (): Promise<Kernel> =>
+{
+    const kernel = createKernel({ plugins: [documents] });
+
+    await kernel.start();
+
+    return kernel;
+};
+
+const draw = async (): Promise<void> =>
+{
+    const kernel = await framed();
+
+    render(<KernelProvider kernel={kernel}><DeskFrame /></KernelProvider>);
+};
+
 describe("the shell every page renders inside", () =>
 {
-    test("offers a way past the header before anything else is reachable", () =>
+    test("offers a way past the header before anything else is reachable", async () =>
     {
-        render(<DeskFrame />);
+        await draw();
 
-        const skip = screen.getByRole("link", { name: "Skip to the page" });
-
-        expect(skip.getAttribute("href")).toBe("#work");
+        expect(screen.getByRole("link", { name: "Skip to the page" }).getAttribute("href")).toBe("#work");
     });
 
-    test("and the page it skips to is the one that carries the content", () =>
+    test("and the page it skips to is the one that carries the content", async () =>
     {
-        const { container } = render(<DeskFrame />);
+        const kernel = await framed();
+
+        const { container } = render(<KernelProvider kernel={kernel}><DeskFrame /></KernelProvider>);
 
         expect(container.querySelector("main")?.id).toBe("work");
         expect(screen.getByText("the page")).toBeDefined();
     });
 
-    test("names its navigation, so a screen reader can jump to it", () =>
+    test("names its navigation, so a screen reader can jump to it", async () =>
     {
-        render(<DeskFrame />);
+        await draw();
 
         expect(screen.getByRole("navigation", { name: "Sections" })).toBeDefined();
+    });
+
+    test("and opens a place another plugin fills, so the desk names none of them", async () =>
+    {
+        const kernel = await framed();
+
+        const opened = kernel.slot("documents.nav", {});
+
+        expect(opened.problem).toBeUndefined();
     });
 });
 
@@ -1832,6 +1890,16 @@ export const Filing = {
 
 export type Filing = z.infer<typeof Filing.schema>;
 
+==> src/plugins/documents/types/NavPlace.ts
+
+import { z } from "zod";
+
+export const NavPlace = {
+    schema: z.object({}),
+};
+
+export type NavPlace = z.infer<typeof NavPlace.schema>;
+
 ==> src/plugins/documents/types/Reader.ts
 
 import { z } from "zod";
@@ -1874,6 +1942,7 @@ import { definePlugin } from "@onetype/stack-app-kit";
 import { Drafts } from "./pages/Drafts/Drafts";
 import { Publish } from "./pages/Publish/Publish";
 import { AddComment } from "./sections/AddComment/AddComment";
+import { DraftsLink } from "./sections/DraftsLink/DraftsLink";
 import { CommentTrouble } from "./sections/CommentTrouble/CommentTrouble";
 import { createDraftingService } from "./services/drafting";
 import { CommentsConfig } from "./types/CommentsConfig";
@@ -1922,6 +1991,12 @@ export default definePlugin("comments", {
     ],
 
     contributes: [
+        {
+            slot: "documents.nav",
+            order: 10,
+            requires: ["comments.write"],
+            render: DraftsLink,
+        },
         {
             slot: "documents.beside",
             order: 10,
@@ -2130,7 +2205,7 @@ export type { DraftList } from "./types/DraftList";
 .root .name
 {
     overflow: hidden;
-    font-weight: var(--example17);
+    font-weight: var(--example20);
     text-overflow: ellipsis;
     white-space: nowrap;
 }
@@ -2138,13 +2213,13 @@ export type { DraftList } from "./types/DraftList";
 .root .each
 {
     color: var(--example2);
-    font-size: var(--example17);
+    font-size: var(--example18);
 }
 
 .root .length
 {
-    font-family: var(--example16);
-    font-size: var(--example17);
+    font-family: var(--example17);
+    font-size: var(--example18);
     font-variant-numeric: tabular-nums;
 }
 
@@ -2152,7 +2227,7 @@ export type { DraftList } from "./types/DraftList";
 {
     min-width: 5rem;
     text-align: right;
-    font-weight: var(--example17);
+    font-weight: var(--example20);
 }
 
 @media (max-width: 40rem)
@@ -2167,21 +2242,21 @@ export type { DraftList } from "./types/DraftList";
 .root .gone
 {
     padding: var(--example12);
-    font-size: var(--example17);
+    font-size: var(--example18);
     color: var(--example10);
     background: var(--example11);
-    border-radius: var(--example14);
+    border-radius: var(--example15);
 }
 
 .root .drop
 {
     padding: var(--example12);
     font: inherit;
-    font-size: var(--example17);
+    font-size: var(--example18);
     color: var(--example2);
     background: none;
     border: var(--example6) solid var(--example5);
-    border-radius: var(--example14);
+    border-radius: var(--example15);
     cursor: pointer;
 }
 
@@ -2298,15 +2373,15 @@ export const usePublishForm = (): PublishForm =>
 
 .root .head
 {
-    max-width: var(--example13);
+    max-width: var(--example14);
 }
 
 .root .eyebrow
 {
     margin: 0 0 var(--example12);
     color: var(--example7);
-    font-size: var(--example17);
-    font-weight: var(--example18);
+    font-size: var(--example18);
+    font-weight: var(--example21);
     letter-spacing: 0.08em;
     text-transform: uppercase;
 }
@@ -2314,17 +2389,17 @@ export const usePublishForm = (): PublishForm =>
 .root .title
 {
     margin: 0;
-    font-size: var(--example18);
-    font-weight: var(--example18);
+    font-size: var(--example19);
+    font-weight: var(--example21);
     letter-spacing: -0.02em;
-    line-height: var(--example17);
+    line-height: var(--example22);
 }
 
 .root .lead
 {
     margin: var(--example12) 0 0;
     color: var(--example2);
-    line-height: var(--example17);
+    line-height: var(--example22);
 }
 
 .root .action
@@ -2334,7 +2409,7 @@ export const usePublishForm = (): PublishForm =>
     color: var(--example9);
     background: var(--example7);
     border: var(--example6) solid transparent;
-    border-radius: var(--example14);
+    border-radius: var(--example15);
     cursor: pointer;
 }
 
@@ -2397,20 +2472,20 @@ export const Drafts = () =>
     display: flex;
     flex-direction: column;
     gap: var(--example13);
-    max-width: var(--example13);
+    max-width: var(--example14);
 }
 
 .root .head
 {
-    max-width: var(--example13);
+    max-width: var(--example14);
 }
 
 .root .eyebrow
 {
     margin: 0 0 var(--example12);
     color: var(--example7);
-    font-size: var(--example17);
-    font-weight: var(--example18);
+    font-size: var(--example18);
+    font-weight: var(--example21);
     letter-spacing: 0.08em;
     text-transform: uppercase;
 }
@@ -2418,17 +2493,17 @@ export const Drafts = () =>
 .root .title
 {
     margin: 0;
-    font-size: var(--example18);
-    font-weight: var(--example18);
+    font-size: var(--example19);
+    font-weight: var(--example21);
     letter-spacing: -0.02em;
-    line-height: var(--example17);
+    line-height: var(--example22);
 }
 
 .root .lead
 {
     margin: var(--example12) 0 0;
     color: var(--example2);
-    line-height: var(--example17);
+    line-height: var(--example22);
 }
 
 .root .form
@@ -2439,7 +2514,7 @@ export const Drafts = () =>
     padding: var(--example13);
     background-color: var(--example3);
     border: var(--example6) solid var(--example5);
-    border-radius: var(--example14);
+    border-radius: var(--example15);
 }
 
 .root .choices
@@ -2453,7 +2528,7 @@ export const Drafts = () =>
 {
     margin: 0;
     color: var(--example2);
-    line-height: var(--example17);
+    line-height: var(--example22);
 }
 
 @media (max-width: 40rem)
@@ -2474,8 +2549,8 @@ export const Drafts = () =>
 
 .root .what
 {
-    font-size: var(--example17);
-    font-weight: var(--example18);
+    font-size: var(--example18);
+    font-weight: var(--example21);
     color: var(--example2);
 }
 
@@ -2486,7 +2561,7 @@ export const Drafts = () =>
     color: var(--example1);
     background: var(--example3);
     border: var(--example6) solid var(--example5);
-    border-radius: var(--example14);
+    border-radius: var(--example15);
 }
 
 .root .input[aria-invalid]
@@ -2496,13 +2571,13 @@ export const Drafts = () =>
 
 .root .hint
 {
-    font-size: var(--example17);
+    font-size: var(--example18);
     color: var(--example2);
 }
 
 .root .problem
 {
-    font-size: var(--example17);
+    font-size: var(--example18);
     color: var(--example10);
 }
 
@@ -2513,7 +2588,7 @@ export const Drafts = () =>
     color: var(--example9);
     background: var(--example7);
     border: var(--example6) solid transparent;
-    border-radius: var(--example14);
+    border-radius: var(--example15);
     cursor: pointer;
 }
 
@@ -2531,7 +2606,7 @@ export const Drafts = () =>
     padding: var(--example13);
     background: var(--example3);
     border: var(--example6) solid var(--example5);
-    border-radius: var(--example14);
+    border-radius: var(--example15);
 }
 
 ==> src/plugins/comments/pages/Publish/Publish.tsx
@@ -2639,8 +2714,8 @@ export const Publish = () =>
 {
     margin: 0;
     color: var(--example2);
-    font-size: var(--example17);
-    font-weight: var(--example18);
+    font-size: var(--example18);
+    font-weight: var(--example21);
     letter-spacing: 0.06em;
     text-transform: uppercase;
 }
@@ -2649,14 +2724,14 @@ export const Publish = () =>
 {
     margin: 0;
     color: var(--example2);
-    font-size: var(--example17);
+    font-size: var(--example18);
 }
 
 .root .problem
 {
     margin: 0;
     color: var(--example10);
-    font-size: var(--example17);
+    font-size: var(--example18);
 }
 
 
@@ -2668,17 +2743,17 @@ export const Publish = () =>
     color: var(--example1);
     background-color: var(--example3);
     border: 1px solid var(--example5);
-    border-radius: var(--example14);
+    border-radius: var(--example15);
     resize: vertical;
 }
 
 .root .drafted
 {
     padding: var(--example12);
-    font-size: var(--example17);
+    font-size: var(--example18);
     color: var(--example9);
     background: var(--example7);
-    border-radius: var(--example14);
+    border-radius: var(--example15);
 }
 
 .root .field
@@ -2690,8 +2765,8 @@ export const Publish = () =>
 
 .root .what
 {
-    font-size: var(--example17);
-    font-weight: var(--example18);
+    font-size: var(--example18);
+    font-weight: var(--example21);
     color: var(--example2);
 }
 
@@ -2702,7 +2777,7 @@ export const Publish = () =>
     color: var(--example9);
     background: var(--example7);
     border: var(--example6) solid transparent;
-    border-radius: var(--example14);
+    border-radius: var(--example15);
     cursor: pointer;
 }
 
@@ -2806,7 +2881,7 @@ export const AddComment = ({ payload }: AddCommentProps) =>
     align-items: flex-start;
     padding: var(--example13);
     border: var(--example6) solid var(--example10);
-    border-radius: var(--example14);
+    border-radius: var(--example15);
     background-color: var(--example11);
 }
 
@@ -2814,14 +2889,14 @@ export const AddComment = ({ payload }: AddCommentProps) =>
 {
     margin: 0;
     color: var(--example1);
-    font-weight: var(--example17);
+    font-weight: var(--example20);
 }
 
 .root .body
 {
     margin: 0;
     color: var(--example2);
-    font-size: var(--example17);
+    font-size: var(--example18);
 }
 
 .root .again
@@ -2829,11 +2904,11 @@ export const AddComment = ({ payload }: AddCommentProps) =>
     align-self: flex-start;
     padding: var(--example12);
     font: inherit;
-    font-size: var(--example17);
+    font-size: var(--example18);
     color: var(--example1);
     background: none;
     border: var(--example6) solid var(--example5);
-    border-radius: var(--example14);
+    border-radius: var(--example15);
     cursor: pointer;
 }
 
@@ -2866,7 +2941,7 @@ export const CommentTrouble = ({ error, plugin, reset }: CommentTroubleProps) =>
     overflow: hidden;
     background-color: var(--example3);
     border: var(--example6) solid var(--example5);
-    border-radius: var(--example14);
+    border-radius: var(--example15);
 }
 
 .root .title
@@ -2876,8 +2951,8 @@ export const CommentTrouble = ({ error, plugin, reset }: CommentTroubleProps) =>
     border-bottom: var(--example6) solid var(--example5);
     background-color: var(--example4);
     color: var(--example2);
-    font-size: var(--example17);
-    font-weight: var(--example18);
+    font-size: var(--example18);
+    font-weight: var(--example21);
     letter-spacing: 0.06em;
     text-transform: uppercase;
 }
@@ -2898,7 +2973,7 @@ export const CommentTrouble = ({ error, plugin, reset }: CommentTroubleProps) =>
 {
     height: 1em;
     background: var(--example4);
-    border-radius: var(--example14);
+    border-radius: var(--example15);
 }
 
 ==> src/plugins/comments/sections/DraftedDocuments/DraftedDocuments.tsx
@@ -2965,7 +3040,7 @@ export const DraftedDocuments = ({ documentIds }: DraftedDocumentsProps) =>
     overflow: hidden;
     background-color: var(--example3);
     border: var(--example6) solid var(--example5);
-    border-radius: var(--example14);
+    border-radius: var(--example15);
     box-shadow: var(--example5);
 }
 
@@ -2998,13 +3073,13 @@ export const DraftedDocuments = ({ documentIds }: DraftedDocumentsProps) =>
 .root .term
 {
     color: var(--example2);
-    font-size: var(--example17);
+    font-size: var(--example18);
 }
 
 .root .sum
 {
-    font-size: var(--example18);
-    font-weight: var(--example18);
+    font-size: var(--example19);
+    font-weight: var(--example21);
     font-variant-numeric: tabular-nums;
 }
 
@@ -3021,14 +3096,14 @@ export const DraftedDocuments = ({ documentIds }: DraftedDocumentsProps) =>
 .root .title
 {
     margin: 0;
-    font-size: var(--example18);
-    font-weight: var(--example18);
+    font-size: var(--example19);
+    font-weight: var(--example21);
 }
 
 .root .hint
 {
     margin: 0;
-    font-size: var(--example17);
+    font-size: var(--example18);
     color: var(--example2);
 }
 
@@ -3083,6 +3158,44 @@ export const DraftLines = ({ list, locale, onDrop, action }: DraftLinesProps) =>
                 {action}
             </footer>
         </section>
+    );
+};
+
+==> src/plugins/comments/sections/DraftsLink/DraftsLink.module.css
+
+.root
+{
+    padding: var(--example12) var(--example13);
+    font-size: var(--example18);
+    color: var(--example2);
+    text-decoration: none;
+    border-radius: var(--example15);
+    transition: color var(--example16);
+}
+
+.root:hover
+{
+    color: var(--example1);
+}
+
+.here
+{
+    color: var(--example1);
+    background: var(--example4);
+}
+
+==> src/plugins/comments/sections/DraftsLink/DraftsLink.tsx
+
+import { Link } from "@tanstack/react-router";
+
+import styles from "./DraftsLink.module.css";
+
+export const DraftsLink = () =>
+{
+    return (
+        <Link to="/comments" className={styles.root} activeProps={{ className: styles.here }}>
+            Drafts
+        </Link>
     );
 };
 
@@ -3243,9 +3356,17 @@ const drafted = async (): Promise<DraftingService> =>
 
 describe("the contract", () =>
 {
-    test("names documents as a dependency, since it reaches its API and its slot", () =>
+    test("names documents as a dependency, for its API and its event, never for its slots", () =>
     {
         expect(comments.definition.dependsOn).toEqual(["documents"]);
+    });
+
+    test("and fills two of its slots, which on their own would need no dependency at all", () =>
+    {
+        const filled = (comments.definition.contributes ?? []).map((one) => one.slot);
+
+        expect(filled).toContain("documents.nav");
+        expect(filled).toContain("documents.beside");
     });
 
     test("and every route it declares asks for the permission it declares", () =>
@@ -3691,6 +3812,21 @@ describe("the slot the desk opens", () =>
 
         expect(opened.problem).toBeDefined();
         expect(opened.contributions).toEqual([]);
+
+        await app.stop();
+    });
+});
+
+describe("the way into the drafts", () =>
+{
+    test("is a contribution the desk places, so the desk names no plugin", async () =>
+    {
+        const app = await Mount.open(new QueryClient());
+
+        const opened = app.kernel.slot("documents.nav", {});
+
+        expect(opened.problem).toBeUndefined();
+        expect(opened.contributions.length).toBeGreaterThan(0);
 
         await app.stop();
     });

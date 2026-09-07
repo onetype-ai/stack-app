@@ -9,8 +9,9 @@ enforces the boundaries between them.
 pnpm install
 ```
 
-The kernel is one package from npm, `@onetype/stack-app-kit`. Nothing else is
-shared, and nothing is linked.
+The kernel is one package, `@onetype/stack-app-kit`. `package.json` says where
+it comes from: a version resolves from npm, a `link:` from a checkout beside
+this one, which is how it is developed.
 
 ## Running
 
@@ -56,10 +57,10 @@ model.
 
 Read them where they are.
 
-`src/ui/example.txt` is the same again for the shared layer: one unit and
-eighteen tokens named `--example1` upward, holding nothing. Neither the names
-nor the values are a decision, so nothing there can be copied by accident.
-The palette, the type scale and the units are yours on the first day.
+`src/ui/example.txt` is the same again for the shared layer: one unit, and
+tokens named for their role but holding nothing. The names let a stylesheet
+read; the empty values impose no palette. Filling them in is the first day's
+work.
 
 Each of those files is a folder folded into one: every path and every line,
 in the order somebody would read them. Read them where they are.

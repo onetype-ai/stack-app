@@ -75,9 +75,19 @@ describe("this application, booted the way it ships rather than from plugins a t
 
     test("and grants nothing at all until a server says who is reading", async () =>
     {
+        const { discover } = await import("@onetype/stack-app-kit");
+
+        const plugins = discover(import.meta.glob("../../plugins/*/plugin.ts", { eager: true }));
+        const declared = plugins.flatMap((one) => Object.keys(one.definition.permissions ?? {}));
+
         const app = await Mount.open(new QueryClient());
 
-        expect(app.kernel.permissions.has("documents.read")).toBe(false);
+        for (const permission of declared)
+        {
+            expect(app.kernel.permissions.has(permission)).toBe(false);
+        }
+
+        expect(app.kernel.permissions.has("nobody.declared.this")).toBe(false);
 
         await app.stop();
     });

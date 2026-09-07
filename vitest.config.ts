@@ -10,6 +10,11 @@ export default mergeConfig(
             setupFiles: ["./tests/setup.ts"],
             include: ["src/**/tests/**/*.test.{ts,tsx}"],
             passWithNoTests: false,
+            typecheck: {
+                enabled: true,
+                include: ["src/**/tests/**/*.test.{ts,tsx}"],
+                tsconfig: "./tsconfig.json",
+            },
         },
     }),
 );

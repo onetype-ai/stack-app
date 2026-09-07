@@ -23,9 +23,9 @@ const unpacked = (at) => (existsSync(at)
     ? readdirSync(at, { withFileTypes: true }).filter((entry) => entry.isDirectory() || entry.name.endsWith(".ts"))
     : []).length > 0;
 
-if (!unpacked("src/plugins") || !unpacked("src/utils"))
+if (!unpacked("src/plugins"))
 {
-    console.log("the examples are packed away, so there is no application to open. Unpack the plugins and the utils first.");
+    console.log("no plugin folder holds anything, so there are no routes to open. Unpack the examples, or write a plugin.");
     process.exit(0);
 }
 
@@ -75,11 +75,24 @@ try
 {
     await page.goto(AT, { waitUntil: "networkidle" });
 
-    // "/" belongs to no plugin. A reader who opens the application and is
-    // answered 404 at the address they were given is the whole app broken.
-    if (!page.url().endsWith("/documents"))
+    // "/" belongs to no plugin, so it forwards to the first route declared. A
+    // reader answered 404 at the address they were given is the whole app
+    // broken, whatever that first route happens to be called.
+    // A build that failed leaves an empty root: say that rather than blaming
+    // the router, which is what a reader would otherwise go and read.
+    const mounted = await page.locator("#root").count();
+    const painted = ((await page.locator("#root").textContent()) ?? "").trim();
+
+    if (mounted === 0 || painted === "")
     {
-        throw new Error(`"/" did not send the reader anywhere: it stayed at ${page.url()}, which is a 404 at the address the application is opened by.`);
+        throw new Error(`nothing mounted at #root. The application did not start: read the vite output above, and the console errors below.`);
+    }
+
+    const landed = new URL(page.url()).pathname;
+
+    if (landed === "/")
+    {
+        throw new Error(`"/" forwarded nowhere: the reader is still at "/", which no plugin declares. Something must declare a route.`);
     }
 
     // Nothing answers /api here, so no document arrives. What must still be
@@ -87,11 +100,13 @@ try
     // crash: a blank page with a header passes every unit test there is.
     await page.waitForSelector("main", { timeout: 10_000 });
 
-    const shell = await page.locator("header a").count();
+    // A shell may put its navigation in a header, a sidebar or neither, so ask
+    // whether anything on the page leads anywhere rather than where it sits.
+    const leads = await page.locator("a[href], button").count();
 
-    if (shell === 0)
+    if (leads === 0)
     {
-        wrong.push("the frame rendered without its own navigation");
+        wrong.push("nothing on the page leads anywhere: no link and no control rendered");
     }
 
     const said = (await page.locator("main").textContent()) ?? "";
