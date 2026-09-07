@@ -3,13 +3,7 @@ import { describe, expect, test } from "vitest";
 
 import { Mount, Routes } from "../index";
 
-/**
- * The one case that boots what ships, rather than a plugin a test wrote.
- *
- * A contract this application declares wrongly fails here and nowhere else:
- * every other test builds its own plugins, so none of them reads `plugins/`.
- */
-describe("this application", () =>
+describe("this application, booted the way it ships rather than from plugins a test wrote", () =>
 {
     test("starts with the plugins it ships, or says which one refused", async () =>
     {
@@ -20,11 +14,7 @@ describe("this application", () =>
         await app.stop();
     });
 
-    /**
-     * Whatever ships, no two plugins may claim one path. With the examples
-     * packed away there is nothing to collide, and that is still the answer.
-     */
-    test("registers each declared page once, and never a path twice", async () =>
+    test("registers each declared page once, and never a path twice, whatever ships", async () =>
     {
         const app = await Mount.open(new QueryClient());
         const paths = app.kernel.routes().map((route) => route.path);
@@ -47,12 +37,7 @@ describe("this application", () =>
         await app.stop();
     });
 
-    /**
-     * A router needs a shell to render pages into, and nothing else here
-     * would say so: the failure reaches a blank screen rather than a test.
-     * Which answer is right depends on whether a plugin ships a frame.
-     */
-    test("builds a router when a plugin frames it, and says so when none does", async () =>
+    test("builds a router when a plugin frames it, and refuses naming the frame when none does", async () =>
     {
         const app = await Mount.open(new QueryClient());
 
@@ -68,18 +53,39 @@ describe("this application", () =>
         await app.stop();
     });
 
-    /**
-     * A guarded route asks the kernel, so a kernel that granted nothing turns
-     * every one of them into a blanket 403 with no error anywhere.
-     */
-    test("carries the permissions its plugins granted, and only those", async () =>
+    test("requires only permissions some plugin declares, so no guard asks for what nothing grants", async () =>
+    {
+        const { discover } = await import("@onetype/stack-app-kit");
+
+        const plugins = discover(import.meta.glob("../../plugins/*/plugin.ts", { eager: true }));
+        const declared = plugins.flatMap((one) => Object.keys(one.definition.permissions ?? {}));
+
+        const app = await Mount.open(new QueryClient());
+
+        for (const route of app.kernel.routes())
+        {
+            for (const permission of route.requires ?? [])
+            {
+                expect(declared).toContain(permission);
+            }
+        }
+
+        await app.stop();
+    });
+
+    test("and grants nothing at all until a server says who is reading", async () =>
     {
         const app = await Mount.open(new QueryClient());
 
-        /* Whatever ships was declared, so every requirement is answerable. */
-        const required = app.kernel.routes().flatMap((route) => route.requires ?? []);
+        expect(app.kernel.permissions.has("documents.read")).toBe(false);
 
-        expect(app.kernel.permissions.all(required)).toBe(true);
+        await app.stop();
+    });
+
+    test("and grants nothing nobody declared", async () =>
+    {
+        const app = await Mount.open(new QueryClient());
+
         expect(app.kernel.permissions.has("nobody.granted.this")).toBe(false);
 
         await app.stop();
@@ -103,21 +109,17 @@ describe("this application", () =>
 
 describe("a start the kernel refuses", () =>
 {
-    /**
-     * The message names the plugin, the key and the fix, and reaches nobody
-     * unless the entry catches it. `main.tsx` does; this is what says so.
-     */
-    test("throws a message naming the plugin and what to do", async () =>
+    test("throws a message naming the plugin and the dependency, for main.tsx to show", async () =>
     {
         const { createKernel, definePlugin } = await import("@onetype/stack-app-kit");
 
-        const wrong = definePlugin("billing", {
+        const missingDependency = definePlugin("billing", {
             version: "1.0.0",
             describe: "Depends on nothing that exists.",
             dependsOn: ["nowhere"],
         });
 
-        const kernel = createKernel({ plugins: [wrong] });
+        const kernel = createKernel({ plugins: [missingDependency] });
 
         await expect(kernel.start()).rejects.toThrow(/billing/);
         await expect(kernel.start()).rejects.toThrow(/nowhere/);
@@ -135,3 +137,4 @@ describe("a start the kernel refuses", () =>
         expect(kernel.started()).toBe(false);
     });
 });
+

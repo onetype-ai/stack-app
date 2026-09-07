@@ -1,0 +1,691 @@
+# src/ui packed
+
+Every file of these units, one after another. A line starting
+with "==> " opens a file and names its path; everything until the next
+such line is that file, byte for byte.
+
+Read it here. Nothing needs unpacking, and editing this file directly is work
+the next pack throws away.
+
+==> src/ui/usage.md
+
+# ui
+
+Shared presentational layer. Knows no domain, imports no plugin.
+
+```ts
+import { Example } from "@ui";
+import "@ui/styles/index.css";
+```
+
+## What is here, and what is not
+
+One unit, `Example`, and eighteen tokens named `--example1` upward. Neither is
+a decision: the names say nothing about a role and the values say nothing at
+all, so nothing here can be copied into a real application by accident.
+
+The whole folder folds into `example.txt`. Read it, take the mechanics, and
+write your own: the palette, the type scale and the units your application
+needs are yours to choose on the first day.
+
+## Layout
+
+- `components/`: smallest units. Stateless, no domain knowledge.
+- `sections/`: blocks composed of components. Hold their own UI state, never
+  load data.
+- `styles/`: `reset` clears, `tokens` declares, `base` applies. Imported once,
+  in that order, through `styles/index.css`.
+- `index.ts`: the only entry. A plugin imports `@ui`, never a path inside it.
+
+## Rules
+
+Styling comes from tokens: a literal colour, length or duration in a module is
+a token that was not declared. `Project.checks()` refuses both a `var()`
+nothing declares and a `styles.name` no module carries.
+
+Props in, markup out. A unit never fetches, never reads global state, and never
+knows what sits above it. Keyboard-operable, visible focus, an empty case.
+
+## Adding a unit
+
+1. Create `Name/` holding `Name.tsx` and `Name.module.css`.
+2. Export it from `index.ts`.
+3. Test it through its public surface, then break the behaviour and watch the
+   test fail. One that stays green proves nothing.
+
+For what a unit accepts, read its exported prop type. The type is the contract.
+
+==> src/ui/index.ts
+
+export { Example } from "./components/Example/Example";
+export type { ExampleProps, ExampleTone } from "./components/Example/Example";
+
+==> src/ui/components/Example/Example.module.css
+
+.root
+{
+    display: flex;
+    flex-direction: column;
+    gap: var(--example12);
+    padding: var(--example13);
+    color: var(--example1);
+    background: var(--example3);
+    border: var(--example6) solid var(--example5);
+    border-radius: var(--example14);
+    transition:
+        border-color var(--example15) var(--example15),
+        box-shadow var(--example15) var(--example15);
+}
+
+.root[data-tone="accent"]
+{
+    border-color: var(--example7);
+    background: var(--example8);
+}
+
+.root[data-tone="alarm"]
+{
+    border-color: var(--example10);
+    background: var(--example11);
+}
+
+.root[data-busy]
+{
+    cursor: progress;
+}
+
+.root .head
+{
+    display: flex;
+    gap: var(--example12);
+    align-items: baseline;
+    justify-content: space-between;
+}
+
+.root .title
+{
+    margin: 0;
+    font-family: var(--example16);
+    font-size: var(--example18);
+    font-weight: var(--example18);
+    line-height: var(--example17);
+    color: var(--example1);
+}
+
+.root .dismiss
+{
+    flex: none;
+    padding: var(--example12);
+    font: inherit;
+    line-height: 1;
+    color: var(--example2);
+    background: none;
+    border: var(--example6) solid transparent;
+    border-radius: var(--example14);
+    cursor: pointer;
+    transition: color var(--example15) var(--example15);
+}
+
+.root .dismiss:hover
+{
+    color: var(--example1);
+}
+
+.root .note
+{
+    margin: 0;
+    font-size: var(--example17);
+    color: var(--example2);
+}
+
+.root .body
+{
+    font-size: var(--example17);
+    line-height: var(--example17);
+}
+
+.root .waiting
+{
+    display: flex;
+    flex-direction: column;
+    gap: var(--example12);
+}
+
+.root .bar
+{
+    height: 1em;
+    background: var(--example4);
+    border-radius: var(--example14);
+}
+
+.root .bar:last-child
+{
+    width: 60%;
+}
+
+.root .problem
+{
+    margin: 0;
+    font-size: var(--example17);
+    color: var(--example10);
+}
+
+.root .foot
+{
+    display: flex;
+    gap: var(--example12);
+    align-items: center;
+    justify-content: flex-end;
+    padding-top: var(--example12);
+    border-top: var(--example6) solid var(--example5);
+}
+
+@media (prefers-reduced-motion: reduce)
+{
+    .root,
+    .root .dismiss
+    {
+        transition-duration: 1ms;
+    }
+}
+
+==> src/ui/components/Example/Example.tsx
+
+import { useId, useRef } from "react";
+
+import { useDismiss, useFocusTrap } from "@onetype/stack-app-kit/react";
+
+import styles from "./Example.module.css";
+
+import type { ReactNode } from "react";
+
+export type ExampleTone = "plain" | "accent" | "alarm";
+
+export type ExampleProps = {
+    title: string;
+    tone?: ExampleTone;
+    note?: string;
+    problem?: string;
+    busy?: boolean;
+    dismissible?: boolean;
+    onDismiss?: () => void;
+    children?: ReactNode;
+    footer?: ReactNode;
+};
+
+export const Example = ({
+    title,
+    tone = "plain",
+    note,
+    problem,
+    busy = false,
+    dismissible = false,
+    onDismiss,
+    children,
+    footer,
+}: ExampleProps) =>
+{
+    const id = useId();
+    const region = useRef<HTMLElement>(null);
+
+    useFocusTrap(dismissible, region);
+    useDismiss(dismissible, region, undefined, onDismiss ?? (() => undefined));
+
+    const describedBy = [note !== undefined ? `${id}-note` : "", problem !== undefined ? `${id}-problem` : ""]
+        .filter(Boolean)
+        .join(" ");
+
+    return (
+        <section
+            ref={region}
+            className={styles.root}
+            data-tone={tone}
+            data-busy={busy || undefined}
+            aria-labelledby={id}
+            aria-describedby={describedBy === "" ? undefined : describedBy}
+            aria-busy={busy || undefined}
+        >
+            <header className={styles.head}>
+                <h2 id={id} className={styles.title}>{title}</h2>
+
+                {dismissible && (
+                    <button
+                        type="button"
+                        className={styles.dismiss}
+                        onClick={onDismiss}
+                        aria-label={`Dismiss ${title}`}
+                    >
+                        ✕
+                    </button>
+                )}
+            </header>
+
+            {note !== undefined && <p id={`${id}-note`} className={styles.note}>{note}</p>}
+
+            {busy
+                ? (
+                    <div className={styles.waiting} aria-hidden="true">
+                        <span className={styles.bar} />
+                        <span className={styles.bar} />
+                        <span className={styles.bar} />
+                    </div>
+                )
+                : <div className={styles.body}>{children}</div>}
+
+            {problem !== undefined && (
+                <p id={`${id}-problem`} className={styles.problem} role="alert">{problem}</p>
+            )}
+
+            {footer !== undefined && <footer className={styles.foot}>{footer}</footer>}
+        </section>
+    );
+};
+
+==> src/ui/styles/base.css
+
+body
+{
+    font-family: var(--example16);
+    font-size: var(--example17);
+    line-height: var(--example17);
+    color: var(--example1);
+    background: var(--example3);
+    -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4
+{
+    font-weight: var(--example18);
+    line-height: var(--example17);
+}
+
+h1 { font-size: var(--example18); }
+h2 { font-size: var(--example18); }
+h3 { font-size: var(--example17); }
+h4 { font-size: var(--example17); }
+
+p, ul, ol, dl, figure
+{
+    margin-block: 0;
+}
+
+small
+{
+    font-size: var(--example17);
+    color: var(--example2);
+}
+
+code, kbd, samp, pre
+{
+    font-family: var(--example16);
+    font-size: var(--example17);
+}
+
+a
+{
+    color: var(--example7);
+    text-decoration-thickness: 1px;
+    text-underline-offset: 2px;
+}
+
+:focus-visible
+{
+    outline: 2px solid var(--example7);
+    outline-offset: 2px;
+    border-radius: var(--example14);
+}
+
+button, input, select, textarea
+{
+    font: inherit;
+    color: inherit;
+}
+
+button
+{
+    cursor: pointer;
+}
+
+:disabled
+{
+    cursor: not-allowed;
+    opacity: 0.55;
+}
+
+hr
+{
+    border: 0;
+    border-top: var(--example6) solid var(--example5);
+}
+
+table
+{
+    border-collapse: collapse;
+}
+
+th
+{
+    text-align: left;
+    font-weight: var(--example18);
+}
+
+==> src/ui/styles/index.css
+
+@import "./reset.css";
+@import "./tokens.css";
+@import "./base.css";
+
+==> src/ui/styles/reset.css
+
+*,
+*::before,
+*::after
+{
+    box-sizing: border-box;
+}
+
+*
+{
+    margin: 0;
+    padding: 0;
+}
+
+html
+{
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    tab-size: 4;
+}
+
+body
+{
+    min-height: 100svh;
+}
+
+img,
+picture,
+video,
+canvas,
+svg,
+iframe
+{
+    display: block;
+    max-width: 100%;
+}
+
+img,
+video
+{
+    height: auto;
+}
+
+input,
+button,
+textarea,
+select
+{
+    font: inherit;
+    color: inherit;
+    background: none;
+    border: none;
+    border-radius: 0;
+    letter-spacing: inherit;
+}
+
+button,
+[type="button"],
+[type="submit"],
+[type="reset"]
+{
+    -webkit-appearance: none;
+    appearance: none;
+    cursor: pointer;
+}
+
+button:disabled
+{
+    cursor: default;
+}
+
+textarea
+{
+    resize: vertical;
+}
+
+:where(input, textarea, select):invalid
+{
+    box-shadow: none;
+}
+
+p,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+li,
+dd,
+dt,
+figcaption
+{
+    overflow-wrap: break-word;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6
+{
+    font-size: inherit;
+    font-weight: inherit;
+}
+
+ol,
+ul,
+menu
+{
+    list-style: none;
+}
+
+a
+{
+    color: inherit;
+    text-decoration: none;
+}
+
+table
+{
+    border-collapse: collapse;
+    border-spacing: 0;
+}
+
+th
+{
+    font-weight: inherit;
+    text-align: left;
+}
+
+fieldset,
+legend
+{
+    border: none;
+}
+
+hr
+{
+    border: none;
+    height: 0;
+    color: inherit;
+}
+
+address
+{
+    font-style: inherit;
+}
+
+dialog
+{
+    max-width: none;
+    max-height: none;
+    color: inherit;
+    background: none;
+    border: none;
+    padding: 0;
+}
+
+dialog::backdrop
+{
+    background: none;
+}
+
+summary
+{
+    display: block;
+    cursor: pointer;
+    list-style: none;
+}
+
+summary::-webkit-details-marker
+{
+    display: none;
+}
+
+[hidden]
+{
+    display: none !important;
+}
+
+@media (prefers-reduced-motion: reduce)
+{
+    *,
+    *::before,
+    *::after
+    {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+==> src/ui/styles/tokens.css
+
+:root
+{
+    color-scheme: light dark;
+
+    --example1: example1;
+    --example2: example2;
+    --example3: example3;
+    --example4: example4;
+    --example5: example5;
+    --example6: example6;
+    --example7: example7;
+    --example8: example8;
+    --example9: example9;
+    --example10: example10;
+    --example11: example11;
+    --example12: example12;
+    --example13: example13;
+    --example14: example14;
+    --example15: example15;
+    --example16: example16;
+    --example17: example17;
+    --example18: example18;
+}
+
+==> src/ui/tests/units.test.tsx
+
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { describe, expect, test, vi } from "vitest";
+
+import { Example } from "../index";
+
+describe("a region a reader is meant to act on", () =>
+{
+    test("names itself by its own heading, so a screen reader can jump to it", () =>
+    {
+        render(<Example title="What is waiting" />);
+
+        expect(screen.getByRole("region", { name: "What is waiting" })).toBeDefined();
+    });
+
+    test("ties its note to the region, so it is read with the heading and not after it", () =>
+    {
+        render(<Example title="What is waiting" note="Nothing has been sent yet." />);
+
+        const said = screen.getByRole("region", { name: "What is waiting" }).getAttribute("aria-describedby") ?? "";
+
+        expect(said).not.toBe("");
+        expect(document.getElementById(said.split(" ")[0] ?? "")?.textContent).toBe("Nothing has been sent yet.");
+    });
+});
+
+describe("a region that is still loading", () =>
+{
+    test("says it is busy, so nothing reads as an empty one", () =>
+    {
+        render(<Example title="What is waiting" busy />);
+
+        expect(screen.getByRole("region", { name: "What is waiting" }).getAttribute("aria-busy")).toBe("true");
+    });
+
+    test("and hides what stands in for the content, so a reader hears it once", () =>
+    {
+        const { container } = render(<Example title="What is waiting" busy>Real content</Example>);
+
+        expect(screen.queryByText("Real content")).toBeNull();
+        expect(container.querySelector("[aria-hidden='true']")).not.toBeNull();
+    });
+});
+
+describe("a region with something wrong", () =>
+{
+    test("announces the problem rather than only colouring a border", () =>
+    {
+        render(<Example title="What is waiting" problem="That board does not exist." />);
+
+        expect(screen.getByRole("alert").textContent).toBe("That board does not exist.");
+    });
+
+    test("and ties it to the region as well as the note", () =>
+    {
+        render(<Example title="What is waiting" note="Pick a board." problem="That board does not exist." />);
+
+        const said = screen.getByRole("region", { name: "What is waiting" }).getAttribute("aria-describedby") ?? "";
+
+        expect(said.split(" ")).toHaveLength(2);
+    });
+});
+
+describe("a region a reader may dismiss", () =>
+{
+    test("offers a control that names what it closes", () =>
+    {
+        render(<Example title="What is waiting" dismissible onDismiss={() => undefined} />);
+
+        expect(screen.getByRole("button", { name: "Dismiss What is waiting" })).toBeDefined();
+    });
+
+    test("and says so when it is pressed", async () =>
+    {
+        const dismissed = vi.fn();
+
+        render(<Example title="What is waiting" dismissible onDismiss={dismissed} />);
+
+        await userEvent.click(screen.getByRole("button", { name: "Dismiss What is waiting" }));
+
+        expect(dismissed).toHaveBeenCalledOnce();
+    });
+
+    test("while one nobody may dismiss offers no control at all", () =>
+    {
+        render(<Example title="What is waiting" />);
+
+        expect(screen.queryByRole("button")).toBeNull();
+    });
+});

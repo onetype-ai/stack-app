@@ -6,19 +6,18 @@ import { findMissingDocs, findOversizedDocs, findUndocumentedKeys, findUnexplain
 
 const ROOT = process.cwd();
 
-/* Packed into docs.md, so a check that reads them has nothing until unpacked. */
 const unpacked = existsSync(join(ROOT, "#docs"));
 
-describe.skipIf(!unpacked)("the documents this application ships", () =>
+describe.skipIf(!unpacked)("the documents this application ships, once unpacked from docs.md", () =>
 {
     test("every contract document stays within 1800 characters", () =>
     {
-        const over = findOversizedDocs(join(ROOT, "#docs")).map((doc) =>
+        const oversized = findOversizedDocs(join(ROOT, "#docs")).map((doc) =>
         {
             return `${doc.path.replace(`${ROOT}/`, "")}: ${doc.size}`;
         });
 
-        expect(over).toEqual([]);
+        expect(oversized).toEqual([]);
     });
 
     test("the root documents are present and say something", () =>
@@ -28,8 +27,7 @@ describe.skipIf(!unpacked)("the documents this application ships", () =>
         expect(findMissingDocs(ROOT, required)).toEqual([]);
     });
 
-/* Found by what it holds: tsup's chunk name carries a hash that moves. */
-const declared = (): string =>
+const declaredByWhateverChunkHoldsIt = (): string =>
 {
     const at = join(ROOT, "node_modules", "@onetype", "stack-app-kit", "dist");
 
@@ -48,17 +46,14 @@ const declared = (): string =>
 
     test("every key the contract accepts is documented", () =>
     {
-        const contract = declared();
+        const contract = declaredByWhateverChunkHoldsIt();
         const procedure = readFileSync(join(ROOT, "#docs", "procedures", "plugin", "contract.md"), "utf8");
 
-        /* An empty answer means it parsed; a vanished shape throws above. */
         expect(findUndocumentedKeys(contract, procedure)).toEqual([]);
     });
 });
 
-/* Reads src/plugins, not #docs, so it holds whether the documents are packed
-   or not: a plugin nobody can read is one nobody can depend on. */
-test("every plugin explains itself in its own usage.md", () =>
+test("every plugin explains itself in its own usage.md, packed documents or not", () =>
 {
     expect(findUnexplainedPlugins(join(ROOT, "src", "plugins"))).toEqual([]);
 });

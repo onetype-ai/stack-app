@@ -13,7 +13,7 @@ import { spawn } from "node:child_process";
 import { existsSync, readdirSync } from "node:fs";
 import { chromium } from "playwright";
 
-const PORT = 5177;
+const PORT = Number(process.env["PORT"] ?? 7390);
 const AT = `http://localhost:${PORT}`;
 
 // Packed, there are no plugin folders for the bundler's glob to find, so the
@@ -56,7 +56,19 @@ const page = await browser.newPage();
 
 const wrong = [];
 
-page.on("console", (line) => line.type() === "error" && wrong.push(`console: ${line.text()}`));
+// Nothing answers /api with no server up, and that is the answer rather than
+// a fault. Named here so adding another is a deliberate act.
+const answersNotFaults = [/Failed to load resource.*40[34]/];
+
+page.on("console", (line) =>
+{
+    if (line.type() !== "error" || answersNotFaults.some((one) => one.test(line.text())))
+    {
+        return;
+    }
+
+    wrong.push(`console: ${line.text()}`);
+});
 page.on("pageerror", (cause) => wrong.push(`threw: ${cause.message}`));
 
 try
@@ -65,32 +77,36 @@ try
 
     // "/" belongs to no plugin. A reader who opens the application and is
     // answered 404 at the address they were given is the whole app broken.
-    if (!page.url().endsWith("/catalog"))
+    if (!page.url().endsWith("/documents"))
     {
         throw new Error(`"/" did not send the reader anywhere: it stayed at ${page.url()}, which is a 404 at the address the application is opened by.`);
     }
 
-    // The stock list is what a reader came for: a shell that rendered with no
-    // parts is a blank page with a header, and every unit test still passes.
-    await page.waitForSelector("main li", { timeout: 10_000 });
+    // Nothing answers /api here, so no document arrives. What must still be
+    // true is that the shell rendered and the absence is a state rather than a
+    // crash: a blank page with a header passes every unit test there is.
+    await page.waitForSelector("main", { timeout: 10_000 });
 
-    const parts = await page.locator("main li").count();
+    const shell = await page.locator("header a").count();
 
-    if (parts === 0)
+    if (shell === 0)
     {
-        wrong.push("the stock list rendered with no parts");
+        wrong.push("the frame rendered without its own navigation");
     }
 
-    // A price is money formatted at the edge. Reaching the page as NaN or as a
-    // raw integer is what a reader notices first and no unit test sees.
-    const shown = await page.locator("main li").first().textContent();
+    const said = (await page.locator("main").textContent()) ?? "";
 
-    if (shown === null || /NaN/.test(shown) || !/[€$¥]\s?\d[.,]\d\d/.test(shown))
+    if (said.trim() === "")
     {
-        wrong.push(`the first part carries no readable price: ${String(shown)}`);
+        wrong.push("the page rendered nothing at all, not even a reason");
     }
 
-    console.log(`rendered ${String(parts)} parts`);
+    if (/NaN|undefined|\[object Object\]/.test(said))
+    {
+        wrong.push(`the page shows a value it never formatted: ${said.slice(0, 80)}`);
+    }
+
+    console.log(`the shell rendered, and answered without a server`);
 }
 finally
 {

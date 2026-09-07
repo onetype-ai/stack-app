@@ -18,13 +18,18 @@ enforces the boundaries between them.
 
 ```sh
 pnpm install
-pnpm dev              # http://localhost:5173
+pnpm dev              # http://localhost:7380, proxying /api to 7280
 pnpm verify           # lint, typecheck, test, build
+
+PORT=7381 API_PORT=7281 pnpm dev   # your own front, on your own back
 ```
 
-`VITE_API_URL` sets the backend base URL, and defaults to `/api`. Until
-something answers it, a plugin that loads a session gets none: no permissions,
-so every guarded route renders 403.
+`PORT` is where this listens, `API_PORT` which server `/api` reaches. A port
+already taken is refused, never quietly moved to.
+
+`VITE_API_URL` sets the base URL a plugin asks for, and defaults to `/api`.
+Until something answers it, a plugin that loads a session gets none: no
+permissions, so every guarded route renders 403.
 
 ## Adding a plugin
 
@@ -58,11 +63,11 @@ the event bus.
 ## Shared UI
 
 ```ts
-import { Button } from "@ui";
+import { Example } from "@ui";
 ```
 
-`ui` knows no domain and imports no plugin. Tokens and eight units arrive with
-it; a ninth is what this application needs and no other does.
+`ui` knows no domain and imports no plugin. One unit and eighteen tokens
+arrive with it, neither a decision: the palette and the units are yours.
 
 `#docs/procedures/` holds how to build each part; `stack.md` the structure.
 
@@ -107,6 +112,10 @@ renders 403, not 404.
 
 Plugins are discovered from the folder, not a list. A cross-plugin import is
 checked against `dependsOn`, so an undeclared one fails.
+
+There are no comments in `src`, stylesheets included. What one would have said
+is a name, or the name of a test that fails the day it stops being true: prose
+goes stale where neither can.
 
 Every guarantee here was broken on purpose and watched to fail.
 
@@ -161,15 +170,15 @@ Four ways to cross. Pick by what you need back.
 A result now, from a plugin in `dependsOn`.
 
 ```ts
-import { Catalog } from "@plugins/catalog";
+import { Documents } from "@plugins/documents";
 
-const cents = await Catalog.priceOf(ctx, id);
+const title = await Documents.titleOf(ctx, id);
 ```
 
 Methods take `ctx` and reach the plugin's services through it, so they run
 anywhere. `use()` is the exception, for components.
 
-A component crosses the same way: `PartRow` from `@plugins/catalog`. A slot lets the opener place
+A component crosses the same way: `DocumentRow` from `@plugins/documents`. A slot lets the opener place
 what it never imported; an exported component lets the caller place what it
 chose.
 
@@ -210,7 +219,7 @@ kernel refuses to start. The name is passed separately, so an error always
 names the plugin.
 
 ```ts
-export default definePlugin("catalog", { ... });
+export default definePlugin("documents", { ... });
 ```
 
 ## Keys
@@ -237,7 +246,8 @@ export default definePlugin("catalog", { ... });
 ## Rules
 
 `services` comes before anything reading `ctx.services`: inference runs left to
-right. What `ctx` carries is in this project's `docs.md`.
+right. `ctx` is in the kit's `reference.md`; `ctx.http` answers the body, not
+an envelope.
 
 Every crossing carries a description and a schema, and a payload failing it is
 rejected at the boundary. Referencing another plugin's permission makes it a
@@ -280,12 +290,12 @@ Stop at the first yes:
 
 Validation lives beside the type it validates. The schema stands outside the
 object when a method returns that type: a `const` and a `type` of one name
-cannot reference each other in a circle.
+cannot reference each other.
 
 ## Style
 
-Everything is an object with methods; no loose top-level `const`. A hook is the
-exception: React calls it, so it is a function `use…`, one per file.
+Everything is an object with methods; no loose top-level `const`. A hook is
+the exception: React calls it, so it is a function `use…`, one per file.
 
 Allman braces for functions and blocks, arrows included: a named function's
 body is a block with a `return`, never one expression. An inline callback stays
@@ -312,16 +322,24 @@ Test what a schema must reject, not what it takes.
 
 ## Fakes
 
-The context is a fake, not a mock framework. Write one per plugin, giving it
-only what the cases need:
+The kit ships one, and no plugin writes its own:
 
-- `http` returns canned responses and records every request.
-- `events.emit` records instead of dispatching.
-- `hooks.run` returns a rejection reason or `undefined`.
-- `permissions.has` answers from a list the test controls.
+```ts
+import { fakeContext } from "@onetype/stack-app-kit/testing";
 
-Never reach the network. A fake that accepts what a real one rejects is where
-bugs hide.
+const fake = fakeContext({ "GET /documents": { documents: [], total: 0 } }, { config });
+```
+
+A bare value is a 200 carrying it; `{ status: 204 }` is nothing; `{ status,
+body }` refuses the way a server does. It records `asked`, `announced`,
+`invalidated` and `commanded`, answers a hook with `fake.refusal`, and refuses
+a path nothing answers, so a service that stopped calling fails.
+
+Its own tests compare it against the real transport, which is the point: a
+fake each plugin wrote drifted from it and left two hundred tests green over
+thirty-nine broken calls.
+
+Never reach the network.
 
 ## Shape
 
@@ -348,7 +366,6 @@ Order is fixed by `index.css`; a layer may only depend on ones above it.
 - `reset.css`: neutralises browser defaults. Removes only, declares nothing.
 - `tokens.css`: every design value, as custom properties on `:root`. No selectors.
 - `base.css`: bare element appearance. Element selectors only.
-- `utilities.css`: reusable global classes.
 - `index.css`: imports only, never a rule.
 
 The app imports `index.css` once, at the entry. Nothing imports a layer
@@ -360,22 +377,20 @@ Stop at the first yes:
 
 1. A raw value used by more than one rule → `tokens.css`
 2. Every instance of the element should look so without a class → `base.css`
-3. One repeated behaviour across unrelated components → `utilities.css`
-4. Otherwise → a CSS Module beside the component
+3. Otherwise → a CSS Module beside the component
 
 Re-declaring what `base.css` already gives you is a bug.
 
 ## Rules
 
-Every value a component sees is a token, named for role, not appearance. A
-literal colour, length or duration outside `tokens.css` is a defect.
+Every value a component sees is a token. The ones that ship are named
+`--example1` upward and hold nothing: name them for their role and give them
+values on the first day. A literal colour, length or duration outside
+`tokens.css` is a defect.
 
 A token nobody declared is worse than a literal: it resolves to nothing and the
 rule quietly does not apply. `Project.checks()` refuses one that names
 nothing, and a `styles.x` no module declares alongside it.
-
-A utility is one behaviour, prefixed `ui-`. Prove it needed in two unrelated
-places first; one used in a single place is a misfiled module rule.
 
 Fonts load in `index.html`, never through CSS; the family name is a token.
 

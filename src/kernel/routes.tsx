@@ -15,19 +15,18 @@ export const Routes = {
 
         const root = createRootRoute({ component: frame, notFoundComponent: NotFound });
 
-        const declared = kernel.routes();
-        const first = declared[0];
+        const declaredRoutes = kernel.routes();
+        const whereLandingSends = declaredRoutes[0];
 
-        if (first === undefined)
+        if (whereLandingSends === undefined)
         {
             throw new Error("No plugin declares a route. One must, or every address answers 404.");
         }
 
-        /* "/" belongs to no plugin, so it sends the reader to the first route. */
         const landing = createRoute({
             getParentRoute: () => root,
             path: "/",
-            component: () => <Navigate to={first.path} replace />,
+            component: () => <Navigate to={whereLandingSends.path} replace />,
         });
 
         const pages = kernel.routes().map((route) =>
@@ -35,9 +34,9 @@ export const Routes = {
                 getParentRoute: () => root,
                 path: route.path,
                 component: () => <RouteGuard route={route} send={(to) => <Navigate to={to} replace />} />,
-                validateSearch: (raw: Record<string, unknown>): unknown =>
+                validateSearch: (query: Record<string, unknown>): unknown =>
                 {
-                    return route.search === undefined ? {} : route.search.parse(raw);
+                    return route.search === undefined ? {} : route.search.parse(query);
                 },
             }),
         );

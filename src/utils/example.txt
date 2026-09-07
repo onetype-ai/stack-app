@@ -1,4 +1,4 @@
-# EXAMPLES START HERE: Money
+# EXAMPLES START HERE: Words
 
 These are example utils, here to be read, not the application you are
 building. Take the mechanics from them and leave the domain alone: yours has
@@ -11,24 +11,35 @@ such line is that file, byte for byte.
 Read it here. Nothing needs unpacking, and editing this file directly is work
 the next pack throws away.
 
-==> src/utils/Money.ts
+==> src/utils/Words.ts
 
-class MoneyUtils
+class WordUtils
 {
-    /* Cents divided at the edge, never a float carried through the app: 0.1
-       plus 0.2 must never reach a total somebody is asked to pay. */
-    format(cents: number, currency: string, locale?: string): string
+    count(words: number, locale?: string): string
     {
-        if (!Number.isFinite(cents))
+        if (!Number.isFinite(words))
         {
             return "";
         }
 
-        return new Intl.NumberFormat(locale, { style: "currency", currency }).format(cents / 100);
+        const rule = new Intl.PluralRules(locale);
+        const name = rule.select(words) === "one" ? "word" : "words";
+
+        return `${new Intl.NumberFormat(locale).format(words)} ${name}`;
+    }
+
+    minutes(words: number, perMinute = 200): number
+    {
+        if (!Number.isFinite(words) || words <= 0)
+        {
+            return 0;
+        }
+
+        return Math.max(1, Math.ceil(words / perMinute));
     }
 }
 
-export const Money = new MoneyUtils();
+export const Words = new WordUtils();
 
 # EXAMPLES END HERE
 
