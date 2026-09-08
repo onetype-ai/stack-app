@@ -279,8 +279,8 @@ The schema stands outside the object when a method returns that type: a
 
 - `types/`: one object holding `schema`, and a type of the same name.
 - `api/`, `index.ts`: one object of methods, named for what it reaches.
-- `services/`: `createXService(ctx)` returning the object, and its
-  `ReturnType` as the type. It closes over `ctx`, so it is a factory.
+- `services/`: a class named for its subject, not suffixed: `ctx` in the
+  constructor, `#private` for what only it calls.
 - `utils/`: a class, exported as one instance.
 - `hooks/`: a function `use…`, one per file.
 

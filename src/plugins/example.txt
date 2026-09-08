@@ -20,8 +20,8 @@ import { Documents } from "./pages/Documents/Documents";
 import { DeskFrame } from "./sections/DeskFrame/DeskFrame";
 import { NoEntry } from "./sections/NoEntry/NoEntry";
 import { NoPage } from "./sections/NoPage/NoPage";
-import { createDocumentsService } from "./services/documents";
-import { createReaderService } from "./services/reader";
+import { Desk } from "./services/documents";
+import { Readers } from "./services/reader";
 import { Beside } from "./types/Beside";
 import { DocumentQuery } from "./types/DocumentQuery";
 import { DocumentsConfig } from "./types/DocumentsConfig";
@@ -45,8 +45,8 @@ export default definePlugin("documents", {
     services: (ctx) =>
     {
         return {
-            documents: createDocumentsService(ctx),
-            reader: createReaderService(ctx),
+            documents: new Desk(ctx),
+            reader: new Readers(ctx),
         };
     },
 
@@ -169,8 +169,8 @@ import { usePlugin } from "@onetype/stack-app-kit/react";
 
 import type { Context } from "@onetype/stack-app-kit";
 import type { PluginHandle } from "@onetype/stack-app-kit/react";
-import type { DocumentsService } from "./services/documents";
-import type { ReaderService } from "./services/reader";
+import type { Desk } from "./services/documents";
+import type { Readers } from "./services/reader";
 import type { Document } from "./types/Document";
 import type { DocumentPage } from "./types/DocumentPage";
 import type { DocumentQuery } from "./types/DocumentQuery";
@@ -178,8 +178,8 @@ import type { DocumentsConfig } from "./types/DocumentsConfig";
 import type { Reader } from "./types/Reader";
 
 export type DocumentsServices = {
-    documents: DocumentsService;
-    reader: ReaderService;
+    documents: Desk;
+    reader: Readers;
 };
 
 export type DocumentsHandle = PluginHandle<DocumentsConfig, DocumentsServices>;
@@ -1300,75 +1300,78 @@ import { DocumentQuery } from "../types/DocumentQuery";
 import { Filing } from "../types/Filing";
 import { DocumentKeys } from "../utils/DocumentKeys";
 
-export const createDocumentsService = (ctx: Context) =>
+export class Desk
 {
-    const known = new Map<string, Document>();
+    readonly #ctx: Context;
 
-    const remember = (document: Document): Document =>
+    readonly #known = new Map<string, Document>();
+
+    constructor(ctx: Context)
     {
-        known.set(document.id, document);
+        this.#ctx = ctx;
+    }
+
+    cached(id: string): Document | undefined
+    {
+        return this.#known.get(id);
+    }
+
+    async list(query: Partial<DocumentQuery> = {}): Promise<DocumentPage>
+    {
+        const page = await documentsApi.list(this.#ctx, DocumentQuery.schema.parse(query));
+
+        for (const document of page.documents)
+        {
+            this.#remember(document);
+        }
+
+        return page;
+    }
+
+    async one(id: string): Promise<Document>
+    {
+        return this.#remember(await documentsApi.one(this.#ctx, id));
+    }
+
+    async titleOf(id: string): Promise<string>
+    {
+        const held = this.#known.get(id);
+
+        if (held !== undefined)
+        {
+            return held.title;
+        }
+
+        return this.#remember(await documentsApi.one(this.#ctx, id)).title;
+    }
+
+    async file(id: string): Promise<void>
+    {
+        const held = this.#known.get(id);
+        const document = held ?? this.#remember(await documentsApi.one(this.#ctx, id));
+        const filing = Filing.schema.parse({ id: document.id, title: document.title });
+        const refused = await this.#ctx.hooks.run("documents.before-file", filing);
+
+        if (refused !== undefined)
+        {
+            throw new Error(`This document cannot be filed: ${refused}`);
+        }
+
+        await documentsApi.file(this.#ctx, id);
+
+        this.#known.delete(id);
+
+        this.#ctx.cache.invalidate(DocumentKeys.all());
+        this.#ctx.events.emit("documents.filed", filing);
+    }
+
+    #remember(document: Document): Document
+    {
+        this.#known.set(document.id, document);
 
         return document;
-    };
-
-    return {
-        cached: (id: string): Document | undefined =>
-        {
-            return known.get(id);
-        },
-
-        list: async (query: Partial<DocumentQuery> = {}): Promise<DocumentPage> =>
-        {
-            const page = await documentsApi.list(ctx, DocumentQuery.schema.parse(query));
-
-            for (const document of page.documents)
-            {
-                remember(document);
-            }
-
-            return page;
-        },
-
-        one: async (id: string): Promise<Document> =>
-        {
-            return remember(await documentsApi.one(ctx, id));
-        },
-
-        titleOf: async (id: string): Promise<string> =>
-        {
-            const held = known.get(id);
-
-            if (held !== undefined)
-            {
-                return held.title;
-            }
-
-            return remember(await documentsApi.one(ctx, id)).title;
-        },
-
-        file: async (id: string): Promise<void> =>
-        {
-            const held = known.get(id);
-            const document = held ?? remember(await documentsApi.one(ctx, id));
-            const filing = Filing.schema.parse({ id: document.id, title: document.title });
-            const refused = await ctx.hooks.run("documents.before-file", filing);
-
-            if (refused !== undefined)
-            {
-                throw new Error(`This document cannot be filed: ${refused}`);
-            }
-
-            await documentsApi.file(ctx, id);
-
-            known.delete(id);
-
-            ctx.cache.invalidate(DocumentKeys.all());
-            ctx.events.emit("documents.filed", filing);
-        },
-    };
-};
-
-export type DocumentsService = ReturnType<typeof createDocumentsService>;
+    }
+}
 
 ==> src/plugins/documents/services/reader.ts
 
@@ -1377,51 +1380,54 @@ import type { Context } from "@onetype/stack-app-kit";
 import { readerApi } from "../api/reader";
 import type { Reader } from "../types/Reader";
 
-export const createReaderService = (ctx: Context<{ sessionPath: string }>) =>
+export class Readers
 {
-    let current: Reader | undefined;
+    readonly #ctx: Context<{ sessionPath: string }>;
 
-    return {
-        current: (): Reader | undefined =>
+    #current: Reader | undefined;
+
+    constructor(ctx: Context<{ sessionPath: string }>)
+    {
+        this.#ctx = ctx;
+    }
+
+    current(): Reader | undefined
+    {
+        return this.#current;
+    }
+
+    permissions(): readonly string[]
+    {
+        return this.#current?.permissions ?? [];
+    }
+
+    async load(): Promise<Reader | undefined>
+    {
+        try
         {
-            return current;
-        },
+            this.#current = await readerApi.load(this.#ctx, this.#ctx.config.sessionPath);
 
-        permissions: (): readonly string[] =>
+            return this.#current;
+        }
+        catch (cause: unknown)
         {
-            return current?.permissions ?? [];
-        },
+            this.#ctx.log.warn("nobody is at the desk", {
+                error: cause instanceof Error ? cause.message : String(cause),
+            });
 
-        load: async (): Promise<Reader | undefined> =>
-        {
-            try
-            {
-                current = await readerApi.load(ctx, ctx.config.sessionPath);
+            this.#current = undefined;
 
-                return current;
-            }
-            catch (cause: unknown)
-            {
-                ctx.log.warn("nobody is at the desk", {
-                    error: cause instanceof Error ? cause.message : String(cause),
-                });
-
-                current = undefined;
-
-                return undefined;
-            }
-        },
-    };
-};
-
-export type ReaderService = ReturnType<typeof createReaderService>;
+            return undefined;
+        }
+    }
+}
 
 ==> src/plugins/documents/tests/documents.test.ts
 
 import { fakeContext } from "@onetype/stack-app-kit/testing";
 import { describe, expect, test } from "vitest";
 
-import { createDocumentsService } from "../services/documents";
+import { Desk } from "../services/documents";
 
 const config = { locale: "en-GB", longRead: 2_000, sessionPath: "/session" };
 
@@ -1441,7 +1447,7 @@ describe("reading the desk", () =>
     {
         const fake = fakeContext({ "GET /documents": { documents: [rota], total: 1 } }, { config });
 
-        await createDocumentsService(fake.ctx).list();
+        await new Desk(fake.ctx).list();
 
         expect(fake.asked).toEqual([{ method: "GET", path: "/documents", query: {} }]);
     });
@@ -1450,7 +1456,7 @@ describe("reading the desk", () =>
     {
         const fake = fakeContext({ "GET /documents": { documents: [summary], total: 1 } }, { config });
 
-        await createDocumentsService(fake.ctx).list({ kind: "report" });
+        await new Desk(fake.ctx).list({ kind: "report" });
 
         expect(fake.asked[0]?.query).toEqual({ kind: "report" });
     });
@@ -1459,7 +1465,7 @@ describe("reading the desk", () =>
     {
         const fake = fakeContext({ "GET /documents": { documents: [{ id: "not-a-uuid" }], total: 1 } }, { config });
 
-        await expect(createDocumentsService(fake.ctx).list()).rejects.toThrow();
+        await expect(new Desk(fake.ctx).list()).rejects.toThrow();
     });
 });
 
@@ -1468,7 +1474,7 @@ describe("a title another plugin asks for", () =>
     test("is fetched once and then answered from what was already read", async () =>
     {
         const fake = fakeContext({ "GET /documents": { documents: [rota], total: 1 } }, { config });
-        const documents = createDocumentsService(fake.ctx);
+        const documents = new Desk(fake.ctx);
 
         await documents.list();
 
@@ -1480,7 +1486,7 @@ describe("a title another plugin asks for", () =>
     {
         const fake = fakeContext({ [`GET /documents/${rota.id}`]: rota }, { config });
 
-        expect(await createDocumentsService(fake.ctx).titleOf(rota.id)).toBe("Desk rota");
+        expect(await new Desk(fake.ctx).titleOf(rota.id)).toBe("Desk rota");
     });
 });
 
@@ -1490,7 +1496,7 @@ describe("filing a document away", () =>
     {
         const fake = fakeContext({ [`GET /documents/${rota.id}`]: rota }, { config, refusal: "It carries a draft." });
 
-        await expect(createDocumentsService(fake.ctx).file(rota.id)).rejects.toThrow(/carries a draft/);
+        await expect(new Desk(fake.ctx).file(rota.id)).rejects.toThrow(/carries a draft/);
 
         expect(fake.asked.some((one) => one.method === "POST")).toBe(false);
     });
@@ -1502,7 +1508,7 @@ describe("filing a document away", () =>
             [`POST /documents/${rota.id}/filing`]: rota,
         }, { config });
 
-        await createDocumentsService(fake.ctx).file(rota.id);
+        await new Desk(fake.ctx).file(rota.id);
 
         expect(fake.announced).toEqual([{
             event: "documents.filed",
@@ -1517,7 +1523,7 @@ describe("filing a document away", () =>
             [`POST /documents/${rota.id}/filing`]: rota,
         }, { config });
 
-        await createDocumentsService(fake.ctx).file(rota.id);
+        await new Desk(fake.ctx).file(rota.id);
 
         expect(fake.invalidated).toEqual([["documents"]]);
     });
@@ -1529,7 +1535,7 @@ describe("filing a document away", () =>
             [`POST /documents/${rota.id}/filing`]: { status: 409, body: { message: "Already filed." } },
         }, { config });
 
-        await expect(createDocumentsService(fake.ctx).file(rota.id)).rejects.toThrow();
+        await expect(new Desk(fake.ctx).file(rota.id)).rejects.toThrow();
 
         expect(fake.announced).toEqual([]);
     });
@@ -1944,7 +1950,8 @@ import { Publish } from "./pages/Publish/Publish";
 import { AddComment } from "./sections/AddComment/AddComment";
 import { DraftsLink } from "./sections/DraftsLink/DraftsLink";
 import { CommentTrouble } from "./sections/CommentTrouble/CommentTrouble";
-import { createDraftingService } from "./services/drafting";
+import { Drafting } from "./services/drafting";
+import { Watching } from "./services/watching";
 import { CommentsConfig } from "./types/CommentsConfig";
 import { Filed } from "./types/Filed";
 import { Filing } from "./types/Filing";
@@ -1965,7 +1972,7 @@ export default definePlugin("comments", {
 
     services: (ctx) =>
     {
-        return { drafting: createDraftingService(ctx) };
+        return { drafting: new Drafting(ctx), watching: new Watching(ctx) };
     },
 
     fallback: CommentTrouble,
@@ -2055,11 +2062,15 @@ export default definePlugin("comments", {
 
     setup: (ctx) =>
     {
+        ctx.services.watching.start();
+
         ctx.log.info("comments ready", { maxDrafts: ctx.config.maxDrafts });
     },
 
     teardown: (ctx) =>
     {
+        ctx.services.watching.stop();
+
         ctx.log.info("comments stopped", { left: ctx.services.drafting.read().items });
     },
 });
@@ -2118,12 +2129,14 @@ import { Board } from "./types/Board";
 
 import type { Context } from "@onetype/stack-app-kit";
 import type { PluginHandle } from "@onetype/stack-app-kit/react";
-import type { DraftingService } from "./services/drafting";
+import type { Drafting } from "./services/drafting";
+import type { Watching } from "./services/watching";
 import type { CommentsConfig } from "./types/CommentsConfig";
 import type { DraftList } from "./types/DraftList";
 
 export type CommentsServices = {
-    drafting: DraftingService;
+    drafting: Drafting;
+    watching: Watching;
 };
 
 export type CommentsHandle = PluginHandle<CommentsConfig, CommentsServices>;
@@ -3221,111 +3234,145 @@ import type { Draft } from "../types/Draft";
 import type { DraftList } from "../types/DraftList";
 import { Drafts } from "../utils/Drafts";
 
-export const createDraftingService = (ctx: Context<CommentsConfig>) =>
+export class Drafting
 {
-    let drafts: readonly Draft[] = [];
+    readonly #ctx: Context<CommentsConfig>;
 
-    const watchers = new Set<() => void>();
+    readonly #watchers = new Set<() => void>();
 
-    let snapshot: DraftList = { drafts: [], words: 0, items: 0 };
+    #drafts: readonly Draft[] = [];
 
-    const publish = (next: readonly Draft[]): void =>
+    #snapshot: DraftList = { drafts: [], words: 0, items: 0 };
+
+    constructor(ctx: Context<CommentsConfig>)
     {
-        drafts = next;
-        snapshot = { drafts: [...next], words: Drafts.words(next), items: Drafts.items(next) };
+        this.#ctx = ctx;
+    }
 
-        for (const watcher of watchers)
+    read(): DraftList
+    {
+        return this.#snapshot;
+    }
+
+    watch(notify: () => void): () => void
+    {
+        this.#watchers.add(notify);
+
+        return () =>
+        {
+            this.#watchers.delete(notify);
+        };
+    }
+
+    holds(documentId: string): boolean
+    {
+        return Drafts.holds(this.#drafts, documentId);
+    }
+
+    async add(documentId: string, body: string): Promise<void>
+    {
+        if (body.trim() === "")
+        {
+            throw new Error("A comment with nothing in it says nothing.");
+        }
+
+        if (Drafts.count(body) > this.#ctx.config.maxLength)
+        {
+            throw new Error(`A comment may not run past ${String(this.#ctx.config.maxLength)} words.`);
+        }
+
+        if (Drafts.holds(this.#drafts, documentId))
+        {
+            throw new Error("This document already carries a draft of yours.");
+        }
+
+        if (this.#drafts.length >= this.#ctx.config.maxDrafts)
+        {
+            throw new Error(`A desk may not hold more than ${String(this.#ctx.config.maxDrafts)} drafts.`);
+        }
+
+        const title = await Documents.titleOf(this.#ctx, documentId);
+
+        const now = this.#drafts;
+
+        if (Drafts.holds(now, documentId))
+        {
+            return;
+        }
+
+        if (now.length >= this.#ctx.config.maxDrafts)
+        {
+            throw new Error(`A desk may not hold more than ${String(this.#ctx.config.maxDrafts)} drafts.`);
+        }
+
+        this.#publish([...now, { documentId, title, body, gone: false }]);
+    }
+
+    drop(documentId: string): void
+    {
+        this.#publish(this.#drafts.filter((draft) => draft.documentId !== documentId));
+    }
+
+    strike(documentId: string): void
+    {
+        if (!Drafts.holds(this.#drafts, documentId))
+        {
+            return;
+        }
+
+        this.#publish(this.#drafts.map((draft) =>
+        {
+            return draft.documentId === documentId ? { ...draft, gone: true } : draft;
+        }));
+    }
+
+    empty(): void
+    {
+        this.#publish([]);
+    }
+
+    #publish(next: readonly Draft[]): void
+    {
+        this.#drafts = next;
+        this.#snapshot = { drafts: [...next], words: Drafts.words(next), items: Drafts.items(next) };
+
+        for (const watcher of this.#watchers)
         {
             watcher();
         }
-    };
+    }
+}
 
-    return {
-        read: (): DraftList =>
+==> src/plugins/comments/services/watching.ts
+
+import type { Context } from "@onetype/stack-app-kit";
+import type { CommentsConfig } from "../types/CommentsConfig";
+
+export class Watching
+{
+    readonly #ctx: Context<CommentsConfig>;
+
+    #held: { close: () => void } | undefined;
+
+    constructor(ctx: Context<CommentsConfig>)
+    {
+        this.#ctx = ctx;
+    }
+
+    start(): void
+    {
+        this.#held = this.#ctx.realtime.subscribe("labels.put", () =>
         {
-            return snapshot;
-        },
+            this.#ctx.cache.invalidate(["documents"]);
+        });
+    }
 
-        watch: (notify: () => void): (() => void) =>
-        {
-            watchers.add(notify);
-
-            return () =>
-            {
-                watchers.delete(notify);
-            };
-        },
-
-        holds: (documentId: string): boolean =>
-        {
-            return Drafts.holds(drafts, documentId);
-        },
-
-        add: async (documentId: string, body: string): Promise<void> =>
-        {
-            if (body.trim() === "")
-            {
-                throw new Error("A comment with nothing in it says nothing.");
-            }
-
-            if (Drafts.count(body) > ctx.config.maxLength)
-            {
-                throw new Error(`A comment may not run past ${String(ctx.config.maxLength)} words.`);
-            }
-
-            if (Drafts.holds(drafts, documentId))
-            {
-                throw new Error("This document already carries a draft of yours.");
-            }
-
-            if (drafts.length >= ctx.config.maxDrafts)
-            {
-                throw new Error(`A desk may not hold more than ${String(ctx.config.maxDrafts)} drafts.`);
-            }
-
-            const title = await Documents.titleOf(ctx, documentId);
-
-            const now = drafts;
-
-            if (Drafts.holds(now, documentId))
-            {
-                return;
-            }
-
-            if (now.length >= ctx.config.maxDrafts)
-            {
-                throw new Error(`A desk may not hold more than ${String(ctx.config.maxDrafts)} drafts.`);
-            }
-
-            publish([...now, { documentId, title, body, gone: false }]);
-        },
-
-        drop: (documentId: string): void =>
-        {
-            publish(drafts.filter((draft) => draft.documentId !== documentId));
-        },
-
-        strike: (documentId: string): void =>
-        {
-            if (!Drafts.holds(drafts, documentId))
-            {
-                return;
-            }
-
-            publish(drafts.map((draft) =>
-            {
-                return draft.documentId === documentId ? { ...draft, gone: true } : draft;
-            }));
-        },
-
-        empty: (): void =>
-        {
-            publish([]);
-        },
-    };
-};
-
-export type DraftingService = ReturnType<typeof createDraftingService>;
+    stop(): void
+    {
+        this.#held?.close();
+        this.#held = undefined;
+    }
+}
 
 ==> src/plugins/comments/tests/contract.test.ts
 
@@ -3334,11 +3381,11 @@ import { fakeContext } from "@onetype/stack-app-kit/testing";
 import { describe, expect, test } from "vitest";
 
 import comments from "../plugin";
-import { createDraftingService } from "../services/drafting";
+import { Drafting } from "../services/drafting";
 
 import type { Context } from "@onetype/stack-app-kit";
 import type { CommentsConfig } from "../types/CommentsConfig";
-import type { DraftingService } from "../services/drafting";
+
 
 const rota = "5f1a0a3e-1c2b-4f0a-9a11-000000000003";
 
@@ -3350,16 +3397,16 @@ const offering = {
     },
 };
 
-const inside = (drafting: DraftingService): Context<CommentsConfig, { drafting: DraftingService }> =>
+const inside = (drafting: Drafting): Context<CommentsConfig, { drafting: Drafting }> =>
 {
-    const fake = fakeContext<CommentsConfig, { drafting: DraftingService }>({}, { config, offering });
+    const fake = fakeContext<CommentsConfig, { drafting: Drafting }>({}, { config, offering });
 
     return { ...fake.ctx, services: { drafting } };
 };
 
-const drafted = async (): Promise<DraftingService> =>
+const drafted = async (): Promise<Drafting> =>
 {
-    const drafting = createDraftingService(fakeContext({}, { config, offering }).ctx);
+    const drafting = new Drafting(fakeContext({}, { config, offering }).ctx);
 
     await drafting.add(rota, "Needs a date on it.");
 
@@ -3464,7 +3511,7 @@ describe("the command that sends the drafts", () =>
 
     test("and refuses to send an empty desk", () =>
     {
-        const drafting = createDraftingService(fakeContext({}, { config, offering }).ctx);
+        const drafting = new Drafting(fakeContext({}, { config, offering }).ctx);
         const command = comments.definition.commands?.["comments.publish"];
 
         expect(() => command?.run({ board: "review" }, inside(drafting))).toThrow(/nothing drafted/);
@@ -3475,7 +3522,7 @@ describe("the route that sends the drafts", () =>
 {
     test("sends a reader back when there is nothing to send", () =>
     {
-        const drafting = createDraftingService(fakeContext({}, { config, offering }).ctx);
+        const drafting = new Drafting(fakeContext({}, { config, offering }).ctx);
         const route = comments.definition.routes?.find((one) => one.path === "/comments/publish");
 
         expect(route?.instead?.(inside(drafting))).toBe("/comments");
@@ -3505,7 +3552,7 @@ describe("the kernel", () =>
 import { fakeContext } from "@onetype/stack-app-kit/testing";
 import { describe, expect, test } from "vitest";
 
-import { createDraftingService } from "../services/drafting";
+import { Drafting } from "../services/drafting";
 
 const config = { locale: "en-GB", maxDrafts: 20, maxLength: 500 };
 
@@ -3537,7 +3584,7 @@ describe("drafting a comment", () =>
 {
     test("takes the title from the desk rather than inventing one", async () =>
     {
-        const drafting = createDraftingService(fakeContext({}, desk()).ctx);
+        const drafting = new Drafting(fakeContext({}, desk()).ctx);
 
         await drafting.add(rota, "Needs a date on it.");
 
@@ -3546,14 +3593,14 @@ describe("drafting a comment", () =>
 
     test("refuses a comment with nothing in it", async () =>
     {
-        const drafting = createDraftingService(fakeContext({}, desk()).ctx);
+        const drafting = new Drafting(fakeContext({}, desk()).ctx);
 
         await expect(drafting.add(rota, "   ")).rejects.toThrow(/says nothing/);
     });
 
     test("refuses a second draft against one document", async () =>
     {
-        const drafting = createDraftingService(fakeContext({}, desk()).ctx);
+        const drafting = new Drafting(fakeContext({}, desk()).ctx);
 
         await drafting.add(rota, "Needs a date.");
 
@@ -3563,7 +3610,7 @@ describe("drafting a comment", () =>
     test("refuses to run past the drafts a desk may hold", async () =>
     {
         const titles = { [rota]: "Desk rota", [summary]: "Quarterly summary" };
-        const drafting = createDraftingService(fakeContext({}, { ...desk(titles), config: { ...config, maxDrafts: 1 } }).ctx);
+        const drafting = new Drafting(fakeContext({}, { ...desk(titles), config: { ...config, maxDrafts: 1 } }).ctx);
 
         await drafting.add(rota, "Needs a date.");
 
@@ -3572,7 +3619,7 @@ describe("drafting a comment", () =>
 
     test("and refuses one longer than a desk will read", async () =>
     {
-        const drafting = createDraftingService(fakeContext({}, { ...desk(), config: { ...config, maxLength: 3 } }).ctx);
+        const drafting = new Drafting(fakeContext({}, { ...desk(), config: { ...config, maxLength: 3 } }).ctx);
 
         await expect(drafting.add(rota, "one two three four")).rejects.toThrow(/past 3 words/);
     });
@@ -3583,7 +3630,7 @@ describe("what the desk holds", () =>
     test("counts the words across every draft", async () =>
     {
         const titles = { [rota]: "Desk rota", [summary]: "Quarterly summary" };
-        const drafting = createDraftingService(fakeContext({}, desk(titles)).ctx);
+        const drafting = new Drafting(fakeContext({}, desk(titles)).ctx);
 
         await drafting.add(rota, "one two");
         await drafting.add(summary, "three four five");
@@ -3593,7 +3640,7 @@ describe("what the desk holds", () =>
 
     test("tells a watcher whenever that changes, and stops when it leaves", async () =>
     {
-        const drafting = createDraftingService(fakeContext({}, desk()).ctx);
+        const drafting = new Drafting(fakeContext({}, desk()).ctx);
         let told = 0;
 
         const stop = drafting.watch(() => { told += 1; });
@@ -3610,7 +3657,7 @@ describe("what the desk holds", () =>
 
     test("and answers the same snapshot until something changes it", async () =>
     {
-        const drafting = createDraftingService(fakeContext({}, desk()).ctx);
+        const drafting = new Drafting(fakeContext({}, desk()).ctx);
 
         const before = drafting.read();
 
@@ -3626,7 +3673,7 @@ describe("a document that was filed while a draft stood against it", () =>
 {
     test("leaves the draft in place, struck rather than deleted", async () =>
     {
-        const drafting = createDraftingService(fakeContext({}, desk()).ctx);
+        const drafting = new Drafting(fakeContext({}, desk()).ctx);
 
         await drafting.add(rota, "Needs a date.");
         drafting.strike(rota);
@@ -3636,7 +3683,7 @@ describe("a document that was filed while a draft stood against it", () =>
 
     test("and striking one nobody drafted against changes nothing", () =>
     {
-        const drafting = createDraftingService(fakeContext({}, desk()).ctx);
+        const drafting = new Drafting(fakeContext({}, desk()).ctx);
 
         const before = drafting.read();
 
@@ -3720,6 +3767,51 @@ describe("the form that sends the drafts", () =>
 
         expect(result.current.problem).toBe("That is one too many.");
         expect(result.current.wrong).toEqual({});
+    });
+});
+
+==> src/plugins/comments/tests/watching.test.ts
+
+import { fakeContext } from "@onetype/stack-app-kit/testing";
+import { describe, expect, test } from "vitest";
+
+import { Watching } from "../services/watching";
+
+const config = { locale: "en-GB", maxDrafts: 20, maxLength: 500 };
+
+describe("what the api says while somebody is reading", () =>
+{
+    test("makes the desk ask again, so a label somebody else put on shows", () =>
+    {
+        const fake = fakeContext({}, { config });
+
+        new Watching(fake.ctx).start();
+
+        fake.push("labels.put", { noteId: "one", word: "green" });
+
+        expect(fake.invalidated).toEqual([["documents"]]);
+    });
+
+    test("and stops mattering once the plugin has stopped", () =>
+    {
+        const fake = fakeContext({}, { config });
+        const watching = new Watching(fake.ctx);
+
+        watching.start();
+        watching.stop();
+
+        fake.push("labels.put", { noteId: "one", word: "green" });
+
+        expect(fake.invalidated).toEqual([]);
+    });
+
+    test("while a plugin that never started hears nothing at all", () =>
+    {
+        const fake = fakeContext({}, { config });
+
+        fake.push("labels.put", { noteId: "one", word: "green" });
+
+        expect(fake.invalidated).toEqual([]);
     });
 });
 

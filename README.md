@@ -51,6 +51,9 @@ alone and opens a slot, `comments` depends on it and fills it. Between them
 they use every way across a boundary exactly once, so read one crossing where
 it actually runs rather than in a declaration with nothing on the other side.
 
+`comments` also listens on a channel the api pushes to, so a label somebody
+else put on shows without anyone asking again.
+
 They also read from two places on purpose: `documents` asks the server through
 React Query, and `comments` keeps its drafts in a service a view reads with
 `useStore`. The domains are dull on purpose: take the mechanics, never the
