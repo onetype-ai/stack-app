@@ -23,11 +23,13 @@ export const Routes = {
             throw new Error("No plugin declares a route. One must, or every address answers 404.");
         }
 
-        const landing = createRoute({
-            getParentRoute: () => root,
-            path: "/",
-            component: () => <Navigate to={whereLandingSends.path} replace />,
-        });
+        const landing = declaredRoutes.some((route) => route.path === "/")
+            ? []
+            : [createRoute({
+                getParentRoute: () => root,
+                path: "/",
+                component: () => <Navigate to={whereLandingSends.path} replace />,
+            })];
 
         const pages = kernel.routes().map((route) =>
             createRoute({
@@ -41,6 +43,6 @@ export const Routes = {
             }),
         );
 
-        return createRouter({ routeTree: root.addChildren([landing, ...pages]) });
+        return createRouter({ routeTree: root.addChildren([...landing, ...pages]) });
     },
 };
