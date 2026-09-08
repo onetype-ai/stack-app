@@ -37,7 +37,8 @@ the application shows rather than one it hides. Start `stack-api` on
 `API_PORT` and the same code paths reach it unchanged.
 
 `pnpm verify` runs in jsdom, which renders components but runs no build, no
-router and no real network. `pnpm test:browser` opens the built application in
+router and no real network. `tests/setup.ts` gives it a `localStorage` that
+works, since the one jsdom ships cannot be written to. `pnpm test:browser` opens the built application in
 Chromium and reads what a person would see.
 
 ## Where to read
