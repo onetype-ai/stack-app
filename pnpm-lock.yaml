@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@onetype/stack-app-kit':
-        specifier: ^3.0.0
-        version: 3.0.0(react@19.2.8)
+        specifier: ^3.1.0
+        version: 3.1.0(react@19.2.8)
       '@tanstack/react-query':
         specifier: 5.102.8
         version: 5.102.8(react@19.2.8)
@@ -284,8 +284,8 @@ packages:
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
 
-  '@onetype/stack-app-kit@3.0.0':
-    resolution: {integrity: sha512-sefHnfmVHgYeR8YQfagUnm/aPSODG4u9UKUANfVHWIEfX5Z82toSpUrwJA/ffkTrUbR3vYp7ox6n3T3rNIgCzw==}
+  '@onetype/stack-app-kit@3.1.0':
+    resolution: {integrity: sha512-0HmDgxehURgq4FhYnbqubq+qq9KYdlfe8LNwGK5eVCvwdk7+hWvqxve+WIApXbGbn6waERU9x9ZP2a0VWvKXaw==}
     engines: {node: '>=22'}
     peerDependencies:
       react: '>=18'
@@ -1611,7 +1611,7 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.6.0
 
-  '@onetype/stack-app-kit@3.0.0(react@19.2.8)':
+  '@onetype/stack-app-kit@3.1.0(react@19.2.8)':
     dependencies:
       zod: 4.5.4
     optionalDependencies:

@@ -254,6 +254,7 @@ One plugin is one capability: swap it and nothing notices.
 plugins/<name>/
 ├── plugin.ts       the contract: all that crosses the boundary
 ├── index.ts        the public API: methods, components, types
+├── usage.md        what it is for; the build refuses a plugin without one
 ├── types/  utils/  api/  services/  hooks/
 ├── components/  sections/  pages/
 └── tests/
@@ -302,7 +303,6 @@ A plugin tests itself in `tests/`, without the application or a server.
 
 - **Services**: what a caller gets back, and what reached the transport.
 - **Components**: what a user can see and do, never internal state.
-- **Pages**: loading, empty, error and loaded, each rendering its own state.
 - **The contract**: that the kernel accepts `plugin.ts`, and refuses a wrong
   declaration.
 
@@ -320,18 +320,18 @@ const fake = fakeContext({ "GET /documents": { documents: [], total: 0 } }, { co
 
 A bare value is a 200 carrying it; `{ status: 204 }` is nothing; `{ status,
 body }` refuses the way a server does. It records `asked`, `announced`,
-`invalidated` and `commanded`, answers a hook with `fake.refusal`, and refuses
-an unanswered path.
+`invalidated` and `commanded`, answers a hook with `fake.refusal`.
 
 Its own tests compare it against the real transport, which is the point: a
 fake each plugin wrote drifted and left two hundred tests green over
-thirty-nine broken calls. Never reach the network.
+thirty-nine broken calls.
 
 It answers no services of its own: spread it and supply them, as
 `{ ...fake.ctx, services: { billing } }`; another plugin's go in `offering`.
 `asked` records headers too, so a test can prove a closed route was signed.
 Booting the real kernel instead, `createKernel` takes `permissions: { granted:
-() => [...] }` — the only way past a `requires`.
+() => [...] }` — the only way past a `requires` — and `http: fake.ctx.http`, so
+one set of answers serves both.
 
 No shared setup hiding a dependency, no helper wrapping the assertion.
 
@@ -351,8 +351,7 @@ Global, unscoped styles. What one component uses is a CSS Module beside it.
 
 Order is fixed by `index.css`; a layer may only depend on ones above it.
 
-- `reset.css`: neutralises browser defaults. Removes only, declares nothing,
-  and holds the one literal in the layer — it runs before tokens exist.
+- `reset.css`: neutralises browser defaults. Removes only, declares nothing.
 - `tokens.css`: every design value, as custom properties on `:root`. No selectors.
 - `base.css`: bare element appearance. Element selectors only.
 - `index.css`: imports only, never a rule.
@@ -376,9 +375,14 @@ palette is imposed and nothing renders until you fill them in. Renaming them
 and giving them values is the first day's work. A literal colour, length or
 duration outside `tokens.css` is a defect.
 
-A token nobody declared is worse than a literal: it resolves to nothing and the
-rule quietly does not apply. `Project.checks()` refuses both, and a `styles.x`
-no module declares alongside them.
+The check reads less than that rule: colours, `px`/`rem`/`em`, `s`/`ms`. It
+passes `0`, `1px`, `0s`, `1ms` — a hairline and the shortest duration that
+still fires `animationend` — and never reads `%`, `vw`, `deg` or a bare number,
+which describe the viewport rather than a choice anyone would theme. The rule
+is yours to keep where the check cannot see.
+
+A token nobody declared is worse than a literal: the rule quietly does not
+apply. Both are refused, and a `styles.x` no module declares.
 
 Fonts load in `index.html`, never through CSS; the family name is a token.
 

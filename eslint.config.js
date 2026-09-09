@@ -46,9 +46,18 @@ export default tseslint.config(
 
     {
         files: ["src/plugins/*/**/*.{ts,tsx}"],
+        ignores: ["src/plugins/*/tests/**"],
         rules: boundary(
             "A plugin may only import another plugin through its public index: @plugins/<name>.",
             [{ group: ["@plugins/*/*", "@plugins/*/*/**"] }],
+        ),
+    },
+
+    {
+        files: ["src/plugins/*/tests/**/*.{ts,tsx}"],
+        rules: boundary(
+            "A test may reach a plugin's contract at \"@plugins/<name>/plugin\", and nothing deeper. Booting a neighbour is how a slot is proved filled; a stand-in written here is a copy of its declaration that nothing compares.",
+            [{ group: ["@plugins/*/*/**", "@plugins/*/!(plugin)"] }],
         ),
     },
 
