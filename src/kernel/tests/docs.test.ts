@@ -22,7 +22,7 @@ describe.skipIf(!unpacked)("the documents this application ships, once unpacked 
 
     test("the root documents are present and say something", () =>
     {
-        const required = ["#docs/usage.md", "#docs/stack.md", "#docs/architecture.md"];
+        const required = ["#docs/stack/usage.md", "#docs/stack/stack.md", "#docs/stack/architecture.md"];
 
         expect(findMissingDocs(ROOT, required)).toEqual([]);
     });
@@ -47,7 +47,7 @@ const declaredByWhateverChunkHoldsIt = (): string =>
     test("every key the contract accepts is documented", () =>
     {
         const contract = declaredByWhateverChunkHoldsIt();
-        const procedure = readFileSync(join(ROOT, "#docs", "procedures", "plugin", "contract.md"), "utf8");
+        const procedure = readFileSync(join(ROOT, "#docs", "plugin", "contract.md"), "utf8");
 
         expect(findUndocumentedKeys(contract, procedure)).toEqual([]);
     });

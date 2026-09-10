@@ -7,433 +7,987 @@ such line is that file, byte for byte.
 Read it here. Nothing needs unpacking, and editing this file directly is work
 the next pack throws away.
 
-==> #docs/usage.md
+==> #docs/kit/1.context.md
 
-# app
+# ctx
 
-How to write a plugin. `README.md` covers installing and running.
+What every service, listener, participant and command receives. Built once per
+plugin, so a service holds it for the life of the application.
 
-## Your first plugin
-
-Create `src/plugins/<name>/plugin.ts` and export a `definePlugin` result.
-Startup finds it; no list to update.
+- **Plugin**: `name`, `config`, `log`, `services` its own.
+- **Server**: `http.get`, `.post`, `.put`, `.patch`, `.delete`, each taking a
+  path and an optional `{ query, body, headers, signal }`.
+- **Cache**: `cache.invalidate(key)`, the same key a page passes to `useQuery`.
+- **Realtime**: `realtime.subscribe(channel, receive)`, and `channel()` for
+  whether a socket or polling is carrying it.
+- **Caller**: `permissions.has(key)`, `.all(keys)`, `.changed()` after a
+  sign-in, `.watch(notify)` for a component that re-renders on it.
+- **Other plugins**: `use(plugin)` another's public API, `events.emit`,
+  `events.on`, `hooks.run`, `commands.run`.
 
 ```ts
-export default definePlugin("billing", {
-    version: "1.0.0",
-    describe: "Invoices and payment methods.",
-    grants: (ctx) => ctx.services.session.permissions(),
-    frame: Shell,
-    pages: { forbidden: NoEntry, missing: NoPage },
-    routes: [{ path: "/billing", requires: ["billing.read"], component: Invoices }],
+const page = await ctx.http.get("/<name>", { query: { kind } });
+
+await ctx.http.post(`/<name>/${encodeURIComponent(id)}/file`);
+
+ctx.cache.invalidate(<Name>Keys.list());
+ctx.events.emit("<name>.<happened>", { id });
+```
+
+A write invalidates before it emits, so a listener reading afterwards gets
+the new value. `permissions.changed()` after a sign-in, or every guard holds the answer
+from before there was one.
+
+Everything is declared in `plugin.ts` first: what is missing there fails
+contract validation at startup.
+
+==> #docs/kit/2.definePlugin.md
+
+# definePlugin
+
+`definePlugin(name, contract)`. One default export a plugin, and the only
+thing `discover` looks for.
+
+The contract is the whole boundary. `Definition` in the reference names every
+field and its type; `plugin.ts` in these documents shows the shape.
+
+==> #docs/kit/3.react.md
+
+# @onetype/stack-app-kit/react
+
+What a component reaches for. Imported from `/react`, never the root.
+
+- `usePlugin<Config, Services>(name)` answers this plugin's handle: `config`,
+  `services`, `permissions`. A plugin's `index.ts` wraps it as `use()`.
+- `useKernel()` answers the kernel itself, for a frame or a guard.
+- `useEvent(plugin, event, handle)` subscribes for as long as the component
+  lives, and unsubscribes on unmount.
+- `useStore(watch, read)` re-renders on a value outside React, such as
+  `ctx.permissions.watch`.
+- `useFrame()` answers the frame the routed plugin declared.
+- `<Slot name payload />` renders what other plugins contributed to a slot.
+- `<KernelProvider kernel>` wraps the tree; `main.tsx` is its only caller.
+- `<StatusPageProvider pages>` replaces the 403 and 404 for the whole app.
+- `<NotFound />`, `<StartupFailure message />`, `<RouteGuard route send />`.
+
+```tsx
+const { services, config } = <Name>.use();
+
+useEvent("<other>", "<other>.<happened>", (payload) => { ... });
+```
+
+A hook is called at the top of a component, never in a branch. `useEvent`
+takes the plugin that declared the event, so a name cannot be listened to by
+mistake.
+
+==> #docs/kit/4.slots.md
+
+# Slots
+
+How one plugin renders inside another without either importing the other.
+
+The owner declares the slot and what a contribution is given:
+
+```ts
+slots: {
+    "<name>.<place>": { describe: "<what appears here>", schema: <Payload>.schema },
+},
+```
+
+Another plugin contributes to it:
+
+```ts
+contributes: [
+    { slot: "<other>.<place>", order: 10, requires: ["<name>.read"], render: <Name>Link },
+],
+```
+
+The owner renders every contribution at once:
+
+```tsx
+<Slot name="<name>.<place>" payload={{ id, title }} />
+```
+
+`order` decides the sequence, low first. `requires` hides a contribution from a
+reader who may not see it. `render` receives `{ payload }`, parsed against the
+owner's schema.
+
+A slot nothing contributes to renders nothing. A contribution to a slot nobody
+declared fails contract validation at startup, naming both plugins.
+
+==> #docs/kit/5.realtime.md
+
+# Realtime
+
+`ctx.realtime.subscribe(channel, receive)` returns `{ close }`. The transport
+carries it over a socket where one opened, and polls where it did not:
+`ctx.realtime.channel()` answers `"ws"` or `"http"`.
+
+```ts
+const held = ctx.realtime.subscribe("<name>.<thing>", (message) =>
+{
+    ctx.cache.invalidate(<Name>Keys.list());
 });
+
+held.close();
 ```
 
-A fresh application has no frame, no 403, no 404 and grants nothing, so the
-first plugin declares all four or the kernel refuses to start. One plugin owns
-each.
+A message invalidates rather than writes: the cache refetches, and one shape
+comes from the server instead of two from the server and the socket.
 
-Everything it declares is named `plugin.thing`, and one outside its own
-namespace is refused. A route requiring another plugin's permission makes them
-a dependency: guard your own routes with your own.
+`setup` subscribes and `teardown` closes. A component subscribing directly
+leaks on unmount.
 
-Undeclared means absent: the kernel refuses to start, naming the plugin.
+==> #docs/kit/6.routes.md
 
-## Reaching another plugin
+# Routes
+
+A plugin declares its own paths. Nothing central lists them, and two plugins
+claiming one path fails contract validation at startup.
 
 ```ts
-import { Auth } from "@plugins/auth";
+routes: [
+    {
+        path: "/<name>",
+        title: "<what the tab says>",
+        requires: ["<name>.read"],
+        component: <Name>s,
+        search: <Name>Query.schema,
+        instead: (ctx) => ctx.services.<subject>.ready() ? undefined : "/<other>",
+    },
+],
 ```
 
-A plugin's `index.ts` is the only file another may import, and the plugin must
-be in `dependsOn`. Anything deeper is rejected by lint.
+`path` follows TanStack Router: `$id` is a parameter, reached with
+`useParams`. `search` parses the query string, so a reader typing anything into
+the address reaches a value the schema checked.
 
-For everything else: events, hooks, or a slot — never request-and-response
-over the event bus. Filling a slot needs no `dependsOn`; hearing an event or
-joining a hook does.
+`requires` renders the 403 page instead. `instead` redirects: returning a path
+sends the reader there, `undefined` lets them through. A guard nothing can lift
+fails validation, because a route every reader is refused looks the same from
+outside as a route that works.
 
-A contribution renders as `({ payload }: { payload: unknown })`, and parses
-that payload against the slot's schema.
+`title` names the browser tab, set before the guard runs: a reader refused a
+page is on that page.
 
-A route's `search` schema is written back to the address on every navigation,
-so a `.default()` in it shows in the URL. Keep those fields optional.
+==> #docs/kit/7.faults.md
 
-`#docs/procedures/` holds how to build each part; `stack.md` the structure.
+# Faults
 
-==> #docs/architecture.md
+Three, and each says whose mistake it was.
 
-# Architecture
-
-Why this shape. The procedures carry the detail.
-
-## The kernel names no plugin, and no plugin names the application
-
-A capability is added and removed in one folder. Nothing central lists what
-exists: plugins are discovered from the folder, so a merge that adds one
-touches no shared file.
-
-## Undeclared means absent
-
-`plugin.ts` is the whole boundary. The kernel refuses to start rather than
-warn, and names the plugin, the key, the owner and the fix. A warning nobody
-reads is a defect that ships.
-
-## Four ways to cross, and why they differ
-
-- **Public API** when you need a result now, from a plugin in `dependsOn`.
-- **Events** to announce what happened. Nothing comes back, nobody waits.
-- **Hooks** to let somebody refuse, by returning a reason.
-- **Slots** to hand over a component without knowing who takes it.
-
-The first three read a shape whose owner may change it, so all three name that
-owner. A slot does not: it gives, and the payload is checked against a schema.
-That difference is what lets a shell frame the plugins that fill it.
-
-Refused: request and response over the event bus, and a method emitting
-through someone else's `ctx` — an event carries the identity of the context it
-went through.
-
-## Failure is local
-
-Every plugin renders behind its own boundary, and a throwing listener never
-reaches the emitter. One plugin failing is one region failing.
-## The UI reflects, never decides
-
-A route without permission renders 403. The server is the only place a refusal
-counts, so hiding a control is courtesy, never protection.
-
-## Nothing says what code cannot
-
-There are no comments in `src`, stylesheets included, and `Project.checks()`
-refuses one. What a comment would have said is a name, or the name of a test
-that fails the day it stops being true.
-
-==> #docs/procedures/components.md
-
-# Procedure: components, sections, pages
-
-Three levels. Each composes the one below; none reaches down.
-
-- **component**: smallest unit. Knows no domain.
-- **section**: composes components into a block. Knows no page.
-- **page**: composes sections, and is the only level that loads data.
-
-A hook is none of them: `hooks/`, one file, named `use…`, renders nothing.
-
-## State
-
-A component keeps what nothing outside can name, a section what it shares, a
-page what comes from outside. An effect leaving a section exits through a
-callback prop. A level receiving a value as a prop never also stores it —
-except a form seeded from a loaded value, which copies it once and then owns
-it.
-
-Service-held state reaches a view through `useStore(watch, read)`. Memoise
-what `read` answers, or a new object each call re-renders forever.
-
-## Files
-
-One folder per unit, named for it, holding `Name.tsx` and `Name.module.css`. A
-hook is one file, no folder. The layer's root `index.ts` is its only entry.
-
-## Markup and styles
-
-The stylesheet roots at `.root`; children are reached through it, never as bare
-class names. Variants are classes, state is a `data-` attribute. Names say what
-an element is, not how it looks.
-
-Class names come from the module. A bare string is a class nothing declares,
-and no check can see it.
-
-## Rules
-
-Every unit handles its empty, loading and error case, or renders nothing on
-purpose.
-
-==> #docs/procedures/plugin/boundaries.md
-
-# Procedure: plugin boundaries
-
-Four ways to cross. Pick by what you need back.
-
-## Public API
-
-A result now, from a plugin in `dependsOn`.
+- `KernelFault` — a contract is wrong. Thrown at startup, naming the plugin
+  and the field. Nothing renders.
+- `TransportFault` — a call failed. `code` is `NETWORK`, `TIMEOUT`,
+  `ABORTED`, `UNAUTHORIZED`, `FORBIDDEN`, `NOT_FOUND`, `CONFLICT`,
+  `RATE_LIMITED`, `SERVER`, `CLIENT` or `MALFORMED`.
+- `BootFault` — a plugin failed to boot. `NO_NAME`, `NO_BOOT`,
+  `REGISTERED_TWICE`, `UNKNOWN_NEED`, `CYCLE`, `OFFERED_TWICE`, `NO_API`.
 
 ```ts
-import { Documents } from "@plugins/documents";
-
-const title = await Documents.titleOf(ctx, id);
+if (cause instanceof TransportFault && cause.code === "CONFLICT")
+{
+    return "<what the reader may do about it>";
+}
 ```
 
-Methods take `ctx` and reach the plugin's services through it, so they run
-anywhere. `use()` is the exception, for components.
+A page that throws reaches the plugin's `fallback`, given `{ error, plugin,
+reset }`. Without one, the whole tree unmounts: declare it.
 
-A component crosses the same way: `DocumentRow` from `@plugins/documents`. A slot lets the opener place
-what it never imported; an exported component lets the caller place what it
-chose.
+Branch on `code`, never on the message. A message is for a reader.
 
-A method given someone else's `ctx` must not emit: an event carries the
-identity of the context it went through, so the kernel refuses it. Emitting
-belongs to the service, which holds its own.
+==> #docs/kit/8.events.md
 
-`index.ts` is a plugin's only importable file; one holding nothing but types
-and a hook exposes nothing at all.
+# Events, hooks and commands
+
+Three ways one plugin reaches another without importing it.
 
 ## Events
 
-Emit only after the state is written: a write and its event must never
-disagree. A listener that throws reaches neither the emitter nor the others.
-Never request and respond over events: that is a public API with worse types.
-
-## Slots
-
-Nav items, toolbar buttons and settings panels are contributions, never
-imports. A contributor needs no `dependsOn` on the opener: it hands over a
-component and takes back a payload, so a shell can frame the plugins filling
-it. The opener defines that payload's schema; one failing it renders nothing
-and answers `problem`, at render rather than at startup.
-
-## Hooks and permissions
-
-The owner runs a lifecycle point and lets others intercept; a participant
-rejects by returning a reason. A plugin defines its permissions; anything
-guarded references them by key.
-
-Everything crossing is declared in `plugin.ts`. What one plugin uses stays
-inside it until a second needs it.
-
-==> #docs/procedures/plugin/contract.md
-
-# Procedure: plugin contract
-
-`plugin.ts` is the whole boundary: undeclared means it does not exist, and
-the kernel refuses to start, naming the plugin.
+The owner declares what it emits; anyone may listen.
 
 ```ts
-export default definePlugin("documents", { ... });
+emits: { "<name>.<happened>": { describe, schema } },
+listens: { "<other>.<happened>": { describe, handle: (payload, ctx) => { ... } } },
 ```
 
-## Keys, and what is not obvious about them
+Emitted after the work, never before. A listener returns nothing and cannot
+refuse. `useEvent(plugin, event, handle)` is the same subscription in a
+component.
 
-- `version`, `describe`, `dependsOn`, `config` a schema, `services` a factory,
-  `fallback` when it throws.
-- `permissions`: those it defines, named `plugin.thing` like everything else.
-- `grants`: what the viewer may do, read on every check. One plugin owns it,
-  and a guarded route with none is refused at startup.
-- `frame`, `pages`: the shell, the 403 and the 404. One plugin owns each, and
-  without a frame the router refuses to build.
-- `routes`: `path` (`$param` segments), `component`, `title`, `requires?`,
-  `search?` a schema for the query string, `instead?` a path they belong at —
-  asked before `requires`, so signed out sends to sign in, not a 403.
-- `slots`: a record of those it opens, each with a payload schema.
-- `contributes`: a list of `{ slot, render, order?, requires? }` — `render`,
-  never `component`.
-- `emits`, `listens`: a listener that throws stays contained.
-- `hooks`, `participates`: a returned string refuses.
-- `commands`: a schema and `requires`. `setup` / `teardown` at each end.
+## Hooks
 
-## Rules
+The owner declares a point where another plugin may refuse.
 
-`services` comes before every key reading `ctx.services`: inference runs left
-to right, and a reader above it sees `unknown` — the error names the property,
-never the ordering. `ctx.http` answers the body, not an envelope.
-
-Every crossing carries a description and a schema; a payload failing it is
-refused. Naming another plugin's event or hook makes it a dependency; filling
-its slot does not. Schemas grow only through optional fields; removing one
-raises `version`.
-
-==> #docs/procedures/plugin/structure.md
-
-# Procedure: plugin structure
-
-One plugin is one capability: swap it and nothing notices.
-
-```
-plugins/<name>/
-├── plugin.ts       the contract: all that crosses the boundary
-├── index.ts        the public API: methods, components, types
-├── usage.md        what it is for; the build refuses a plugin without one
-├── types/  utils/  api/  services/  hooks/
-├── components/  sections/  pages/
-└── tests/
+```ts
+hooks: { "<name>.before-<doing>": { describe, schema } },
+participates: { "<other>.before-<doing>": { describe, handle } },
 ```
 
-No `index.ts` inside a folder: a plugin is private throughout.
+A participant returns a string to reject, or nothing to allow. The owner runs
+`ctx.hooks.run(hook, payload)` and receives the first refusal.
 
-## Where code belongs
+## Commands
 
-Stop at the first yes:
+An entry point with no route: another plugin calls it, and it declares what
+holding it requires.
 
-1. Describes a value's shape → `types/`, with its schema
-2. Knows a backend route → `api/`
-3. Needs React state, an effect or a ref → `hooks/`
-4. Knows the domain, not the backend → `services/`
-5. Pure and domain-free → `utils/`
-6. Renders → `components/`, `sections/`, `pages/`
+```ts
+commands: { "<name>.<do-thing>": { describe, schema, requires, run } },
+```
 
-The schema stands outside the object when a method returns that type: a
-`const` and a `type` of one name cannot reference each other.
+Reached with `ctx.commands.run("<name>.<do-thing>", input)`. The method is
+`run`, not `handle`.
 
-## Shape, per folder
+==> #docs/kit/testing/1.faking.md
 
-- `types/`: one object holding `schema`, and a type of the same name.
-- `api/`, `index.ts`: one object of methods, named for what it reaches.
-- `services/`: a class named for its subject, not suffixed: `ctx` in the
-  constructor, `#private` for what only it calls.
-- `utils/`: a class, exported as one instance.
-- `hooks/`: a function `use…`, one per file.
+# fakeContext
 
-## Style
+`fakeContext(answers, faking)` builds a `ctx` a test drives, and records
+everything that crossed it.
 
-Allman braces for functions and blocks, arrows included: a named function's
-body is a block with a `return`, never one expression. An inline callback stays
-as it is. An object's brace stays on the key line. No comments — nothing
-enforces this, so it is on you.
+```ts
+const fake = fakeContext({ "GET /<name>": { <name>s: [<thing>], total: 1 } }, {
+    config,
+    permissions: ["<name>.read"],
+    refusal: "<what a participant refuses with>",
+});
+```
 
-`plugin.ts` first, declaring only what it needs; `index.ts` last, the smallest
-surface a consumer needs.
+`answers` is keyed `"<METHOD> <path>"`. A path with no answer throws, so a call
+nobody expected is a failing test rather than `undefined`.
 
-==> #docs/procedures/plugin/tests.md
+What it records:
 
-# Procedure: plugin tests
+- `fake.asked` — every call, as `{ method, path, query, body, headers }`.
+- `fake.announced` — every event, as `{ event, payload }`.
+- `fake.invalidated` — every cache key.
+- `fake.commanded` — every command, as `{ command, input }`.
+- `fake.logged` — every line, as `{ level, line }`.
+- `fake.regranted` — how many times `permissions.changed()` was called.
+- `fake.push(channel, message)` — delivers to whatever subscribed.
 
-A plugin tests itself in `tests/`, without the application or a server.
+`Faking` in the reference names every option. Assert on `fake.asked` rather
+than a mock: what the server was asked is the contract.
 
-- **Services**: what a caller gets back, and what reached the transport.
-- **Components**: what a user can see and do, never internal state.
-- **The contract**: that the kernel accepts `plugin.ts`, and refuses a wrong
-  declaration.
+==> #docs/src/kernel/kernel.md
 
-Test what a schema must reject, not what it takes.
+# kernel/
 
-## Fakes
+What this project decides about itself, before any plugin runs.
 
-The kit ships one, and no plugin writes its own:
+```
+env.ts       what the environment carries, parsed once and refused early
+mount.ts     discovery and start: the only caller of the kit's `start`
+queries.ts   the query client every plugin's cache is built from
+routes.tsx   the router, built from what the kernel registered
+index.ts     what main.tsx reaches
+```
+
+`Mount.open(client)` passes `plugins`, `cache` and `transport`. A plugin
+receives `ctx.config` keyed by its own name, and `ctx.http`; reaching past
+them ties a capability to this one deployment.
+
+Edited when the project changes shape: an environment variable, a base url,
+somewhere else to find plugins. A capability is never added here — that is a
+plugin, and adding one touches no file in this folder.
+
+==> #docs/src/plugin/1.index.ts.md
+
+# index.ts
+
+The public API: the only file another plugin may import, and only when it
+names this one in `dependsOn`. Everything else in the folder is private.
+
+`<Name>` is the plugin's folder capitalised.
+
+```ts
+import { usePlugin } from "@onetype/stack-app-kit/react";
+
+import type { Context } from "@onetype/stack-app-kit";
+import type { PluginHandle } from "@onetype/stack-app-kit/react";
+import type { <Name> } from "./services/<name>";
+import type { <Thing> } from "./types/<Thing>";
+
+export type <Name>Services = { <subject>: <Name> };
+
+export type <Name>Handle = PluginHandle<<Name>Config, <Name>Services>;
+
+const servicesOf = (ctx: Context) => ctx.use<<Name>Services>("<name>");
+
+export const <Name> = {
+    use: (): <Name>Handle => usePlugin<<Name>Config, <Name>Services>("<name>"),
+
+    get: (ctx: Context, id: string): Promise<<Thing>> =>
+    {
+        return servicesOf(ctx).<subject>.get(id);
+    },
+};
+
+export { <Name>Row } from "./components/<Name>Row/<Name>Row";
+export type { <Thing> } from "./types/<Thing>";
+```
+
+`use()` is for a component, `get(ctx, ...)` for anything holding a `ctx`. A
+component this plugin exports is shown the same way wherever it appears.
+
+==> #docs/src/plugin/10.hooks.hook.ts.md
+
+# hooks/
+
+`use<Name>.ts`, one hook a file. What a page needs from React that a service
+cannot hold: the address, focus, a timer.
+
+A hook reads and writes the address through TanStack Router, so the query
+string is the state and a reload lands where the reader was.
+
+```ts
+import { useNavigate, useSearch } from "@tanstack/react-router";
+
+import { <Thing>Query } from "../types/<Thing>Query";
+
+import type { <Thing>Kind } from "../types/<Thing>Kind";
+
+export type <Kind>InAddress = {
+    kind: <Thing>Kind | undefined;
+    choose: (kind: <Thing>Kind | undefined) => void;
+};
+
+export const use<Kind>InAddress = (): <Kind>InAddress =>
+{
+    const navigate = useNavigate();
+    const search: unknown = useSearch({ strict: false });
+    const query = <Thing>Query.schema.parse(search);
+
+    return {
+        kind: query.kind,
+
+        choose: (kind: <Thing>Kind | undefined): void =>
+        {
+            void navigate({ to: "/<name>", search: kind === undefined ? {} : { kind }, replace: true });
+        },
+    };
+};
+```
+
+The search is parsed, never read raw: a reader may type anything into the
+address. `replace: true` keeps the back button meaningful.
+
+==> #docs/src/plugin/11.utils.util.ts.md
+
+# utils/
+
+The same rule as `#docs/src/utils/utils.ts.md`, reachable by this plugin
+alone.
+
+`<Name>Keys.ts` is the one every plugin has: a page reads a key to fetch, and a
+service reads the same key to invalidate.
+
+==> #docs/src/plugin/12.tests.test.ts.md
+
+# tests/
+
+`<name>.test.ts` for a service, `<name>.test.tsx` for anything rendered. Flat,
+one subject a file.
+
+Only the outermost thing is tested: the service, the section, the exported
+component. A hook has no test of its own; the page using it does. Every
+refusal in `usage.md` has one that triggers it.
+
+## A service
+
+`fakeContext(answers, faking)` builds a `ctx` that answers a path with a
+value, and records what was asked, emitted, invalidated and run.
 
 ```ts
 import { fakeContext } from "@onetype/stack-app-kit/testing";
 
-const fake = fakeContext({ "GET /documents": { documents: [], total: 0 } }, { config });
+const fake = fakeContext({ "GET /<name>": { <name>s: [<thing>], total: 1 } }, { config });
+
+await new <Name>(fake.ctx).list();
+
+expect(fake.asked).toEqual([{ method: "GET", path: "/<name>", query: {} }]);
 ```
 
-A bare value is a 200 carrying it; `{ status: 204 }` is nothing; `{ status,
-body }` refuses the way a server does. It records `asked`, `announced`,
-`invalidated` and `commanded`, answers a hook with `fake.refusal`.
+## Anything rendered
 
-Its own tests compare it against the real transport, which is the point: a
-fake each plugin wrote drifted and left two hundred tests green over
-thirty-nine broken calls.
+```tsx
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 
-It answers no services of its own: spread it and supply them, as
-`{ ...fake.ctx, services: { billing } }`; another plugin's go in `offering`.
-`asked` records headers too, so a test can prove a closed route was signed.
-Booting the real kernel instead, `createKernel` takes `permissions: { granted:
-() => [...] }` — the only way past a `requires` — and `http: fake.ctx.http`, so
-one set of answers serves both.
+render(<<Name>Table <name>s={[<thing>]} onOpen={opened} />);
 
-No shared setup hiding a dependency, no helper wrapping the assertion.
+await userEvent.click(screen.getByRole("link", { name: "<title>" }));
 
-## Proving a test
+expect(opened).toHaveBeenCalledWith(<thing>.id);
+```
 
-Break the behaviour: remove the guard, invert the condition, delete the emit.
-Watch it fail naming the cause, then put it back. If it stayed green, it tested
-nothing. Same for a bug: reproduce it, watch the test fail, then fix it.
+A query is asserted through `fake.asked`, a render through the role a reader
+would use. Never a class name: a stylesheet may change without the meaning
+changing.
 
-==> #docs/procedures/ui-styles.md
+Write it, break the code it covers, confirm it fails naming the cause, then
+restore. A test that has never failed proves nothing.
 
-# Procedure: ui/styles
+==> #docs/src/plugin/13.styles.module.css.md
 
-Global, unscoped styles. What one component uses is a CSS Module beside it.
+# Name.module.css
 
-## Layers
+One stylesheet a component, beside it in the same folder. CSS Modules, so a
+class name is local and two plugins may both write `.root`.
 
-Order is fixed by `index.css`; a layer may only depend on ones above it.
+Every length, colour, radius and duration is a token from `@ui`. A literal is
+a lint error, and `Project.findAll()` names the file and the value.
 
-- `reset.css`: neutralises browser defaults. Removes only, declares nothing.
-- `tokens.css`: every design value, as custom properties on `:root`. No selectors.
-- `base.css`: bare element appearance. Element selectors only.
-- `index.css`: imports only, never a rule.
+```css
+.root
+{
+    display: grid;
+    gap: var(--example-space);
+    padding: var(--example-space) var(--example-gutter);
+    border-bottom: var(--example-hairline) solid var(--example-edge);
+}
 
-Whichever plugin owns the frame imports `index.css` once, so an application
-with no plugins still builds. Nothing imports a layer directly.
+.root .name
+{
+    overflow: hidden;
+    color: var(--example-ink);
+    font-weight: var(--example-strong);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
 
-## Where a style belongs
+.root[data-length="long"] .length
+{
+    color: var(--example-warn);
+}
+```
 
-Stop at the first yes:
+State is an attribute, never a second class: `data-length`, `data-open`,
+`aria-busy`. A test asserts on the attribute, and a screen reader announces what the
+stylesheet renders.
 
-1. A raw value used by more than one rule → `tokens.css`
-2. Every instance of the element should look so without a class → `base.css`
-3. Otherwise → a CSS Module beside the component
+==> #docs/src/plugin/2.plugin.ts.md
 
-## Rules
+# plugin.ts
 
-Every value a component sees is a token. The ones that ship are named for
-their role — `--example-ink`, `--example-space` — and hold nothing, so no
-palette is imposed and nothing renders until you fill them in. Renaming them
-and giving them values is the first day's work. A literal colour, length or
-duration outside `tokens.css` is a defect.
+The contract: everything crossing the boundary, named here or absent. The
+kernel refuses to start when a declaration is missing.
 
-The check reads less than that rule: colours, `px`/`rem`/`em`, `s`/`ms`. It
-passes `0`, `1px`, `0s`, `1ms` — a hairline and the shortest duration that
-still fires `animationend` — and never reads `%`, `vw`, `deg` or a bare number,
-which describe the viewport rather than a choice anyone would theme. The rule
-is yours to keep where the check cannot see.
+`<Name>` is the folder capitalised, `<subject>` the service it holds.
 
-A token nobody declared is worse than a literal: the rule quietly does not
-apply. Both are refused, and a `styles.x` no module declares.
+Required: `version`, `describe`.
 
-Fonts load in `index.html`, never through CSS; the family name is a token.
+```ts
+export default definePlugin("<name>", {
+    version: "1.0.0",
+    describe: "<what this plugin is for>",
 
+    dependsOn: ["<other>"],
+    config: <Name>Config.schema,
+
+    permissions: { "<name>.read": { describe: "<what it allows>" } },
+    grants: (ctx) => ctx.services.<subject>.permissions(),
+
+    services: (ctx) => ({ <subject>: new <Name>(ctx) }),
+
+    frame: <Name>Frame,
+    pages: { forbidden: NoEntry, missing: NoPage },
+
+    routes: [
+        { path: "/<name>", title: "<Tab>", requires: ["<name>.read"],
+          component: <Name>s, search: <Name>Query.schema },
+        { path: "/<name>/$id", title: "<Tab>", component: <Name>Detail },
+    ],
+
+    slots: { "<name>.<place>": { describe, schema } },
+    contributes: [{ slot: "<other>.<place>", render: <Name>Link }],
+
+    emits: { "<name>.<happened>": { describe, schema } },
+    listens: { "<other>.<happened>": { describe, handle } },
+    hooks: { "<name>.before-<doing>": { describe, schema } },
+    participates: { "<other>.before-<doing>": { describe, handle } },
+    commands: { "<name>.<do-thing>": { describe, schema, requires, run } },
+
+    sends: (ctx) => ({ "x-<name>": ctx.config.<field> }),
+    fallback: <Name>Broke,
+
+    setup: (ctx) => ctx.log.info("<name> ready"),
+    teardown: (ctx) => ctx.log.info("<name> stopped"),
+});
+```
+
+`frame` wraps every page this plugin routes. `pages` replaces the 403 and 404
+for them. `fallback` renders when one throws.
+
+==> #docs/src/plugin/3.usage.md.md
+
+# usage.md
+
+What another developer reads before building against this plugin.
+
+`<name>` is the folder, exactly as the contract names it.
+
+```md
+# <name>
+
+## Description
+
+<what it is, in a sentence or two: what it holds and who may see it>
+
+## Usage
+
+<the two or three calls another plugin makes, as code>
+
+## What it declares
+
+- **Permissions**: <each one, and what holding it allows>
+- **Routes**: <each path, and what it shows>
+- **Slots**: <each slot, and what a contribution renders>
+- **Events**: <each one, and when it fires>
+
+## Refusals
+
+- <every refusal, one a line, each with a test that triggers it>
+
+## Does not
+
+- <what another plugin owns, so a reader does not wait on this one>
+```
+
+==> #docs/src/plugin/4.types.type.ts.md
+
+# types/
+
+Everything zod parses, and the shapes describing code alone. `<Thing>.ts`
+holds `<Thing>`, as a `const` and a `type` of one name.
+
+A value crossing the boundary carries a schema. A shape the code needs and no
+server receives carries none.
+
+```ts
+import { z } from "zod";
+
+import { <Other> } from "./<Other>";
+
+export const <Thing> = {
+    schema: z.object({
+        id: z.uuid(),
+        <field>: <Other>.schema,
+    }),
+
+    <method>: (raw: <Thing>): string =>
+    {
+        return <raw, made regular>;
+    },
+};
+
+export type <Thing> = z.infer<typeof <Thing>.schema>;
+```
+
+`<Name>Config.ts` holds what `plugin.ts` names in `config`, and is what
+`ctx.config` resolves to. A secret belongs on the server: nothing here reaches
+the browser without shipping in the bundle.
+
+==> #docs/src/plugin/5.api.api.ts.md
+
+# api/
+
+Every call to the server, one file a surface. The only place a path is
+written, and the only place a response is parsed.
+
+`ctx.http` carries the call; `fetch` is a lint error. A response is parsed
+before it is returned, so a service holds a value the schema already checked.
+
+```ts
+import type { Context } from "@onetype/stack-app-kit";
+
+import { <Thing> } from "../types/<Thing>";
+import type { <Thing>Query } from "../types/<Thing>Query";
+
+export const <name>Api = {
+    list: async (ctx: Context, query: <Thing>Query): Promise<<Thing>Page> =>
+    {
+        const body = await ctx.http.get("/<name>", { query });
+
+        return <Thing>Page.schema.parse(body);
+    },
+
+    one: async (ctx: Context, id: string): Promise<<Thing>> =>
+    {
+        const body = await ctx.http.get(`/<name>/${encodeURIComponent(id)}`);
+
+        return <Thing>.schema.parse(body);
+    },
+};
+```
+
+`encodeURIComponent` on every id: one carrying a slash otherwise reads as
+another path. A 4xx or 5xx throws, and the kit names which.
+
+==> #docs/src/plugin/6.services.service.ts.md
+
+# services/
+
+One class a file, built once per plugin and handed `ctx`. Everything a page
+or a section needs, and the only holder of state between renders.
+
+A service calls `api/`, never the server. It parses nothing: the api already
+did. `fetch` is a lint error here too.
+
+```ts
+import type { Context } from "@onetype/stack-app-kit";
+
+import { <name>Api } from "../api/<name>";
+import { <Name>Keys } from "../utils/<Name>Keys";
+import type { <Thing> } from "../types/<Thing>";
+
+export class <Name>
+{
+    readonly #ctx: Context;
+
+    readonly #known = new Map<string, <Thing>>();
+
+    constructor(ctx: Context)
+    {
+        this.#ctx = ctx;
+    }
+
+    cached(id: string): <Thing> | undefined
+    {
+        return this.#known.get(id);
+    }
+
+    async get(id: string): Promise<<Thing>>
+    {
+        return this.#remember(await <name>Api.one(this.#ctx, id));
+    }
+
+    async <method>(id: string): Promise<void>
+    {
+        await <name>Api.<method>(this.#ctx, id);
+
+        this.#ctx.cache.invalidate(<Name>Keys.list());
+        this.#ctx.events.emit("<name>.<happened>", { id });
+    }
+
+    #remember(<thing>: <Thing>): <Thing>
+    {
+        this.#known.set(<thing>.id, <thing>);
+
+        return <thing>;
+    }
+}
+```
+
+A write invalidates the cache keys it changed, then emits. `utils/<Name>Keys`
+holds every key, so a page and a service cannot disagree.
+
+==> #docs/src/plugin/7.pages.page.tsx.md
+
+# pages/
+
+The same shape as `#docs/src/ui/page.md`, one folder a route. What `plugin.ts`
+names in `routes`.
+
+==> #docs/src/plugin/8.sections.section.tsx.md
+
+# sections/
+
+One folder a composed piece: `<Name>/<Name>.tsx` with its own module.css.
+What a page puts together, and what `frame` and `pages` name.
+
+A section may reach this plugin's services and another plugin's public API. It
+takes what it renders as props wherever a page already holds it, so the same
+section serves two pages.
+
+```tsx
+import { <Other> } from "@plugins/<other>";
+
+import { <Name>Row } from "../../components/<Name>Row/<Name>Row";
+import styles from "./<Name>Table.module.css";
+
+import type { <Thing> } from "../../types/<Thing>";
+
+export type <Name>TableProps = {
+    <name>s: readonly <Thing>[];
+    loading?: boolean;
+    onOpen?: ((id: string) => void) | undefined;
+};
+
+export const <Name>Table = ({ <name>s, loading, onOpen }: <Name>TableProps) =>
+{
+    if (loading === true)
+    {
+        return <p className={styles.waiting}>Loading…</p>;
+    }
+
+    return (
+        <ul className={styles.root}>
+            {<name>s.map((<thing>) => (
+                <<Name>Row key={<thing>.id} <thing>={<thing>} onOpen={onOpen} />
+            ))}
+        </ul>
+    );
+};
+```
+
+`Slot` renders what other plugins contributed: `<Slot name="<name>.<place>"
+payload={...} />`, and each contribution declares what it needs.
+
+==> #docs/src/plugin/9.components.component.tsx.md
+
+# components/
+
+The same shape as `#docs/src/ui/component.md`, reachable by this plugin alone
+unless `index.ts` exports it.
+
+A component a plugin exports is shown the same way wherever it appears, so a
+row looks alike on its own page and inside another plugin's slot.
+
+==> #docs/src/structure.md
+
+# Procedure: src structure
+
+## The tree
+
+```
+src/
+├── main.tsx        composition root
+├── kernel/         env, mount, queries, routes
+├── plugins/        one folder a capability
+├── ui/             presentational, no domain
+└── utils/          pure, no domain
+```
+
+Nothing central lists the plugins: adding one touches no file above it.
+
+## Inside a plugin
+
+`*` kernel requires it.
+
+```
+plugins/<name>/
+├── plugin.ts *     one default export
+├── usage.md *      under 1800 characters
+├── index.ts        one exported object
+├── types/          Name.ts, one type a file
+├── api/            name.ts, one server surface a file
+├── services/       name.ts, one class a file
+├── pages/          Name/Name.tsx, one route a folder
+├── sections/       Name/Name.tsx, composed, reaches services
+├── components/     Name/Name.tsx, presentational only
+├── hooks/          useName.ts, one hook a file
+├── utils/          Name.ts, one class a file
+└── tests/          name.test.ts, flat
+```
+
+Every `.tsx` folder holds its own `Name.module.css` beside it.
+
+==> #docs/src/ui/component.md
+
+# A component
+
+One folder a unit: `<Name>/<Name>.tsx` and `<Name>.module.css` beside it. The
+same shape whether it lives in `src/ui` or in a plugin's `components/`.
+
+Props in, markup out. No service, no plugin, no hook that reads the address,
+and `fetch` is a lint error. Everything shown arrives as a prop, so the same
+unit serves a page, a section and a test.
+
+```tsx
+import { useId, useRef } from "react";
+
+import { useFocusTrap } from "@onetype/stack-app-kit/react";
+
+import styles from "./<Name>.module.css";
+
+import type { ReactNode } from "react";
+
+export type <Name>Tone = "plain" | "accent" | "alarm";
+
+export type <Name>Props = {
+    title: string;
+    tone?: <Name>Tone;
+    busy?: boolean;
+    onDismiss?: () => void;
+    children?: ReactNode;
+    trailing?: ReactNode;
+};
+
+export const <Name> = ({ title, tone = "plain", busy = false, children, trailing }: <Name>Props) =>
+{
+    const id = useId();
+
+    return (
+        <section
+            className={styles.root}
+            data-tone={tone}
+            data-busy={busy || undefined}
+            aria-labelledby={id}
+            aria-busy={busy || undefined}
+        >
+            <h2 id={id} className={styles.title}>{title}</h2>
+            {children}
+            {trailing}
+        </section>
+    );
+};
+```
+
+`data-tone` and `data-busy` carry state, so the stylesheet reads an attribute
+rather than a second class. `aria-labelledby` and `aria-busy` say the same
+thing to a screen reader, and a test asserts on the role.
+
+`trailing` and `children` are how a caller adds to a unit without it knowing
+what: the unit places, the caller decides.
+
+==> #docs/src/ui/page.md
+
+# A page
+
+One folder a route: `<Name>/<Name>.tsx` and `<Name>.module.css` beside it.
+Only a plugin has them; `src/ui` holds none, because a page carries domain.
+
+A page reads the address, calls a service through `useQuery`, and composes
+sections. It holds no markup of its own beyond layout.
+
+```tsx
+import { useQuery } from "@tanstack/react-query";
+import { useNavigate } from "@tanstack/react-router";
+
+import { <Name> as Plugin } from "../../index";
+import { <Name>Table } from "../../sections/<Name>Table/<Name>Table";
+import { <Name>Keys } from "../../utils/<Name>Keys";
+import styles from "./<Name>s.module.css";
+
+export const <Name>s = () =>
+{
+    const { services, config } = Plugin.use();
+    const navigate = useNavigate();
+
+    const page = useQuery({
+        queryKey: <Name>Keys.list({}),
+        queryFn: () => services.<subject>.list(),
+    });
+
+    return (
+        <div className={styles.root}>
+            {page.isError
+                ? <p className={styles.wrong} role="alert">{page.error.message}</p>
+                : (
+                    <<Name>Table
+                        <name>s={page.data?.<name>s ?? []}
+                        loading={page.isPending}
+                        onOpen={(id) => { void navigate({ to: "/<name>/$id", params: { id } }); }}
+                    />
+                )}
+        </div>
+    );
+};
+```
+
+`queryKey` comes from `utils/<Name>Keys`, the same file a service invalidates
+through, so a stale list cannot survive a write.
+
+An error renders where the reader is, with `role="alert"`. A page that throws
+instead reaches the plugin's `fallback`.
+
+==> #docs/src/ui/ui.md
+
+# ui/
+
+The presentational layer every plugin may reach: units, tokens and the reset.
+It holds no domain and imports no plugin.
+
+The scaffold ships `index.ts` and nothing else. The layout below is what to
+build, in the order a first screen needs it.
+
+```
+ui/
+├── index.ts                    what `@ui` exports
+├── components/Name/Name.tsx    one unit a folder, with its own module.css
+└── styles/                     the reset, the tokens, the base
+```
+
+Reached as `@ui` for a unit and `@ui/styles/...` for a stylesheet, both mapped
+in `tsconfig.base.json` and `vite.config.ts`. A path that resolves to nothing
+is reported by `Project.findAll()` before the first import of it.
+
+`component.md` and `page.md` beside this file hold the shape each takes. A
+plugin's `components/` and `pages/` follow them.
+
+A token is named for its role, never its value, so a stylesheet reads and the
+palette stays one file.
+
+Every length, colour and duration in a plugin's stylesheet is a token. A
+literal is a lint error: `Project.findAll()` names the file and the value.
+
+==> #docs/src/utils/utils.ts.md
+
+# utils/
+
+A class of methods any plugin may reach: `plugin.ts`, `index.ts`, a service, a
+section, a component. Exported as a singleton, so a caller never constructs
+one.
+
+It takes values and returns values. Reaching a plugin, the kit or `@ui` is a
+lint error: needing `ctx` means it is a service.
+
+```ts
+class <Name>Utils
+{
+    <method>(raw: string, locale: string): string
+    {
+        return this.#<private>(raw, locale);
+    }
+
+    #<private>(raw: string, locale: string): string
+    {
+        return raw;
+    }
+}
+
+export const <Name> = new <Name>Utils();
+```
+
+A plugin's own `utils/` holds `<Name>Keys` the same way, as one object every
+cache key comes from:
+
+```ts
+export const <Name>Keys = {
+    all: (): readonly unknown[] => ["<name>"],
+    list: (query: <Name>Query): readonly unknown[] => ["<name>", "list", query.<field> ?? "any"],
+    one: (id: string): readonly unknown[] => ["<name>", "one", id],
+};
+```
+
+Reached as `@utils/<Name>`. A formatter takes the locale rather than reading
+one, so the same value renders the same way in a test.
 
 ==> #docs/stack.md
 
 # Stack
 
-One application, one package: the kernel is `@onetype/stack-app-kit`, and
-`package.json` says whether it resolves from npm or from a checkout beside
-this one.
+Node 22+, TypeScript strict with `noUncheckedIndexedAccess` and
+`exactOptionalPropertyTypes`. Vite, React 19, TanStack Router and Query, CSS
+Modules, Zod, Vitest, ESLint.
 
-## Tools
+One package from npm, `@onetype/stack-app-kit`, with three entries: the root,
+`./react` for hooks and components, and `./testing` for what a test uses.
 
-Vite, React, TanStack Router and Query, CSS Modules, Zod, Vitest. TypeScript
-strict, plus `noUncheckedIndexedAccess` and `exactOptionalPropertyTypes`.
-
-File-based routing is forbidden: a route that exists because of where a file
-sits is a boundary nothing enforces. Routes are declared in a contract.
-
-## Layout
+## Running it
 
 ```
-src/
-├── kernel/     brings the app up: env, mount, queries, routes
-├── ui/         shared presentation: styles, components
-├── utils/      pure functions no plugin owns
-├── plugins/    one folder per capability
-└── main.tsx    composition root
+pnpm dev       vite, on http://localhost:5173
+pnpm build     typecheck, then bundle
+pnpm verify    lint, typecheck, tests
 ```
 
-`ui` imports neither a plugin nor the kernel, and a plugin imports another only
-through its `index.ts`. ESLint rejects each. Whether that plugin is one it
-declared in `dependsOn` is a contract question, so `Project.checks()` answers
-it and the build fails there.
-
-## The kit
-
-Three entries. `.` runs without a DOM: registry, contracts, events, hooks,
-slots, permissions, transport. `./react` adds `KernelProvider`, `Slot`,
-`RouteGuard`, `usePlugin`, `useStore`, `useEvent` and `StartupFailure` — a
-plugin's `index.ts` reaches for this one. `./testing` holds the checks a test
-calls, and `fakeContext`.
+`VITE_API_URL` names the server, `VITE_WS_URL` the socket.
 
 ## Startup
 
-`start` discovers every `plugins/*/plugin.ts`, validates every contract,
-resolves dependencies, rejects cycles, and runs `setup` in dependency order.
-Any failure stops the boot naming the plugin and the cause.
-
-`services` is declared before anything reading `ctx.services`: inference runs
-left to right, so a callback above it sees `unknown`.
-
-`pnpm verify` runs lint, typecheck, tests and build.
+`main.tsx` builds a query client, `Mount.open` discovers every plugin, and the
+kernel validates each contract. Any failure stops the boot naming the plugin
+and the cause. Nothing partially starts.
