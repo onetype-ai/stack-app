@@ -16,9 +16,9 @@ export const Routes = {
         const root = createRootRoute({ component: frame, notFoundComponent: NotFound });
 
         const declaredRoutes = kernel.routes();
-        const whereLandingSends = declaredRoutes[0];
+        const landingRoute = declaredRoutes[0];
 
-        if (whereLandingSends === undefined)
+        if (landingRoute === undefined)
         {
             throw new Error("No plugin declares a route. One must, or every address answers 404.");
         }
@@ -28,7 +28,7 @@ export const Routes = {
             : [createRoute({
                 getParentRoute: () => root,
                 path: "/",
-                component: () => <Navigate to={whereLandingSends.path} replace />,
+                component: () => <Navigate to={landingRoute.path} replace />,
             })];
 
         const pages = kernel.routes().map((route) =>

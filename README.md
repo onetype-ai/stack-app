@@ -47,28 +47,17 @@ Chromium and reads what a person would see.
 why, why plugins at all, and a procedure for each part. It is one file so it
 can be read without walking a tree.
 
-`src/plugins/example.txt` is the worked pair, the same way: `documents` stands
-alone and opens a slot, `comments` depends on it and fills it. Between them
-they use every way across a boundary exactly once, so read one crossing where
-it actually runs rather than in a declaration with nothing on the other side.
+No worked example ships yet. `src/plugins/` and `src/utils/` are empty, and
+`src/ui/` holds only `index.ts`, which exports nothing: the procedures in
+`docs.md` are the only description of a plugin's shape, so read those rather
+than looking for code that is not here.
 
-`comments` also listens on a channel the api pushes to, so a label somebody
-else put on shows without anyone asking again.
-
-They also read from two places on purpose: `documents` asks the server through
-React Query, and `comments` keeps its drafts in a service a view reads with
-`useStore`. The domains are dull on purpose: take the mechanics, never the
-model.
-
-Read them where they are.
-
-`src/ui/example.txt` is the same again for the shared layer: one unit, and
-tokens named for their role but holding nothing. The names let a stylesheet
-read; the empty values impose no palette. Filling them in is the first day's
-work.
-
-Each of those files is a folder folded into one: every path and every line,
-in the order somebody would read them. Read them where they are.
+`tools/pack/plugins.mjs`, `tools/pack/ui.mjs` and `tools/pack/utils.mjs` are
+where the examples will land when they are written; `tools/pack/docs.mjs`
+folds `#docs` the same way. Each folds a folder into one file -- every path and
+every line, in the order somebody would read them -- so
+`node tools/pack/plugins.mjs unpack` and its siblings rebuild the folders from
+it. Until an example is written there is nothing for them to unpack.
 
 The checks that read `#docs` skip while it is folded away. The ones that read
 code, which is most of them, run either way.

@@ -51,6 +51,319 @@ thing `discover` looks for.
 The contract is the whole boundary. `Definition` in the reference names every
 field and its type; `plugin.ts` in these documents shows the shape.
 
+==> #docs/kit/2a.composition.md
+
+# Composition
+
+Which pieces an application assembles, in what order, and what each one is for.
+
+## The pieces
+
+Two layers, and they are not the same thing.
+
+The **host** is `boot(log, [...])`. It takes *host plugins* — `kernelPlugin()`,
+`routerPlugin(...)`, `cachePlugin(...)`, `transportPlugin(...)`,
+`mountPlugin()` — functions the kit exports that wire the kit to itself. Each
+carries `needs`, and `boot` orders them:
+
+```
+kernelPlugin()     needs: undefined      offers the kernel runtime
+transportPlugin()  needs: undefined      offers http and the socket
+cachePlugin()      needs: ["kernel"]
+routerPlugin()     needs: ["kernel"]
+mountPlugin()      needs: ["kernel", "transport"]
+```
+
+The **kernel** is `createKernel({ plugins })`. It takes *application plugins* —
+what `definePlugin` returns, one a capability. This is the layer every other
+document in here is about.
+
+`start({ plugins, transport })` is the one-call path: it boots a host with
+`transportPlugin` and builds a kernel, and is enough for an application whose
+pages are rendered by something else. **It never builds a router.** For a route
+tree you assemble the host yourself, which is what follows.
+
+## An application, from an empty folder
+
+```
+package.json
+src/
+    main.jsx
+    shell.plugin.jsx
+    notes.plugin.jsx
+    audit.plugin.jsx
+```
+
+One dependency, `@onetype/stack-app-kit`, with `react`, `react-dom` and `zod`
+beside it, and a router library — `@tanstack/react-router` below.
+
+### shell.plugin.jsx — the frame and the status pages
+
+```jsx
+import { definePlugin } from "@onetype/stack-app-kit";
+
+const Shell = ({ children }) => <main><h1>App</h1>{children}</main>;
+const Missing = () => <p>No such page.</p>;
+const Forbidden = () => <p>Not for you.</p>;
+
+export default definePlugin("shell", {
+    version: "1.0.0",
+    describe: "The frame every page renders inside.",
+
+    frame: Shell,
+    pages: { forbidden: Forbidden, missing: Missing },
+});
+```
+
+At most one plugin declares `frame`, and at most one each of the two pages.
+
+### notes.plugin.jsx — a capability
+
+```jsx
+import { definePlugin } from "@onetype/stack-app-kit";
+import { Slot, usePlugin } from "@onetype/stack-app-kit/react";
+import { z } from "zod";
+
+const Notes = () =>
+{
+    const { services } = usePlugin("notes");
+
+    return (
+        <ul>
+            {services.notes.list().map((note) => (
+                <li key={note.id}>
+                    {note.title}
+                    <Slot name="notes.beside-title" payload={{ id: note.id }} />
+                </li>
+            ))}
+        </ul>
+    );
+};
+
+export default definePlugin("notes", {
+    version: "1.0.0",
+    describe: "The notes a reader may see.",
+
+    config: z.object({ greeting: z.string().default("Notes") }),
+
+    permissions: { "notes.read": { describe: "See the notes." } },
+
+    services: () => ({ notes: { list: () => [{ id: "n1", title: "First" }] } }),
+    grants: () => ["notes.read"],
+
+    slots: {
+        "notes.beside-title": { describe: "Beside a note's title.", schema: z.object({ id: z.string() }) },
+    },
+
+    emits: {
+        "notes.saved": { describe: "A note was written.", schema: z.object({ id: z.string() }) },
+    },
+
+    hooks: {
+        "notes.before-save": { describe: "Before a note is written.", schema: z.object({ id: z.string() }) },
+    },
+
+    commands: {
+        "notes.archive": {
+            describe: "Put a note out of the way.",
+            schema: z.object({ id: z.string() }),
+            requires: ["notes.read"],
+
+            run: async (input, ctx) =>
+            {
+                const refusal = await ctx.hooks.run("notes.before-save", input);
+
+                if (refusal !== undefined)
+                {
+                    ctx.log.warn(`archive refused: ${refusal}`);
+
+                    return;
+                }
+
+                ctx.events.emit("notes.saved", input);
+            },
+        },
+    },
+
+    routes: [
+        { path: "/notes", title: "Notes", requires: ["notes.read"], component: Notes },
+    ],
+});
+```
+
+Every declared name — `notes.read`, `notes.beside-title`, `notes.saved`,
+`notes.before-save`, `notes.archive` — begins with `notes.`. That is the rule,
+below.
+
+### audit.plugin.jsx — reaching into notes
+
+```jsx
+import { definePlugin } from "@onetype/stack-app-kit";
+
+const Flag = ({ payload }) => <span> [{payload.id}]</span>;
+
+export default definePlugin("audit", {
+    version: "1.0.0",
+    describe: "Watches what notes does.",
+
+    dependsOn: ["notes"],
+
+    listens: {
+        "notes.saved": { describe: "Records a write.", handle: (payload, ctx) => ctx.log.info(`saved ${payload.id}`) },
+    },
+
+    participates: {
+        "notes.before-save": {
+            describe: "Refuses a note nobody named.",
+            handle: (payload) => (payload.id === "" ? "a note needs an id" : undefined),
+        },
+    },
+
+    contributes: [
+        { slot: "notes.beside-title", order: 10, requires: ["notes.read"], render: Flag },
+    ],
+});
+```
+
+`audit` depends on `notes`; `notes` names `audit` nowhere.
+
+### main.jsx — the composition root
+
+```jsx
+import { boot, createKernel, kernelPlugin, router, routerPlugin } from "@onetype/stack-app-kit";
+import { KernelProvider, RouteGuard } from "@onetype/stack-app-kit/react";
+import { createRootRoute, createRoute, createRouter } from "@tanstack/react-router";
+
+import audit from "./audit.plugin.jsx";
+import notes from "./notes.plugin.jsx";
+import shell from "./shell.plugin.jsx";
+
+const log = (line, about) => console.log("[host]", line, about ?? "");
+
+// 1. the host. kernelPlugin first: routerPlugin.needs is ["kernel"].
+const app = boot(log, [kernelPlugin(), routerPlugin({ createRootRoute, createRoute, createRouter })]);
+
+// 2. the kernel: the plugins this application holds.
+const kernel = createKernel({
+    plugins: [shell, notes, audit],
+    config: { notes: { greeting: "Notes" } },
+    grantedBy: "notes",
+    log: (level, plugin, line) => console.log(`[${level}] ${plugin}: ${line}`),
+});
+
+// 3. validation happens here, not in createKernel.
+await kernel.start();
+
+// 4. the tree. This `{ shell, missing }` is Router.build's Frame, not Definition.frame.
+const built = router.from(app.host).build(
+    kernel,
+    { shell: ({ children }) => children, missing: kernel.pages().missing },
+    (route) => () => <RouteGuard route={route} />,
+);
+```
+
+`routerPlugin` takes the three functions of a router library, never imports
+one. `router.from(host)` answers `{ build }` or `undefined` — `undefined`
+means `routerPlugin` was not in the `boot` array.
+
+`build(kernel, frame, guard)` takes three arguments and answers whatever
+`createRouter` returned, typed `unknown`. `guard` is called once a route and
+must answer a component: `RouteGuard` is where 403, `instead` and the plugin's
+`fallback` happen, so a guard that skips it skips all three.
+
+Rendering it, with the frame the `shell` plugin declared around the page the
+router matched:
+
+```jsx
+const { Page } = built.render("/notes");   // your router library's matching
+const Frame = kernel.frame();
+
+renderToString(
+    <KernelProvider kernel={kernel}><Frame><Page /></Frame></KernelProvider>,
+);
+```
+
+Output:
+
+```
+boot order = [ 'kernel', 'router' ]
+routes     = [ '/notes' ]
+rendered   = <main><h1>App</h1><ul><li>First<span> [<!-- -->n1<!-- -->]</span></li></ul></main>
+404        = <p>No such page.</p>
+```
+
+The `<span>` is `audit`'s contribution inside `notes`' slot: neither plugin
+imports the other. The `<!-- -->` are React's own text separators.
+
+Then the command, the hook and the event, in one call each:
+
+```js
+await kernel.run("notes.archive", { id: "n1" });   // [info] audit: saved n1
+await kernel.run("notes.archive", { id: "" });     // [warn] notes: archive refused: a note needs an id
+```
+
+`kernel.stop()` unwinds the plugins, `app.stop()` the host, in that order.
+
+## Every name begins with its plugin's own
+
+A permission, slot, event, hook or command is `<plugin>.<rest>`, where
+`<plugin>` is the name passed to `definePlugin`. This is the first thing
+`start()` checks, and a name that breaks it stops the boot:
+
+```
+[INVALID_NAME] notes: A permission is named inside its own plugin:
+"note.read" belongs to "note", not to "notes". Rename it to "notes.read".
+```
+
+Routes are the exception: a path is a path, and only has to start with `/`.
+
+## Hooks and events flow dependent → dependency
+
+The invariant, opposite in direction to `ctx.use`:
+
+- A plugin **runs** only the hooks it **owns**.
+- A plugin **participates** in, or **listens** to, a plugin it **depends on**.
+
+So the plugin that declares `participates` is the one that names the owner in
+`dependsOn` — `audit` depends on `notes`, above. The owner declares nothing
+about the participant, and must not: adding `dependsOn: ["audit"]` to `notes`
+so that both sides "know" each other is the trap, and it fails with
+
+```
+[DEPENDENCY_CYCLE] audit: Plugins depend on each other in a loop:
+audit -> notes -> audit. One of them has to stop.
+```
+
+Read `UNDECLARED_DEPENDENCY` as naming the *participant's* missing
+`dependsOn`, never the owner's. Running someone else's hook is refused at the
+call:
+
+```
+[UNDECLARED_HOOK] "audit" ran "notes.before-save", which belongs to "notes".
+A plugin runs only the hooks it owns.
+```
+
+Two plugins that each want to refuse the other's work are two hooks, one owned
+by each, not one hook and a cycle.
+
+## Shapes worth stating once
+
+- `Command.run` receives `(input, ctx)`: the parsed input first, the declaring
+  plugin's context second.
+- `Definition.frame` is a bare component. The `{ shell, missing }` `Frame` is
+  the **second argument to `Router.build`** and nothing else — `shell` wraps
+  every page, `missing` is the 404 for a path nothing declared.
+- `emits`, `listens`, `hooks`, `participates`, `commands` and `slots` are
+  objects keyed by name, never arrays. `listens` and `participates` entries are
+  `{ describe, handle }`.
+- A plugin never receives its own events. Declaring `emits` and `listens` for
+  one name hears nothing.
+- `TransportFault` and `address` live on the `transport` namespace —
+  `import { transport } from "@onetype/stack-app-kit"`, then
+  `transport.TransportFault` — not on the root.
+- `createKernel` validates nothing. `await kernel.start()` is what refuses, so
+  a contract mistake surfaces there.
+
 ==> #docs/kit/3.react.md
 
 # @onetype/stack-app-kit/react
@@ -60,8 +373,9 @@ What a component reaches for. Imported from `/react`, never the root.
 - `usePlugin<Config, Services>(name)` answers this plugin's handle: `config`,
   `services`, `permissions`. A plugin's `index.ts` wraps it as `use()`.
 - `useKernel()` answers the kernel itself, for a frame or a guard.
-- `useEvent(plugin, event, handle)` subscribes for as long as the component
-  lives, and unsubscribes on unmount.
+- `useEvent(listener, event, handle)` subscribes for as long as the component
+  lives, and unsubscribes on unmount. `listener` is the plugin doing the
+  listening, not the one that owns the event.
 - `useStore(watch, read)` re-renders on a value outside React, such as
   `ctx.permissions.watch`.
 - `useFrame()` answers the frame the routed plugin declared.
@@ -76,9 +390,10 @@ const { services, config } = <Name>.use();
 useEvent("<other>", "<other>.<happened>", (payload) => { ... });
 ```
 
-A hook is called at the top of a component, never in a branch. `useEvent`
-takes the plugin that declared the event, so a name cannot be listened to by
-mistake.
+A hook is called at the top of a component, never in a branch. `useEvent`'s
+first argument is the plugin whose context subscribes — the listener — and it
+must name the event's owner in `dependsOn`. A component of `<other>` hearing
+`<name>.<happened>` passes `"<other>"`, not `"<name>"`.
 
 ==> #docs/kit/4.slots.md
 
@@ -163,9 +478,13 @@ routes: [
 the address reaches a value the schema checked.
 
 `requires` renders the 403 page instead. `instead` redirects: returning a path
-sends the reader there, `undefined` lets them through. A guard nothing can lift
-fails validation, because a route every reader is refused looks the same from
-outside as a route that works.
+sends the reader there, `undefined` lets them through.
+
+A `requires` naming a permission no plugin declared fails validation, and so
+does a `requires` where no plugin declares `grants` at all — a route every
+reader is refused looks the same from outside as a route that works. A plugin
+that declares `grants` and returns `[]` passes: the kernel checks that someone
+answers, not that the answer is ever yes.
 
 `title` names the browser tab, set before the guard runs: a reader refused a
 page is on that page.
@@ -194,6 +513,10 @@ if (cause instanceof TransportFault && cause.code === "CONFLICT")
 A page that throws reaches the plugin's `fallback`, given `{ error, plugin,
 reset }`. Without one, the whole tree unmounts: declare it.
 
+`fallback` is a React error boundary, so it catches only while rendering in a
+browser. Under `renderToString` a throw is not caught by anything: it comes out
+of the render call, and the caller handles it or the response is lost.
+
 Branch on `code`, never on the message. A message is for a reader.
 
 ==> #docs/kit/8.events.md
@@ -212,8 +535,10 @@ listens: { "<other>.<happened>": { describe, handle: (payload, ctx) => { ... } }
 ```
 
 Emitted after the work, never before. A listener returns nothing and cannot
-refuse. `useEvent(plugin, event, handle)` is the same subscription in a
-component.
+refuse. `useEvent(listener, event, handle)` is the same subscription in a
+component, where `listener` is the plugin doing the listening. A plugin never
+receives its own events: declaring `emits` and `listens` for one name hears
+nothing.
 
 ## Hooks
 
@@ -259,7 +584,8 @@ nobody expected is a failing test rather than `undefined`.
 
 What it records:
 
-- `fake.asked` — every call, as `{ method, path, query, body, headers }`.
+- `fake.requests` — every call, as `{ method, path, query, body, headers }`.
+  `query`, `body` and `headers` are absent where the call passed none.
 - `fake.announced` — every event, as `{ event, payload }`.
 - `fake.invalidated` — every cache key.
 - `fake.commanded` — every command, as `{ command, input }`.
@@ -267,7 +593,7 @@ What it records:
 - `fake.regranted` — how many times `permissions.changed()` was called.
 - `fake.push(channel, message)` — delivers to whatever subscribed.
 
-`Faking` in the reference names every option. Assert on `fake.asked` rather
+`Faking` in the reference names every option. Assert on `fake.requests` rather
 than a mock: what the server was asked is the contract.
 
 ==> #docs/src/kernel/kernel.md
@@ -406,7 +732,7 @@ const fake = fakeContext({ "GET /<name>": { <name>s: [<thing>], total: 1 } }, { 
 
 await new <Name>(fake.ctx).list();
 
-expect(fake.asked).toEqual([{ method: "GET", path: "/<name>", query: {} }]);
+expect(fake.requests).toEqual([{ method: "GET", path: "/<name>" }]);
 ```
 
 ## Anything rendered
@@ -422,7 +748,7 @@ await userEvent.click(screen.getByRole("link", { name: "<title>" }));
 expect(opened).toHaveBeenCalledWith(<thing>.id);
 ```
 
-A query is asserted through `fake.asked`, a render through the role a reader
+A query is asserted through `fake.requests`, a render through the role a reader
 would use. Never a class name: a stylesheet may change without the meaning
 changing.
 
@@ -487,9 +813,11 @@ export default definePlugin("<name>", {
     config: <Name>Config.schema,
 
     permissions: { "<name>.read": { describe: "<what it allows>" } },
-    grants: (ctx) => ctx.services.<subject>.permissions(),
 
+    // services before grants: TypeScript infers this object in order, so a
+    // grants written above it reads ctx.services as unknown.
     services: (ctx) => ({ <subject>: new <Name>(ctx) }),
+    grants: (ctx) => ctx.services.<subject>.permissions(),
 
     frame: <Name>Frame,
     pages: { forbidden: NoEntry, missing: NoPage },
@@ -979,9 +1307,9 @@ One package from npm, `@onetype/stack-app-kit`, with three entries: the root,
 ## Running it
 
 ```
-pnpm dev       vite, on http://localhost:5173
+pnpm dev       vite, on http://localhost:7380
 pnpm build     typecheck, then bundle
-pnpm verify    lint, typecheck, tests
+pnpm verify    lint, typecheck, tests, build
 ```
 
 `VITE_API_URL` names the server, `VITE_WS_URL` the socket.
@@ -991,3 +1319,37 @@ pnpm verify    lint, typecheck, tests
 `main.tsx` builds a query client, `Mount.open` discovers every plugin, and the
 kernel validates each contract. Any failure stops the boot naming the plugin
 and the cause. Nothing partially starts.
+
+## Kernel fault codes, by when they fire
+
+A `KernelFault` carries a `code`. Branch on that, never on the message. Every
+message names the plugin, the thing and the fix, so this maps when to expect
+which rather than replacing the sentence you will read.
+
+**At boot, from a contract that does not hold.** `DUPLICATE_PLUGIN`,
+`UNKNOWN_DEPENDENCY`, `DEPENDENCY_CYCLE`, `INVALID_NAME`, `INVALID_CONFIG`,
+`INVALID_ROUTE`. And one duplicate per kind, each meaning two plugins claim one
+name so which answers would depend on boot order: `DUPLICATE_ROUTE`,
+`DUPLICATE_SLOT`, `DUPLICATE_EVENT`, `DUPLICATE_HOOK`, `DUPLICATE_COMMAND`,
+`DUPLICATE_PERMISSION`, `DUPLICATE_FRAME`, `DUPLICATE_PAGE`.
+
+**At boot, about who may decide what a viewer holds.** `DUPLICATE_GRANTS` is
+two plugins declaring `grants`. `UNNOMINATED_GRANTS` is one declaring it that
+the application did not name in `grantedBy`. `UNGRANTABLE_PERMISSION` is a
+route asking for something nothing grants, so nobody could ever reach it.
+
+**At boot, from one plugin naming another's.** `UNDECLARED_EVENT`,
+`UNDECLARED_HOOK`, `UNDECLARED_SLOT`, `UNDECLARED_COMMAND`,
+`UNDECLARED_PERMISSION`, `UNDECLARED_DEPENDENCY`. Each says which plugin owns
+what you reached for, and that `dependsOn` is where you say so.
+
+**At the first outbound request.** `DUPLICATE_HEADER` is two plugins whose
+`sends` both set one header.
+
+**While running.** `PERMISSION_DENIED` is a command whose `requires` the viewer
+does not hold — a UI guard, so the server must refuse it too. `INVALID_PAYLOAD`
+is an event or command input failing its schema. `NOT_STARTED` is reaching the
+kernel before `start()` finished or after `stop()`.
+
+`OFF_BASE` is a `TransportFault`, not a kernel one: a path that would carry
+this app's headers off its own origin.

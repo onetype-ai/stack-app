@@ -2,7 +2,7 @@
 
 ## Functions
 
-### boot(say: LogLine, plugins: readonly HostPlugin[]): RunningApp
+### boot(say: LogLine, plugins: readonly HostPlugin[]): BootedKernel
 
 ### cachePlugin(client: Queries): HostPlugin
 
@@ -36,7 +36,7 @@
     readonly detail: Readonly<Record<string, unknown>>
     constructor(code: KernelFaultCode, message: string, about?: KernelFaultDetail)
 
-### RunningApp
+### BootedKernel
     constructor(host: Host, plugins: readonly HostPlugin[])
 
 ## Types
