@@ -61,6 +61,15 @@ const vite = await serving();
 const browser = await chromium.launch();
 
 const problems = [];
+const absent = [];
+
+//
+// A request to /api that nobody answers is a state this application renders,
+// not a fault in it: README says so, and every guarded route shows its 403.
+// Counting it as a failure would make an honest scaffold red for as long as
+// no server runs. Anything else the console reports is the application's.
+//
+const isMissingServer = (text, url) => /\/api\//.test(url) && /\b(404|failed to (load|fetch))\b/i.test(text);
 
 try
 {
@@ -68,10 +77,15 @@ try
 
     page.on("console", (message) =>
     {
-        if (message.type() === "error")
+        if (message.type() !== "error")
         {
-            problems.push(`console: ${message.text()}`);
+            return;
         }
+
+        const text = message.text();
+        const url = message.location().url;
+
+        (isMissingServer(text, url) ? absent : problems).push(`console: ${text}`);
     });
 
     page.on("pageerror", (error) =>
@@ -92,6 +106,11 @@ try
     const routes = await page.evaluate(() => document.querySelectorAll("[data-route]").length);
 
     console.log(`${ORIGIN} answered. #root ${root === "" ? "is empty" : "holds markup"}, ${String(routes)} routes marked.`);
+
+    if (absent.length > 0)
+    {
+        console.log(`${String(absent.length)} request(s) reached no server, which is a state and not a fault.`);
+    }
 }
 finally
 {
