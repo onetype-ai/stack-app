@@ -5,7 +5,7 @@ import { createRoot } from "react-dom/client";
 
 import { KernelProvider, StartupFailure } from "@onetype/stack-app-kit/react";
 
-import { Mount, Queries, Routes } from "./kernel";
+import { Mount, Queries } from "./kernel";
 
 import type { QueryClient } from "@tanstack/react-query";
 import type { Root } from "react-dom/client";
@@ -36,7 +36,7 @@ class Application
             <StrictMode>
                 <QueryClientProvider client={this.client}>
                     <KernelProvider kernel={app.kernel}>
-                        <RouterProvider router={Routes.build(app.kernel)} />
+                        <RouterProvider router={app.router as never} />
                     </KernelProvider>
                 </QueryClientProvider>
             </StrictMode>,
