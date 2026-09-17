@@ -6,8 +6,12 @@ src/
 ├── kernel/         settings, mount, query client
 ├── plugins/        one folder a capability
 ├── ui/             presentational, no domain
+│   ├── components/ Name/Name.tsx, one a folder
+│   └── sections/   Name/Name.tsx, composed
 └── utils/          pure, no domain
 ```
+
+`src/ui/` has a plugin's view shape: nothing sits directly in it.
 
 Nothing central lists the plugins: adding one touches no file above it.
 
