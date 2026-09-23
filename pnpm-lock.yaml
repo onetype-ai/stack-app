@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@onetype/stack-app-kit':
-        specifier: ^6.0.2
-        version: 6.0.2(react@19.2.8)
+        specifier: ^6.4.0
+        version: 6.4.0(playwright@1.62.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(vite@8.2.2(@types/node@26.4.0))
       '@tanstack/react-query':
         specifier: 5.102.8
         version: 5.102.8(react@19.2.8)
@@ -284,13 +284,23 @@ packages:
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
 
-  '@onetype/stack-app-kit@6.0.2':
-    resolution: {integrity: sha512-D5D+XcrEhodksFWizY9mB5ULCKTE3UEx98dxxbhP7geY1AXuWKTY6H9NUW/FYBEYkO9V46cFAJWSd9JTVsfHUg==}
+  '@onetype/stack-app-kit@6.4.0':
+    resolution: {integrity: sha512-4n+CaqZkF9w1E1ewlSTs3bOCE0GdAD0y4JZV7UYGOIPFvflPrue59ZrsfkVqQ6ZDzAQsugMWBVjvijH2G31gdA==}
     engines: {node: '>=22'}
+    hasBin: true
     peerDependencies:
+      playwright: '>=1.40'
       react: '>=18'
+      react-dom: '>=18'
+      vite: '>=6'
     peerDependenciesMeta:
+      playwright:
+        optional: true
       react:
+        optional: true
+      react-dom:
+        optional: true
+      vite:
         optional: true
 
   '@oxc-project/types@0.147.0':
@@ -1611,11 +1621,14 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.6.0
 
-  '@onetype/stack-app-kit@6.0.2(react@19.2.8)':
+  '@onetype/stack-app-kit@6.4.0(playwright@1.62.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(vite@8.2.2(@types/node@26.4.0))':
     dependencies:
       zod: 4.5.4
     optionalDependencies:
+      playwright: 1.62.1
       react: 19.2.8
+      react-dom: 19.2.8(react@19.2.8)
+      vite: 8.2.2(@types/node@26.4.0)
 
   '@oxc-project/types@0.147.0': {}
 
