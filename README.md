@@ -54,6 +54,7 @@ paths reach it unchanged.
 | `#docs/architecture.md` | decisions that shape more than one plugin |
 | `#docs/stack.md` | what the kit is for, and what `verify` catches |
 | `#docs/src/structure.md` | where a file goes |
+| `#docs/src/app.md` | what is not a plugin: entries, locale, settings, e2e |
 | `#docs/src/names.md` | the names every example uses |
 | `#docs/src/plugin/` | one procedure a file: what to write, and an example |
 | `schemas.md` | the kit's whole surface, generated from its published types |

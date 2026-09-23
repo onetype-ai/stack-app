@@ -44,7 +44,7 @@ class Application
         }
 
         const app = await Mount.open(this.client, { isPrerendered, log, locale: prerenderedLocale() ?? viewerLocale });
-        const tree = <Tree app={app} client={this.client} viewerLocale={viewerLocale} />;
+        const tree = <Tree app={app} client={this.client} viewerLocale={viewerLocale} log={log} />;
 
         if (isPrerendered)
         {
