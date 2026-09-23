@@ -20,7 +20,7 @@ Nothing central lists the plugins: adding one touches no file above it.
 `*` is required by the kernel.
 
 ```
-plugins/<plugin>/
+plugins/items/
 ├── plugin.ts *     one default export
 ├── usage.md *      under 1800 characters
 ├── index.ts        the public API, the only importable file
@@ -43,4 +43,4 @@ Every key `plugin.ts` accepts: `version`, `describe`, `dependsOn`, `config`,
 `commands`, `sends`, `fallback`, `setup`, `teardown`. Only the first two are
 required.
 
-Placeholders every example uses: `placeholders.md`.
+The names every example uses: `names.md`.

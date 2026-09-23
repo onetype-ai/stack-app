@@ -38,5 +38,4 @@ message names the plugin, the thing and the fix.
 
 `pnpm verify` runs in jsdom: components render, but no build, no router and no
 real network. `pnpm test:browser` opens the application in Chromium and fails
-on anything thrown or logged as an error. Three defects have been found there
-and by nothing else.
+on anything thrown or logged as an error.

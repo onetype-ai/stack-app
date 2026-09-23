@@ -41,12 +41,14 @@ paths reach it unchanged.
 
 | | |
 |---|---|
+| `#docs/usage.md` | what this application is: rewrite it first |
+| `#docs/architecture.md` | decisions that shape more than one plugin |
 | `#docs/stack.md` | what the kit is for, and what `verify` catches |
 | `#docs/src/structure.md` | where a file goes |
-| `#docs/src/placeholders.md` | what every `<name>` in an example stands for |
-| `#docs/src/plugin/` | one procedure a file: what to write, and a skeleton |
+| `#docs/src/names.md` | the names every example uses |
+| `#docs/src/plugin/` | one procedure a file: what to write, and an example |
 | `schemas.md` | the kit's whole surface, generated from its published types |
 
-No worked example ships: `src/plugins/` and `src/utils/` are empty and
-`src/ui/index.ts` exports nothing. The procedures are the description of a
-plugin's shape.
+`src/plugins/`, `src/utils/` and `src/ui/` ship empty. The examples live in
+`#docs/src/plugin/` only: `items`, and the `layout` it contributes to. Both
+were compiled, linted and tested as written, then removed from `src/`.
