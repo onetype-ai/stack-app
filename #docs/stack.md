@@ -21,6 +21,8 @@ Two plugins reach each other only through `index.ts`, and only where
 `start` answers the kernel and the router built from what plugins declared, so
 an application assembles no route tree of its own.
 
+`pnpm build` writes each `render: "prerender"` route as HTML with its head.
+
 ## What verify catches that the compiler cannot
 
 `Project.findAll()` reads the source. One test runs it, and it names a plugin

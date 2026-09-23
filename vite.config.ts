@@ -2,7 +2,8 @@ import { fileURLToPath } from "node:url";
 import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
 
-import { serving } from "@onetype/stack-app-kit";
+import { serving, settings } from "@onetype/stack-app-kit";
+import { prerenderOnBuild } from "@onetype/stack-app-kit/server";
 
 const resolvePath = (path: string): string => fileURLToPath(new URL(path, import.meta.url));
 
@@ -11,7 +12,11 @@ export default defineConfig(({ mode }) =>
     const set = loadEnv(mode, process.cwd(), "");
 
     return {
-        plugins: [react()],
+        plugins: [
+            react(),
+            settings.refusingSecrets({ application: ["VITE_API_URL", "VITE_WS_URL", "VITE_LOG_LEVEL"] }),
+            prerenderOnBuild({ entry: "src/prerender.tsx", origin: set["SITE_ORIGIN"] }),
+        ],
         server: serving({ set }),
         resolve: {
             dedupe: ["react", "react-dom"],

@@ -37,11 +37,20 @@
 > The kernel plugin: what lets an application declare plugins of its own.
 ### kernelPlugin(): HostPlugin
 
+> Offers the leveled logger and the shipper that sends a browser's logs home.
+### logsPlugin(): HostPlugin
+
 > Brings an application up in one call.
 ### mountPlugin(): HostPlugin
 
 > Turns the routes plugins declared into a router the application renders.
 ### routerPlugin(building: RouterOptions): HostPlugin
+
+> Offers what writes a site's sitemap and robots.txt.
+### seoPlugin(): HostPlugin
+
+> Names the entry that renders pages in Node: prerender at build time, and per request.
+### serverPlugin(): HostPlugin
 
 > Where an application listens, and which server `/api` reaches.
 > `strictPort` is the point: a port already taken is refused rather than
@@ -49,8 +58,11 @@
 > accident and wonder whose change they are looking at.
 ### serving(options?: ServingOptions): Serving
 
+> Offers what maps the environment onto plugin config, and what refuses a public secret.
+### settingsPlugin(): HostPlugin
+
 > Brings an application up: transport, then kernel, then plugins.
-### start(starting: StartOptions): Promise<StartedApp>
+### start(given: StartOptions): Promise<StartedApp>
 
 > The transport plugin.
 ### transportPlugin(settings: TransportOptions): HostPlugin
@@ -104,6 +116,10 @@
 > What the kernel needs to drop what a view is holding.
 ### Cache
     invalidate: (key: readonly unknown[]) => void
+    // Cancels what is still loading, drops every entry no view shows, and resets the ones a view shows so they fetch again: when the data's owner changed (a workspace switch, sign-out), not when some of it went stale.
+    clear: () => void
+    // Fetches `key` into the cache before a page renders, so the page reads it without a request and a server's state carries it.
+    prefetch: (key: readonly unknown[], fetch: () => Promise<unknown>) => Promise<void>
 
 > One request, as a plugin makes it.
 ### CallOptions
@@ -146,6 +162,11 @@
     }
     commands: {
     run: (command: string, input: unknown) => Promise<void>
+    }
+    session: {
+    // Says who is looking, or at what, changed (sign-in, sign-out, a workspace switch), in the order that leaves nothing
+    // stale: the cache clears (when the one given can), every guard asks again, and the socket dials the address as it reads now.
+    changed: () => void
     }
     // Another plugin's services, by name. Reachable outside a component.
     use: <Api>(plugin: string) => Api
@@ -265,6 +286,12 @@
     // What renders at `/` when no plugin declares it: a redirect to the first route there is.
     landing: (to: string) => ComponentType
 
+> What a page says about itself to a search engine and a link preview. Every field is optional; `title` falls back to the route's.
+### Head = z.input<typeof headSchema>
+
+> One element of `<head>`, as data: rendered to a string on a server, created as a node in a browser.
+### HeadTag = { tag: "title"; text: string } | { tag: "meta"; attributes: Readonly<Record<string, string>> } | { tag: "link"; attributes: Readonly<Record<string, string>> } | { tag: "script"; attributes: Readonly<Record<string, string>>; text: string }
+
 > A point where a plugin may refuse what is about to happen.
 ### Hook
     describe: string
@@ -361,10 +388,12 @@
     plugins: readonly Plugin[]
     config?: Readonly<Record<string, unknown>>
     http?: HttpClient
-    cache?: Cache
-    realtime?: Realtime
+    // Without `clear`, ctx.cache.clear() refuses, naming what to give.
+    cache?: Omit<Cache, "clear" | "prefetch"> & Partial<Pick<Cache, "clear" | "prefetch">>
+    // Without `reconnect`, the kernel answers one that does nothing.
+    realtime?: Omit<Realtime, "reconnect"> & Partial<Pick<Realtime, "reconnect">>
     permissions?: PermissionSource
-    // Which plugin may answer what the viewer holds; any other declaring `grants` is refused.
+    // Which plugin may answer what the viewer holds; any other declaring `grants` is refused. Left out, the one plugin declaring `grants` is that plugin, and may own permissions under its own name.
     grantedBy?: string
     log?: LogFn
 
@@ -428,9 +457,12 @@
 > What the kernel needs to hear a server push.
 ### Realtime
     channel: () => "ws" | "http"
-    subscribe: (topic: string, receive: (message: unknown) => void) => {
+    // `refused` hears the server decline the channel; unknown and forbidden read alike, so nobody can probe which exist.
+    subscribe: (topic: string, receive: (message: unknown) => void, refused?: (code: string) => void) => {
     close: () => void
     }
+    // Dials the socket again with the address as it reads now, keeping every subscription: after sign-in, sign-out or a workspace switch.
+    reconnect: () => void
 
 > A route, and the plugin it came from.
 ### RegisteredRoute = Route &
@@ -449,6 +481,17 @@
     search?: z.ZodType | undefined
     // Where the viewer belongs instead, when this page is not it: asked before `requires`.
     instead?: ((ctx: Context<Config, Services>) => string | undefined) | undefined
+    // "prerender" writes this page as HTML at build time; "server" renders it per request with the viewer's session; "client" (the default) renders it in the browser only. A prerendered page may hold no `requires` or `instead`.
+    render?: "client" | "prerender" | "server" | undefined
+    // Every set of parameters to prerender, for a path holding `$name` segments: `[{ id: "1" }]` for `/items/$id`.
+    paths?: ((ctx: Context<Config, Services>) => readonly RouteParams[] | Promise<readonly RouteParams[]>) | undefined
+    // Fetches what the page reads before it renders on a server, filling the cache the page reads from.
+    load?: ((ctx: Context<Config, Services>, params: RouteParams) => void | Promise<void>) | undefined
+    // What the page says to search engines and link previews, validated before it is written; `title` falls back to the route's.
+    head?: ((ctx: Context<Config, Services>, params: RouteParams) => Head | Promise<Head>) | undefined
+
+> A path's `$name` segments and what they matched.
+### RouteParams = Readonly<Record<string, string>>
 
 > What the router plugin offers: the tree, built from what plugins declared.
 ### Router
@@ -470,6 +513,8 @@
     // What renders at `/` when no plugin declares it: a redirect to the first route there is.
     landing: (to: string) => ComponentType
     guard: (route: RegisteredRoute) => ComponentType
+    // A history standing at one path (`createMemoryHistory({ initialEntries: [path] })`), for rendering that path on a server.
+    history?: ((path: string) => unknown) | undefined
 
 > The part of a router library this plugin drives.
 ### RouterOptions
@@ -522,10 +567,12 @@
     kernel: Kernel
     http: HttpClient
     realtime: Realtime
-    // Which channel carried the first request: "ws" or "http".
+    // Which channel was live once every plugin had started: the socket is dialled only then, so it carries every plugin's `sends`.
     channel: "ws" | "http"
     // The router built from what plugins declared, where `start` was given one to build with.
     router: unknown
+    // Stands the router at `path` and loads it, for rendering that path on a server; refuses without `router.history`.
+    visit: (path: string) => Promise<void>
     // Stops the plugins, then the socket.
     stop: () => Promise<void>
 
@@ -536,9 +583,13 @@
     // Where the server is, and how to reach it.
     transport: TransportOptions
     config?: Readonly<Record<string, unknown>> | undefined
+    // What the bundler exposes (`import.meta.env`): `VITE_<PLUGIN>__<FIELD>` reaches that plugin's config, under whatever `config` gives it.
+    environment?: Readonly<Record<string, unknown>> | undefined
+    // The page holds prerendered markup (`prerenderedState() !== undefined`): the router loads before `start` answers, so `hydrateRoot` matches what the server wrote.
+    prerendered?: boolean | undefined
     permissions?: PermissionSource | undefined
     log?: Logger | undefined
-    // Which plugin may answer what the viewer holds; any other declaring `grants` is refused.
+    // Which plugin may answer what the viewer holds; any other declaring `grants` is refused. Left out, the one plugin declaring `grants` is that plugin, and may own permissions under its own name.
     grantedBy?: string | undefined
     // Dropping what a view holds. Omit and `ctx.cache` refuses, naming itself.
     cache?: Cache | undefined
@@ -552,6 +603,10 @@ Imported whole, then reached through the name: `import { cache } from "@onetype/
 > What the kernel needs to drop what a view is holding.
 ### cache.Cache
     invalidate: (key: readonly unknown[]) => void
+    // Cancels what is still loading, drops every entry no view shows, and resets the ones a view shows so they fetch again: when the data's owner changed (a workspace switch, sign-out), not when some of it went stale.
+    clear: () => void
+    // Fetches `key` into the cache before a page renders, so the page reads it without a request and a server's state carries it.
+    prefetch: (key: readonly unknown[], fetch: () => Promise<unknown>) => Promise<void>
 
 > The cache, for a plugin that declared "cache" in needs.
 ### cache.from(host: Host): Cache | undefined
@@ -567,6 +622,81 @@ Imported whole, then reached through the name: `import { cache } from "@onetype/
     invalidateQueries: (filters: {
     queryKey: unknown[]
     }) => unknown
+    cancelQueries?: () => unknown
+    removeQueries?: (filters: {
+    type: "inactive"
+    }) => void
+    resetQueries?: () => unknown
+    prefetchQuery?: (options: {
+    queryKey: unknown[]
+    queryFn: () => Promise<unknown>
+    }) => Promise<void>
+
+## logs
+
+Imported whole, then reached through the name: `import { logs } from "@onetype/stack-app-kit";`. Its members have no import of their own.
+
+### logs.captureErrors(log: Logger, source: ErrorSource): () => void
+
+### logs.create(options: LoggerOptions): Logger
+
+### logs.ErrorSource
+    addEventListener: (kind: string, listener: (event: unknown) => void) => void
+    removeEventListener: (kind: string, listener: (event: unknown) => void) => void
+
+> The logs, for a plugin that declared "logs" in needs.
+### logs.from(host: Host): Logs | undefined
+
+### logs.Level = (typeof levels)[number]
+
+### logs.levels: readonly ["debug", "info", "warn", "error"]
+
+### logs.LogEntry
+    level: Level
+    at: string
+    plugin: string | undefined
+    line: string
+    about: Readonly<Record<string, unknown>> | undefined
+
+### logs.LoggerOptions
+    level: Level
+    write: LogWriter | readonly LogWriter[]
+    now?: (() => Date) | undefined
+
+> What `logs.from(host)` answers.
+### logs.Logs
+    // A leveled logger for `start({ log })`, handing every entry at or above `level` to each writer.
+    create: typeof create
+    // Batches, clips, redacts and sends entries at or above `level` (never below info); a 429 pauses it for a minute.
+    shipper: typeof shipper
+
+### logs.LogWriter = (entry: LogEntry) => void
+
+> What this plugin offers itself as.
+### logs.NAME = "logs"
+
+### logs.postTo(url: string): (entries: readonly ShippedEntry[], isLeaving: boolean) => Promise<number>
+
+### logs.ShippedEntry
+    level: "info" | "warn" | "error"
+    at: string
+    plugin?: string
+    line: string
+    about?: Record<string, string | number | boolean | null>
+
+### logs.shipper(options: ShipperOptions): Shipper
+
+### logs.Shipper
+    write: (entry: LogEntry) => void
+    flush: (isLeaving: boolean) => void
+
+### logs.ShipperOptions
+    level: Level
+    send: (entries: readonly ShippedEntry[], isLeaving: boolean) => Promise<number>
+    every: (run: () => void) => void
+    now?: (() => number) | undefined
+
+### logs.toConsole: LogWriter
 
 ## router
 
@@ -614,6 +744,97 @@ Imported whole, then reached through the name: `import { router } from "@onetype
 
 ### router.tree(kernel: Kernel, building: RouterOptions, frame: Frame, guard: (route: RegisteredRoute) => ComponentType): unknown
 
+## seo
+
+Imported whole, then reached through the name: `import { seo } from "@onetype/stack-app-kit";`. Its members have no import of their own.
+
+> The seo helpers, for a plugin that declared "seo" in needs.
+### seo.from(host: Host): Seo | undefined
+
+> What this plugin offers itself as.
+### seo.NAME = "seo"
+
+### seo.robotsTxt(origin: string, disallow?: readonly string[]): string
+
+> What `seo.from(host)` answers.
+### seo.Seo
+    // A sitemap of every indexed page, with hreflang alternates.
+    sitemapXml: typeof sitemapXml
+    // A robots.txt allowing everything but `disallow`, naming the sitemap.
+    robotsTxt: typeof robotsTxt
+
+> Every problem a prerender found, before it wrote anything.
+### seo.SeoFault extends Error
+    readonly code = "REFUSED_PRERENDER"
+    readonly problems: readonly string[]
+    constructor(problems: readonly string[])
+
+### seo.SitemapPage
+    path: string
+    isIndexed: boolean
+    alternates: readonly {
+    locale: string
+    href: string
+    }[]
+
+### seo.sitemapXml(origin: string, pages: readonly SitemapPage[]): string
+
+## server
+
+Imported whole, then reached through the name: `import { server } from "@onetype/stack-app-kit";`. Its members have no import of their own.
+
+> The server plugin, for a plugin that declared "server" in needs.
+### server.from(host: Host): Server | undefined
+
+> What this plugin offers itself as.
+### server.NAME = "server"
+
+> What `server.from(host)` answers: nothing to call in a browser; the work is in the `./server` entry.
+### server.Server
+    // The entry a Node process imports for prerendering and rendering per request.
+    entry: "@onetype/stack-app-kit/server"
+
+## settings
+
+Imported whole, then reached through the name: `import { settings } from "@onetype/stack-app-kit";`. Its members have no import of their own.
+
+### settings.BuildGuard
+    name: string
+    configResolved: (config: ResolvedBuild) => void
+
+### settings.configFor(plugins: readonly Plugin[], environment: Readonly<Record<string, unknown>>): PluginConfig
+
+> The settings, for a plugin that declared "settings" in needs.
+### settings.from(host: Host): Settings | undefined
+
+> What this plugin offers itself as.
+### settings.NAME = "settings"
+
+### settings.PluginConfig = Readonly<Record<string, Readonly<Record<string, string>>>>
+
+### settings.problemsOf(names: readonly string[], options?: PublicOptions): string[]
+
+### settings.PublicOptions = Partial<PublicRule>
+
+### settings.refusingSecrets(options?: Omit<PublicOptions, "prefixes">): BuildGuard
+
+### settings.ResolvedBuild
+    env: Readonly<Record<string, unknown>>
+    envPrefix?: string | readonly string[] | undefined
+
+> What `settings.from(host)` answers.
+### settings.Settings
+    // Maps `VITE_<PLUGIN>__<FIELD>` variables onto each plugin's config, or throws every problem at once.
+    configFor: typeof configFor
+    // Every public variable that should not ship, one sentence each; empty when all may.
+    problemsOf: typeof publicProblemsOf
+
+> Every problem found at once, one line each; `problems` lets a caller show them apart.
+### settings.SettingsFault extends Error
+    readonly code = "REFUSED_SETTINGS"
+    readonly problems: readonly string[]
+    constructor(what: string, problems: readonly string[])
+
 ## transport
 
 Imported whole, then reached through the name: `import { transport } from "@onetype/stack-app-kit";`. Its members have no import of their own.
@@ -660,8 +881,10 @@ Imported whole, then reached through the name: `import { transport } from "@onet
     channel: () => Channel
     // One request. The body comes back as unknown, so the caller validates.
     request: (request: HttpRequest) => Promise<unknown>
-    // Server-pushed messages. With no socket this succeeds and delivers nothing.
-    subscribe: (topic: string, receive: (message: unknown) => void) => Subscription
+    // Server-pushed messages. With no socket this succeeds and delivers nothing. `refused` hears the server decline the channel (unknown and forbidden read alike).
+    subscribe: (topic: string, receive: (message: unknown) => void, refused?: (code: string) => void) => Subscription
+    // Closes the socket and dials again with the address as it reads now, keeping every subscription; a socket closed as signed out (4001) waits for this.
+    reconnect: () => void
     // Stops the socket for good.
     close: () => void
 
@@ -699,7 +922,11 @@ Imported whole, then reached through the name: `import { transport } from "@onet
 > What the plugin needs before it can dial anything.
 ### transport.TransportOptions
     baseUrl: string
-    wsUrl?: string | undefined
+    // Where the socket dials. A function is read on every dial and redial with the headers a request would carry now
+    // (`headers` and every plugin's), so the address can follow the viewer; answering undefined keeps the socket closed until `reconnect()`.
+    wsUrl?: string | ((sent: Readonly<Record<string, string>>) => string | undefined) | undefined
+    // "requests" (the default) sends requests over the socket while it is open; "push" keeps every request on HTTP and the socket for pushes only.
+    socketFor?: "requests" | "push" | undefined
     openSocket?: ((url: string) => Socket) | undefined
     headers?: (() => Readonly<Record<string, string>>) | undefined
     onUnauthorized?: ((path: string) => void) | undefined
@@ -709,6 +936,16 @@ Imported whole, then reached through the name: `import { transport } from "@onet
     connectTimeoutMs?: number
     reconnectBaseMs?: number
     sleep?: ((ms: number) => Promise<void>) | undefined
+    // Spreads every retry and redial between half and all of its backoff, so the tabs of a restarted server do not return in the same instant.
+    random?: (() => number) | undefined
+    // Once the server has sent `$ping`, a socket silent this long is closed and dialled again (60 s by default). A server that never pings is never timed.
+    silenceMs?: number | undefined
+    // Hands a listener to whatever says the device is back (online, a tab shown again); the socket then redials at once rather than waiting its backoff. Answers a stop.
+    wake?: ((listener: () => void) => () => void) | undefined
+    // Runs once a socket after the first is settled: the server said `$ready` and answered every subscription, or said nothing within `connectTimeoutMs`. Pushes sent while it was down are lost, so this is when to fetch again.
+    onReconnected?: ((about: {
+    downMs: number
+    }) => void) | undefined
 
 # @onetype/stack-app-kit/react
 
@@ -722,10 +959,14 @@ Imported whole, then reached through the name: `import { transport } from "@onet
 > The 404, for a path nothing declared.
 ### NotFound(): ReactNode
 
-> A page, and what it takes to see it.
-### RouteGuard({ route, send }: { route: RegisteredRoute; send?: (to: string) => ReactNode }): ReactNode
+> What a prerender wrote for the cache to hydrate from (`<script id="kit-state">`), or undefined on a page the browser rendered first.
+### prerenderedState(): unknown
+
+> A page, and what it takes to see it; `params` are what the path matched, for the route's `head`.
+### RouteGuard({ route, send, params }: { route: RegisteredRoute; send?: (to: string) => ReactNode; params?: RouteParams }): ReactNode
     route: RegisteredRoute
     send?: (to: string) => ReactNode
+    params?: RouteParams
 
 > Renders every contribution to a slot.
 ### Slot({ name, payload }: { name: string; payload?: unknown }): ReactNode
@@ -787,6 +1028,12 @@ Imported whole, then reached through the name: `import { transport } from "@onet
 # @onetype/stack-app-kit/testing
 
 ## Functions
+
+> Set once per test process (a setup file). From then on `start` adds every plugin the given ones depend on,
+> transitively: a plugin the test passed wins by name, so a stand-in stays one, dependencies come first, and
+> otherwise the given order holds. A name nothing provides is still refused as UNKNOWN_DEPENDENCY.
+> Never called, `start` boots exactly what it was given. Only `./testing` exports it.
+### configureTestKernels(fixture: TestKernels): void
 
 > A context that answers the way the real one does.
 ### fakeContext<Config = unknown, Services = unknown>(answers?: Answers, faking?: Faking<Config>): Fake<Config, Services>
@@ -857,6 +1104,12 @@ Imported whole, then reached through the name: `import { transport } from "@onet
     // Every check that could not run, and what it would have read.
     findSkipped: (checking?: ProjectCheckOptions) => ProjectSkipped[]
 
+> Forgets what `configureTestKernels` set, so `start` boots exactly what it is given again.
+### resetTestKernels(): void
+
+> The same closure over dependsOn, for a test building its kernel with `createKernel` rather than `start`.
+### withDependencies(plugins: readonly Plugin[]): Promise<readonly Plugin[]>
+
 ## Types
 
 > What routes a fake answers, keyed by the address the transport dials:
@@ -909,10 +1162,18 @@ Imported whole, then reached through the name: `import { transport } from "@onet
     }[]
     // How many times the plugin said what a viewer may do had moved.
     regranted: number
+    // How many times the plugin asked the socket to be dialled again.
+    reconnected: number
+    // How many times the plugin dropped the whole cache.
+    cleared: number
+    // Every key the plugin fetched ahead, in order.
+    prefetched: unknown[][]
     // What `ctx.hooks.run` answers next. Set it to refuse.
     refusal: string | undefined
     // Sends a message on a channel, as a server would.
     push: (topic: string, message: unknown) => void
+    // Declines a channel, as a server would: every `refused` given to that channel's subscribe hears the code.
+    refuse: (topic: string, code?: string) => void
 
 > One request a plugin made, as the fake recorded it.
 ### FakeRequest
@@ -938,6 +1199,11 @@ Imported whole, then reached through the name: `import { transport } from "@onet
     refusal?: string | undefined
     // What each named plugin's `ctx.use` hands back.
     offering?: Readonly<Record<string, unknown>>
+
+> A plugin a test did not name, and the config it boots with; config is only ever given to a plugin the closure added.
+### FoundPlugin
+    plugin: Plugin
+    config?: unknown
 
 > One import that crossed from one plugin into another, as the specifier wrote it.
 ### ImportEdge
@@ -968,7 +1234,7 @@ Imported whole, then reached through the name: `import { transport } from "@onet
     utils?: string
     // Where the documents sit while they are a folder.
     docs?: string
-    // What every application must hold, whatever else it keeps.
+    // Documents this application asks itself to hold; none unless named. `Project.required` is the kit's suggestion.
     required?: readonly string[]
     // The size a document may reach before it has outgrown its point.
     maxCharacters?: number
@@ -1020,6 +1286,10 @@ Imported whole, then reached through the name: `import { transport } from "@onet
     shared: readonly string[]
     disagreed: readonly string[]
 
+> Where the plugins a test did not name come from. `resolve` runs once per name, only for one nothing given provides.
+### TestKernels
+    resolve: (name: string) => FoundPlugin | undefined | Promise<FoundPlugin | undefined>
+
 > A `Definition` key the written procedure never mentions.
 ### UndocumentedKey
     key: string
@@ -1049,3 +1319,93 @@ Imported whole, then reached through the name: `import { transport } from "@onet
 ### Unwatched
     file: string
     shape: string
+
+# @onetype/stack-app-kit/server
+
+## Functions
+
+> Renders a route declared `render: "server"` for one request, with a kit of its own: the api sees this viewer's cookie
+> and no other request's, and the head is resolved, checked and written before the page streams. Answers undefined for
+> a request it does not render (not GET or HEAD, or no server route matches), for the host to serve `_shell.html`.
+### handle(request: Request, options: HandleOptions): Promise<Response | undefined>
+
+> Writes every route declared `render: "prerender"`, once per set its `paths` answer, as `<outDir><path>/index.html`,
+> then `sitemap.xml` and `robots.txt`. Every head is validated and every path checked before anything is written;
+> a problem anywhere throws `SeoFault` naming them all.
+### prerender(options: PrerenderOptions): Promise<readonly PrerenderedPage[]>
+
+> The default export of a prerender entry: starts the app once, then writes every prerendered route through `prerender`.
+### prerenderApp(options: PrerenderAppOptions): (output: BuildOutput) => Promise<readonly PrerenderedPage[]>
+
+> A Vite plugin: once the client is built, builds `entry` for the server, runs its default export with the built
+> `index.html`, and removes the server build. Skips the nested server build it starts, and every command but `build`.
+> In a production build, an origin that is missing or not absolute http(s) stops the build.
+### prerenderOnBuild(options: PrerenderOnBuildOptions): { name: string; configResolved: (resolved: ResolvedBuildConfig) => void; closeBundle: () => Promise<void> }
+    name: string
+    configResolved: (resolved: ResolvedBuildConfig) => void
+    closeBundle: () => Promise<void>
+
+> A `respond` for `handle` that renders `tree` into `template` (the built `_template.html`), as a prerender does: the router already stands at the path.
+### respondWith(options: { template: string; tree: (app: StartedApp) => ReactNode }): (app: StartedApp) => Promise<Response>
+    template: string
+    tree: (app: StartedApp) => ReactNode
+
+## Types
+
+> What a build hands the entry `prerenderOnBuild` built: the client's template, where the site is served, and where pages go.
+### BuildOutput
+    template: string
+    origin: string
+    outDir: string
+
+> What `handle` needs: a fresh app per request, and how that app renders its document.
+### HandleOptions
+    // Starts the app for one viewer: pass `session.headers` as the transport's headers, so the api sees who is asking.
+    start: (session: Session) => Promise<StartedApp>
+    // Renders the whole document with the app's router (a streamed `Response`); the kit writes the head into it.
+    respond: (app: StartedApp, request: Request) => Promise<Response>
+    // What the client hydrates its cache from, read once the page loaded.
+    state?: ((app: StartedApp) => unknown) | undefined
+
+> What `prerenderApp` needs: the same app and tree the browser starts, built once for every page.
+### PrerenderAppOptions
+    // Starts the app as the browser does, with one query client given to `cache.fromQueries` and read by `state`.
+    start: () => Promise<StartedApp>
+    // The one tree `main.tsx` also renders, so server and client cannot drift.
+    tree: (app: StartedApp) => ReactNode
+    state?: (() => unknown) | undefined
+    disallow?: readonly string[] | undefined
+
+> One page written, and what it said about itself.
+### PrerenderedPage
+    path: string
+    file: string
+
+> What `prerenderOnBuild` takes: the entry whose default export `prerenderApp` answered, and where the site is served.
+### PrerenderOnBuildOptions
+    entry: string
+    origin: string | undefined
+
+> What `prerender` needs: a started app, how to render one path, and where the pages go.
+### PrerenderOptions
+    app: StartedApp
+    // The same tree the browser renders, for one path: typically a router on memory history, loaded.
+    render: (path: string) => ReactNode | Promise<ReactNode>
+    // The built `index.html`, holding `<!--kit-head-->` and `<!--kit-app-->`.
+    template: string
+    // Where the site is served, for the sitemap: `https://shop.example`.
+    origin: string
+    outDir: string
+    // What the client hydrates its cache from, read after every page loaded: `() => dehydrate(queryClient)`.
+    state?: (() => unknown) | undefined
+    // Paths robots.txt asks crawlers to leave alone: the client-only part of the site.
+    disallow?: readonly string[] | undefined
+    // Where the untouched template is written (`_shell.html` by default), for the host to serve every path with no page of
+    // its own. Prerendering `/` rewrites `index.html`, so falling back to it would hand a client route the home page.
+    fallback?: string | undefined
+    // Writes one file; the file system by default, a map in a test.
+    write?: ((file: string, contents: string) => Promise<void>) | undefined
+
+> What a request forwards to the api on the viewer's behalf: the cookie and the language, nothing else.
+### Session
+    headers: Readonly<Record<string, string>>

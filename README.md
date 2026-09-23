@@ -15,7 +15,7 @@ pnpm install
 
 ```sh
 pnpm dev              # http://localhost:7380, proxying /api to 7280
-pnpm build            # typecheck, then bundle
+pnpm build            # typecheck, bundle, then prerender (needs SITE_ORIGIN)
 pnpm verify           # lint, typecheck, test, build, browser
 pnpm test:browser     # opens the app in Chromium and reads the page
 pnpm schemas          # rewrite schemas.md from the installed kit
@@ -31,6 +31,15 @@ nothing shared. A port already taken is refused rather than quietly moved to.
 
 `VITE_API_URL` sets the base URL a plugin asks for, and defaults to `/api`.
 `VITE_WS_URL` sets the websocket; without one the transport stays on HTTP.
+`VITE_LOG_LEVEL` is the lowest level logged. `VITE_<PLUGIN>__<FIELD>` reaches
+that plugin's config. Every `VITE_` value ships, so a name that reads like a
+secret refuses the build. `SITE_ORIGIN` is where the site is served, for
+canonical links and the sitemap. `.env.example` lists them.
+
+`pnpm build` writes `dist/`: a page for every prerendered route, then
+`sitemap.xml`, `robots.txt`, `_shell.html` and `_template.html`. A host serves
+a path's own file and `_shell.html` for everything else. `_template.html`
+is the template a Node server renders `render: "server"` routes into.
 
 Nothing stands in for a server. With none running, `/api` answers 404 and every
 guarded route renders its 403: the absence is a state the application shows
