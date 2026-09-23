@@ -4,6 +4,7 @@ import { cache, discover, start } from "@onetype/stack-app-kit";
 import { NotFound, RouteGuard } from "@onetype/stack-app-kit/react";
 
 import { Env } from "./env";
+import { Locales } from "./locales";
 import { Log } from "./log";
 
 import type { QueryClient } from "@tanstack/react-query";
@@ -11,16 +12,18 @@ import type { Logger, RouterOptions, StartedApp } from "@onetype/stack-app-kit";
 
 export type MountOptions = {
     isPrerendered?: boolean;
+    locale?: string;
     log?: Logger;
 };
 
 export const Mount = {
-    open: (client: QueryClient, { isPrerendered = false, log = Log.create() }: MountOptions = {}): Promise<StartedApp> =>
+    open: (client: QueryClient, { isPrerendered = false, locale = Locales.fallback, log = Log.create() }: MountOptions = {}): Promise<StartedApp> =>
     {
         return start({
             plugins: discover(import.meta.glob("../plugins/*/plugin.ts", { eager: true })),
             environment: import.meta.env,
             prerendered: isPrerendered,
+            locale: { supported: Locales.supported, fallback: Locales.fallback, current: locale },
             log,
             cache: cache.fromQueries(client),
             transport: {

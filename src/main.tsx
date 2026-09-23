@@ -2,10 +2,10 @@ import { hydrate } from "@tanstack/react-query";
 import { StrictMode } from "react";
 import { createRoot, hydrateRoot } from "react-dom/client";
 
-import { logs } from "@onetype/stack-app-kit";
-import { prerenderedState, StartupFailure } from "@onetype/stack-app-kit/react";
+import { locale, logs } from "@onetype/stack-app-kit";
+import { prerenderedLocale, prerenderedState, StartupFailure } from "@onetype/stack-app-kit/react";
 
-import { Log, Mount, Queries, Tree } from "./kernel";
+import { Locales, Log, Mount, Queries, Tree } from "./kernel";
 
 import type { QueryClient } from "@tanstack/react-query";
 import type { Root } from "react-dom/client";
@@ -34,6 +34,7 @@ class Application
         const log = Log.create();
         const state = prerenderedState();
         const isPrerendered = state !== undefined;
+        const viewerLocale = locale.negotiate(navigator.languages, Locales.supported, Locales.fallback);
 
         logs.captureErrors(log, window);
 
@@ -42,8 +43,8 @@ class Application
             hydrate(this.client, state);
         }
 
-        const app = await Mount.open(this.client, { isPrerendered, log });
-        const tree = <Tree app={app} client={this.client} />;
+        const app = await Mount.open(this.client, { isPrerendered, log, locale: prerenderedLocale() ?? viewerLocale });
+        const tree = <Tree app={app} client={this.client} viewerLocale={viewerLocale} />;
 
         if (isPrerendered)
         {

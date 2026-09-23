@@ -1,7 +1,7 @@
 # Names in the examples
 
 Every example is one plugin, `items`, holding `Item`s that each have a
-`title`, plus `layout`, which frames every page. They were compiled, linted
+`title`, plus `layout`, which frames the pages. They were compiled, linted
 and tested as written, then removed from `src/`.
 
 Substitute your own names; none is a name to keep.

@@ -20,6 +20,9 @@
 > The plugins a bundler found, sorted by name.
 ### discover(modules: PluginModules): Plugin[]
 
+> Names the entry that starts services and watched browsers for end-to-end tests.
+### e2ePlugin(): HostPlugin
+
 > Configuration rules, refused by name rather than repaired.
 > A bundler replaces `import.meta.env.NAME` where it is written, so reading
 > belongs to the application: it reads the value and passes it to a rule.
@@ -36,6 +39,9 @@
 
 > The kernel plugin: what lets an application declare plugins of its own.
 ### kernelPlugin(): HostPlugin
+
+> Offers the negotiation both kits share: one tag from what the viewer accepts.
+### localePlugin(): HostPlugin
 
 > Offers the leveled logger and the shipper that sends a browser's logs home.
 ### logsPlugin(): HostPlugin
@@ -111,7 +117,16 @@
 ## Types
 
 > What the kernel refuses, and why.
-### BootFaultCode = "NO_NAME" | "NO_BOOT" | "REGISTERED_TWICE" | "UNKNOWN_NEED" | "CYCLE" | "NOT_BOOTING" | "OFFERED_TWICE" | "NO_API"
+### BootFaultCode
+    | "NO_NAME"
+    | "NO_BOOT"
+    | "REGISTERED_TWICE"
+    | "UNKNOWN_NEED"
+    | "CYCLE"
+    | "NOT_BOOTING"
+    | "OFFERED_TWICE"
+    | "NO_API"
+    | "INVALID_ENV"
 
 > What the kernel needs to drop what a view is holding.
 ### Cache
@@ -163,6 +178,8 @@
     commands: {
     run: (command: string, input: unknown) => Promise<void>
     }
+    // The viewer's language: this plugin's own messages, numbers and dates formatted for it, and a change that reaches every plugin.
+    locale: PluginLocale
     session: {
     // Says who is looking, or at what, changed (sign-in, sign-out, a workspace switch), in the order that leaves nothing
     // stale: the cache clears (when the one given can), every guard asks again, and the socket dials the address as it reads now.
@@ -255,6 +272,8 @@
     hooks?: Readonly<Record<string, Hook>> | undefined
     participates?: Readonly<Record<string, Participant<Context<z.infer<Schema>, Given<Services>>>>> | undefined
     commands?: Readonly<Record<string, Command<Context<z.infer<Schema>, Given<Services>>>>> | undefined
+    // This plugin's text by locale, then key: `{ en: { empty: "No items yet" } }`. The fallback locale holds every key; `ctx.locale.text(key)` reads them.
+    messages?: Messages | undefined
     // What this plugin adds to the headers of every request the kit makes: asked per request, never sent outside `baseUrl`.
     sends?: ((ctx: Context<z.infer<Schema>, Given<Services>>) => Readonly<Record<string, string>>) | undefined
     setup?: ((ctx: Context<z.infer<Schema>, Given<Services>>) => void | Promise<void>) | undefined
@@ -283,6 +302,9 @@
 ### Frame
     shell: ComponentType
     missing: ComponentType
+    // The bare outlet, for pages declared `frame: false`; and the 404 inside the frame. Both are needed only when a page opts out.
+    outlet?: ComponentType | undefined
+    framedMissing?: ComponentType | undefined
     // What renders at `/` when no plugin declares it: a redirect to the first route there is.
     landing: (to: string) => ComponentType
 
@@ -320,6 +342,8 @@
     put: (path: string, request?: CallOptions) => Promise<unknown>
     patch: (path: string, request?: CallOptions) => Promise<unknown>
     delete: (path: string, request?: CallOptions) => Promise<unknown>
+    // A `Blob` sent as it is, or a `FormData` as multipart, with progress and abort; never retried.
+    upload: (path: string, body: Blob | FormData, options?: UploadOptions) => Promise<unknown>
 
 > What the application holds after createKernel.
 ### Kernel
@@ -351,6 +375,12 @@
     failures: () => readonly ListenerFailure[]
     }
     run: (command: string, input: unknown) => Promise<void>
+    // The viewer's locale for the whole application: what a page renders in, and what `html lang` says.
+    locale: {
+    current: () => string
+    change: (tag: string) => void
+    watch: (notify: () => void) => () => void
+    }
     sent: () => Readonly<Record<string, string>>
 
 > What the kernel refuses.
@@ -387,7 +417,8 @@
 ### KernelOptions
     plugins: readonly Plugin[]
     config?: Readonly<Record<string, unknown>>
-    http?: HttpClient
+    // Without `upload`, ctx.http.upload refuses, naming what to give.
+    http?: Omit<HttpClient, "upload"> & Partial<Pick<HttpClient, "upload">>
     // Without `clear`, ctx.cache.clear() refuses, naming what to give.
     cache?: Omit<Cache, "clear" | "prefetch"> & Partial<Pick<Cache, "clear" | "prefetch">>
     // Without `reconnect`, the kernel answers one that does nothing.
@@ -396,6 +427,8 @@
     // Which plugin may answer what the viewer holds; any other declaring `grants` is refused. Left out, the one plugin declaring `grants` is that plugin, and may own permissions under its own name.
     grantedBy?: string
     log?: LogFn
+    // The locales plugins' messages are in; `en` alone when left out.
+    locale?: LocaleOptions
 
 ### Listener
     who: string
@@ -412,6 +445,13 @@
     error: unknown
     atMs: number
 
+> Which locales the application speaks, and the one every plugin's messages must be complete in.
+### LocaleOptions
+    supported: readonly string[]
+    fallback: string
+    // The viewer's locale at start: what `locale.negotiate` answered. The fallback when left out.
+    current?: string | undefined
+
 > Where a line goes. The application decides; a plugin never writes directly.
 ### LogFn = (level: "debug" | "info" | "warn" | "error", plugin: string, line: string, about?: Readonly<Record<string, unknown>>) => void
 
@@ -421,6 +461,13 @@
     info: (line: string, about?: Readonly<Record<string, unknown>>) => void
     warn: (line: string, about?: Readonly<Record<string, unknown>>) => void
     error: (line: string, about?: Readonly<Record<string, unknown>>) => void
+
+> One message: plain text with `{name}` holes, or plural forms chosen by `count` through `Intl.PluralRules`.
+### Message = string | (Readonly<Partial<Record<Intl.LDMLPluralRule, string>>> &
+    other: string
+
+> A plugin's messages: by locale tag, then by key. The fallback locale holds every key.
+### Messages = Readonly<Record<string, Readonly<Record<string, Message>>>>
 
 > One thing to render in a slot, and what it needs to be seen.
 ### MountedContribution = SlotContribution &
@@ -449,6 +496,21 @@
 ### Plugin
     name: string
     definition: Definition
+
+> What a plugin reads its language through.
+### PluginLocale
+    current: () => string
+    text: (key: string, values?: LocaleValues) => string
+    format: {
+    number: (value: number, options?: Intl.NumberFormatOptions) => string
+    date: (value: Date | number, options?: Intl.DateTimeFormatOptions) => string
+    }
+    // Changes the viewer's locale for every plugin; one outside `supported` is refused.
+    change: (tag: string) => void
+    // Runs `notify` on every change. Returns a stop.
+    watch: (notify: () => void) => () => void
+    // The same view read at a fixed tag, whatever the current one: what a component renders while hydrating a page written in another.
+    at: (tag: string) => PluginLocale
 
 > What a bundler's eager glob returns.
 ### PluginModules = Readonly<Record<string,
@@ -483,6 +545,8 @@
     instead?: ((ctx: Context<Config, Services>) => string | undefined) | undefined
     // "prerender" writes this page as HTML at build time; "server" renders it per request with the viewer's session; "client" (the default) renders it in the browser only. A prerendered page may hold no `requires` or `instead`.
     render?: "client" | "prerender" | "server" | undefined
+    // false renders this page without the application's frame: a landing, sign-in or legal page. A prerendered page defaults to false.
+    frame?: false | undefined
     // Every set of parameters to prerender, for a path holding `$name` segments: `[{ id: "1" }]` for `/items/$id`.
     paths?: ((ctx: Context<Config, Services>) => readonly RouteParams[] | Promise<readonly RouteParams[]>) | undefined
     // Fetches what the page reads before it renders on a server, filling the cache the page reads from.
@@ -524,7 +588,8 @@
     }) => Root
     createRoute: (options: {
     getParentRoute: () => Root
-    path: string
+    path?: string
+    id?: string
     component: ComponentType
     validateSearch?: (query: Record<string, unknown>) => unknown
     }) => Child
@@ -585,6 +650,8 @@
     config?: Readonly<Record<string, unknown>> | undefined
     // What the bundler exposes (`import.meta.env`): `VITE_<PLUGIN>__<FIELD>` reaches that plugin's config, under whatever `config` gives it.
     environment?: Readonly<Record<string, unknown>> | undefined
+    // The locales plugins' messages are in, and the viewer's: `current: locale.negotiate(navigator.languages, supported, fallback, stored)`.
+    locale?: LocaleOptions | undefined
     // The page holds prerendered markup (`prerenderedState() !== undefined`): the router loads before `start` answers, so `hydrateRoot` matches what the server wrote.
     prerendered?: boolean | undefined
     permissions?: PermissionSource | undefined
@@ -595,6 +662,15 @@
     cache?: Cache | undefined
     // The router library and the frame around every page. Omit and `router` is undefined, for an application rendering its own.
     router?: RouterBuilding | undefined
+
+> What an upload takes besides its path and body.
+### UploadOptions
+    method?: "POST" | "PUT" | undefined
+    query?: Readonly<Record<string, string | number | boolean | null | undefined>> | undefined
+    headers?: Readonly<Record<string, string>> | undefined
+    signal?: AbortSignal | undefined
+    // Bytes sent so far, and the total (0 when the browser cannot tell).
+    onProgress?: ((sent: number, total: number) => void) | undefined
 
 ## cache
 
@@ -631,6 +707,37 @@ Imported whole, then reached through the name: `import { cache } from "@onetype/
     queryKey: unknown[]
     queryFn: () => Promise<unknown>
     }) => Promise<void>
+
+## e2e
+
+Imported whole, then reached through the name: `import { e2e } from "@onetype/stack-app-kit";`. Its members have no import of their own.
+
+> What `e2e.from(host)` answers: the entry an end-to-end test imports in Node.
+### e2e.E2e
+    entry: "@onetype/stack-app-kit/e2e"
+
+> The e2e plugin, for a plugin that declared "e2e" in needs.
+### e2e.from(host: Host): E2e | undefined
+
+> What this plugin offers itself as.
+### e2e.NAME = "e2e"
+
+## locale
+
+Imported whole, then reached through the name: `import { locale } from "@onetype/stack-app-kit";`. Its members have no import of their own.
+
+> The locale helpers, for a plugin that declared "locale" in needs.
+### locale.from(host: Host): Locale | undefined
+
+> What `locale.from(host)` answers.
+### locale.Locale
+    // The one tag from `supported` a viewer gets: a supported stored choice, then the accepted languages in order (exact, then by language), then `fallback`.
+    negotiate: typeof negotiate
+
+> What this plugin offers itself as.
+### locale.NAME = "locale"
+
+### locale.negotiate(accepted: string | readonly string[], supported: readonly string[], fallback: string, chosen?: string): string
 
 ## logs
 
@@ -709,6 +816,9 @@ Imported whole, then reached through the name: `import { router } from "@onetype
 ### router.Frame
     shell: ComponentType
     missing: ComponentType
+    // The bare outlet, for pages declared `frame: false`; and the 404 inside the frame. Both are needed only when a page opts out.
+    outlet?: ComponentType | undefined
+    framedMissing?: ComponentType | undefined
     // What renders at `/` when no plugin declares it: a redirect to the first route there is.
     landing: (to: string) => ComponentType
 
@@ -734,7 +844,8 @@ Imported whole, then reached through the name: `import { router } from "@onetype
     }) => Root
     createRoute: (options: {
     getParentRoute: () => Root
-    path: string
+    path?: string
+    id?: string
     component: ComponentType
     validateSearch?: (query: Record<string, unknown>) => unknown
     }) => Child
@@ -767,7 +878,7 @@ Imported whole, then reached through the name: `import { seo } from "@onetype/st
 ### seo.SeoFault extends Error
     readonly code = "REFUSED_PRERENDER"
     readonly problems: readonly string[]
-    constructor(problems: readonly string[])
+    constructor(problems: readonly string[], what?: string)
 
 ### seo.SitemapPage
     path: string
@@ -881,6 +992,8 @@ Imported whole, then reached through the name: `import { transport } from "@onet
     channel: () => Channel
     // One request. The body comes back as unknown, so the caller validates.
     request: (request: HttpRequest) => Promise<unknown>
+    // One upload, with progress; the body comes back as unknown. It carries the headers every request carries.
+    upload: (request: UploadRequest) => Promise<unknown>
     // Server-pushed messages. With no socket this succeeds and delivers nothing. `refused` hears the server decline the channel (unknown and forbidden read alike).
     subscribe: (topic: string, receive: (message: unknown) => void, refused?: (code: string) => void) => Subscription
     // Closes the socket and dials again with the address as it reads now, keeping every subscription; a socket closed as signed out (4001) waits for this.
@@ -938,6 +1051,8 @@ Imported whole, then reached through the name: `import { transport } from "@onet
     sleep?: ((ms: number) => Promise<void>) | undefined
     // Spreads every retry and redial between half and all of its backoff, so the tabs of a restarted server do not return in the same instant.
     random?: (() => number) | undefined
+    // How uploads leave; `XMLHttpRequest` when left out.
+    uploader?: Uploader | undefined
     // Once the server has sent `$ping`, a socket silent this long is closed and dialled again (60 s by default). A server that never pings is never timed.
     silenceMs?: number | undefined
     // Hands a listener to whatever says the device is back (online, a tab shown again); the socket then redials at once rather than waiting its backoff. Answers a stop.
@@ -946,6 +1061,29 @@ Imported whole, then reached through the name: `import { transport } from "@onet
     onReconnected?: ((about: {
     downMs: number
     }) => void) | undefined
+
+> How an upload leaves: `XMLHttpRequest` by default, since only it reports upload progress; a test or a server passes its own.
+### transport.Uploader = (upload:
+    url: string
+    method: "POST" | "PUT"
+    headers: Readonly<Record<string, string>>
+    body: Blob | FormData
+    signal?: AbortSignal
+    onProgress?: (sent: number, total: number) => void
+    }) => Promise<{
+    status: number
+    body: unknown
+
+> One upload: a file sent as it is, or a form sent as multipart. Never retried, and never over the socket.
+### transport.UploadRequest
+    path: string
+    body: Blob | FormData
+    method?: "POST" | "PUT" | undefined
+    query?: Readonly<Record<string, string | number | boolean | null | undefined>> | undefined
+    headers?: Readonly<Record<string, string>> | undefined
+    signal?: AbortSignal | undefined
+    // Bytes sent so far, and the total (0 when the browser cannot tell).
+    onProgress?: ((sent: number, total: number) => void) | undefined
 
 # @onetype/stack-app-kit/react
 
@@ -958,6 +1096,9 @@ Imported whole, then reached through the name: `import { transport } from "@onet
 
 > The 404, for a path nothing declared.
 ### NotFound(): ReactNode
+
+> The locale a prerendered page was written in (`#kit-state`'s `data-locale`), for `start` to hydrate in; undefined on a page the browser rendered first.
+### prerenderedLocale(): string | undefined
 
 > What a prerender wrote for the cache to hydrate from (`<script id="kit-state">`), or undefined on a page the browser rendered first.
 ### prerenderedState(): unknown
@@ -981,6 +1122,9 @@ Imported whole, then reached through the name: `import { transport } from "@onet
     pages: Partial<StatusPages>
     children: ReactNode
 
+> Shows streamed text as it grows, and announces it through a polite live region once, when it stops growing.
+### StreamedText({ text, streaming, label, className }: StreamedTextProps): ReactNode
+
 > Calls `onDismiss` on Escape, or on a pointer press outside both the element and its anchor.
 ### useDismiss: (isOpen: boolean, inside: RefObject<HTMLElement | null>, anchor: RefObject<HTMLElement | null> | undefined, onDismiss: () => void) => void
 
@@ -1000,13 +1144,43 @@ Imported whole, then reached through the name: `import { transport } from "@onet
 > The kernel, for a component under a provider.
 ### useKernel(): Kernel
 
+> A plugin's view of the viewer's locale, re-rendering the component whenever any plugin changes it.
+### useLocale(plugin: string): PluginLocale
+
+> Once hydration is done, switches to the viewer's own locale (what `negotiate` answered), so a page written in another hydrates first.
+### useLocaleAfterHydration(tag: string | undefined): void
+
 > One plugin's context and services, by name.
 ### usePlugin<Config = unknown, Services = unknown>(name: string): PluginHandle<Config, Services>
 
 > Reads a value a service keeps, and re-renders when it changes.
 ### useStore<Value>(watch: (notify: () => void) => () => void, read: () => Value): Value
 
+## Classes
+
+> Catches what no plugin's boundary did, reports it once, and shows a page with a way back.
+### AppBoundary extends Component<AppBoundaryProps, AppBoundaryState>
+    state: AppBoundaryState
+    static getDerivedStateFromError(error: unknown): AppBoundaryState
+    componentDidCatch(error: unknown, info: ErrorInfo): void
+    render(): ReactNode
+
 ## Types
+
+> Around the whole application: whatever throws above a plugin's own boundary is shown and reported, never a blank page.
+### AppBoundaryProps
+    children: ReactNode
+    // Reports what was caught, e.g. `(error) => log.error("render failed", { error })`, since no window error event fires for it.
+    onError?: ((error: unknown, info: {
+    componentStack?: string | null | undefined
+    }) => void) | undefined
+    // The page shown instead; a plain one with a retry when left out.
+    fallback?: ComponentType<AppFailureProps> | undefined
+
+> What the page an `AppBoundary` falls back to receives.
+### AppFailureProps
+    error: unknown
+    reset: () => void
 
 > What a plugin holds: its config, its services, and everything a context carries.
 ### PluginHandle<Config = unknown, Services = unknown> = Context<Config, Services>
@@ -1024,6 +1198,15 @@ Imported whole, then reached through the name: `import { transport } from "@onet
     permission?: string | undefined
     }>
     missing: ComponentType
+
+> Text that grows while it streams: shown as it arrives, announced once when it completes; text that never streamed is not announced.
+### StreamedTextProps
+    text: string
+    // True while more text may arrive: the text is marked busy, and nothing is announced yet.
+    streaming: boolean
+    // What a screen reader hears before the text, e.g. the author's name.
+    label?: string | undefined
+    className?: string | undefined
 
 # @onetype/stack-app-kit/testing
 
@@ -1098,9 +1281,11 @@ Imported whole, then reached through the name: `import { transport } from "@onet
 ### findUnwatched(root: string): Unwatched[]
 
 > Every check an application runs on itself, in one call.
-### Project: { required: readonly ["#docs/usage.md", "#docs/stack.md", "#docs/architecture.md"]; findAll: (checking?: ProjectCheckOptions) => ProjectProblem[]; /** Every check that could not run, and what it would have read. */ findSkipped: (checking?: ProjectCheckOptions) => ProjectSkipped[] }
+### Project: { required: readonly ["#docs/usage.md", "#docs/stack.md", "#docs/architecture.md"]; findAll: (checking?: ProjectCheckOptions) => ProjectProblem[]; /** What 6.x reports without failing: each becomes a refusal in `findAll` with `strict: true`, the default from 7.0. */ findWarnings: (checking?: ProjectCheckOptions) => ProjectProblem[]; /** Every check that could not run, and what it would have read. */ findSkipped: (checking?: ProjectCheckOptions) => ProjectSkipped[] }
     required: readonly ["#docs/usage.md", "#docs/stack.md", "#docs/architecture.md"]
     findAll: (checking?: ProjectCheckOptions) => ProjectProblem[]
+    // What 6.x reports without failing: each becomes a refusal in `findAll` with `strict: true`, the default from 7.0.
+    findWarnings: (checking?: ProjectCheckOptions) => ProjectProblem[]
     // Every check that could not run, and what it would have read.
     findSkipped: (checking?: ProjectCheckOptions) => ProjectSkipped[]
 
@@ -1236,6 +1421,8 @@ Imported whole, then reached through the name: `import { transport } from "@onet
     docs?: string
     // Documents this application asks itself to hold; none unless named. `Project.required` is the kit's suggestion.
     required?: readonly string[]
+    // Refuses what 6.x only warns about (a plugin's usage.md past its size); the default from 7.0.
+    strict?: boolean
     // The size a document may reach before it has outgrown its point.
     maxCharacters?: number
     // The published type declaring `Definition`, read to list the keys a plugin may declare.
@@ -1339,10 +1526,12 @@ Imported whole, then reached through the name: `import { transport } from "@onet
 
 > A Vite plugin: once the client is built, builds `entry` for the server, runs its default export with the built
 > `index.html`, and removes the server build. Skips the nested server build it starts, and every command but `build`.
-> In a production build, an origin that is missing or not absolute http(s) stops the build.
-### prerenderOnBuild(options: PrerenderOnBuildOptions): { name: string; configResolved: (resolved: ResolvedBuildConfig) => void; closeBundle: () => Promise<void> }
+> In a production build, an origin that is missing or not absolute http(s) stops the build. `vite preview` then serves
+> as the documented host does: a page's own `index.html`, and `_shell.html` for every other page path.
+### prerenderOnBuild(options: PrerenderOnBuildOptions): { name: string; configResolved: (resolved: ResolvedBuildConfig) => void; configurePreviewServer: (server: PreviewServer) => void; closeBundle: () => Promise<void> }
     name: string
     configResolved: (resolved: ResolvedBuildConfig) => void
+    configurePreviewServer: (server: PreviewServer) => void
     closeBundle: () => Promise<void>
 
 > A `respond` for `handle` that renders `tree` into `template` (the built `_template.html`), as a prerender does: the router already stands at the path.
@@ -1409,3 +1598,93 @@ Imported whole, then reached through the name: `import { transport } from "@onet
 > What a request forwards to the api on the viewer's behalf: the cookie and the language, nothing else.
 ### Session
     headers: Readonly<Record<string, string>>
+
+# @onetype/stack-app-kit/e2e
+
+## Functions
+
+### bootEnv(file: string): Record<string, string>
+
+> A browser holding the machine-wide lock, whose pages record what went wrong.
+### Browsers: { launch: typeof launch }
+    launch: typeof launch
+
+> Static fixture pages, plain or over a per-run certificate.
+### Hosts: { start: typeof startHosts; startSecure: typeof startSecureHosts }
+    start: typeof startHosts
+    startSecure: typeof startSecureHosts
+
+> Starting the application's services on strict ports, and stopping only them.
+### Stack: { start: typeof startStack; freePorts: typeof freePorts }
+    start: typeof startStack
+    freePorts: typeof freePorts
+
+## Classes
+
+> What the end-to-end harness refused, naming the port, service or value and the fix.
+### E2eFault extends Error
+    readonly code: E2eFaultCode
+    constructor(code: E2eFaultCode, message: string)
+
+## Types
+
+### E2eFaultCode = "PORT_TAKEN" | "NOT_READY" | "UNSAFE_FLAG" | "NO_COMMAND" | "NOT_ON_CI" | "LOCKED"
+
+> A launched browser holding the lock until it closes.
+### LaunchedBrowser
+    browser: Browser
+    open: (viewport?: {
+    width: number
+    height: number
+    }) => Promise<WatchedPage>
+    close: () => Promise<void>
+
+> What `Browsers.launch` takes: test hostnames that resolve to this machine, certificates to trust by hash, and the lock.
+### LaunchOptions
+    hosts?: readonly string[] | undefined
+    trustSpki?: readonly string[] | undefined
+    // The machine-wide lock one browser run holds at a time; a folder in the temp directory by default.
+    lockPath?: string | undefined
+    lockWaitMs?: number | undefined
+
+> Static pages by path, e.g. `{ "/": "<html>…</html>" }`: what a host page fixture serves.
+### Pages = Readonly<Record<string, string>>
+
+> A running fixture server, and its own stop.
+### RunningHosts
+    origin: (hostname?: string) => string
+    close: () => Promise<void>
+
+> A secure fixture server, with the hash of its per-run certificate for `Browsers.launch({ trustSpki })`.
+### RunningSecureHosts = RunningHosts &
+    spki: string
+
+> A started stack: each service's origin, the folder holding their logs, and the stop that ends only them.
+### RunningStack
+    origins: Readonly<Record<string, string>>
+    folder: string
+    stop: () => Promise<void>
+
+> One service of the application under test.
+### ServiceOptions
+    folder: string
+    command: readonly string[]
+    // Fixed and strict: a taken port is refused, never moved.
+    port: number
+    // The path answering 2xx once the service can serve (`/ready`, not `/health`); `/` when left out.
+    ready?: string | undefined
+    // The only environment the service sees besides PATH, HOME, TMPDIR, LANG; `{name}` becomes that service's origin.
+    env?: Readonly<Record<string, string>> | undefined
+
+> What `Stack.start` takes: every service by name, and how long each may take to become ready.
+### StackOptions
+    services: Readonly<Record<string, ServiceOptions>>
+    readyMs?: number | undefined
+    // How long a service has after SIGTERM before its group gets SIGKILL (5 s by default).
+    stopGraceMs?: number | undefined
+
+> A page that records what a reader would never see: console errors, uncaught throws and 5xx answers, one sentence each.
+### WatchedPage
+    context: BrowserContext
+    page: Page
+    problems: string[]
