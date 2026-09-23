@@ -23,7 +23,7 @@ const declaredName = (): string =>
 
 test("the project holds to every rule the kit checks, including ones added after this was written", () =>
 {
-    const problems = Project.findAll({ contract: declaredName(), worked: ["2c2.notes.md"] })
+    const problems = Project.findAll({ contract: declaredName(), required: Project.required })
         .map((problem) => `[${problem.check}] ${problem.message}`);
 
     expect(problems).toEqual([]);
