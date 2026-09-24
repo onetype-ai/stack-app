@@ -185,6 +185,12 @@
     // stale: the cache clears (when the one given can), every guard asks again, and the socket dials the address as it reads now.
     changed: () => void
     }
+    // Runs a pipeline this plugin owns or depends on the owner of, checking its input and output.
+    pipeline: (name: string) => {
+    run: (input: unknown) => Promise<unknown>
+    }
+    // A registry this plugin owns or depends on the owner of.
+    registry: (name: string) => RegistryAccess
     // Another plugin's services, by name. Reachable outside a component.
     use: <Api>(plugin: string) => Api
 
@@ -204,6 +210,9 @@
     readonly permissions: readonly DeclaredEntry[]
     readonly slots: readonly DeclaredEntry[]
     readonly contributes: readonly DeclaredContribution[]
+    readonly registries: readonly DeclaredRegistry[]
+    readonly adds: readonly DeclaredAddition[]
+    readonly pipelines: readonly DeclaredPipeline[]
     readonly emits: readonly DeclaredEntry[]
     readonly listens: readonly DeclaredEntry[]
     readonly hooks: readonly DeclaredEntry[]
@@ -217,6 +226,11 @@
     readonly services: boolean
     readonly setup: boolean
     readonly teardown: boolean
+
+> What one plugin adds at start to one registry.
+### DeclaredAddition
+    readonly registry: string
+    readonly keys: readonly string[]
 
 > One command, which unlike an event names what the caller must hold.
 ### DeclaredCommand = DeclaredEntry &
@@ -232,6 +246,18 @@
 ### DeclaredEntry
     readonly name: string
     readonly describe: string
+
+> One pipeline and the order its steps run in, across the plugins read together; `problems` is what start would refuse.
+### DeclaredPipeline = DeclaredEntry &
+    readonly steps: readonly {
+    readonly id: string
+    readonly owner: string
+    }[]
+    readonly problems: readonly string[]
+
+> One registry: its sentence, and the field that names each entry.
+### DeclaredRegistry = DeclaredEntry &
+    readonly key: string
 
 > One page as declared: where it lives, and what it takes to see it.
 ### DeclaredRoute
@@ -267,6 +293,12 @@
     routes?: readonly Route<z.infer<Schema>, Given<Services>>[] | undefined
     slots?: Readonly<Record<string, Slot>> | undefined
     contributes?: readonly SlotContribution[] | undefined
+    // Named lists this plugin owns, keyed `<plugin>.<name>`.
+    registries?: Readonly<Record<string, Registry>> | undefined
+    // Ordered steps this plugin owns, keyed `<plugin>.<name>`; others add steps through `adds`.
+    pipelines?: Readonly<Record<string, Pipeline>> | undefined
+    // Entries this plugin adds at start to others' registries, or steps to their pipelines, by name.
+    adds?: Readonly<Record<string, readonly unknown[]>> | undefined
     emits?: Readonly<Record<string, Event>> | undefined
     listens?: Readonly<Record<string, Listener<Context<z.infer<Schema>, Given<Services>>>>> | undefined
     hooks?: Readonly<Record<string, Hook>> | undefined
@@ -291,6 +323,9 @@
 ### Event
     describe: string
     schema: z.ZodType
+
+> Where one step sits in a pipeline, and who put it there.
+### ExplainedStep = { readonly id: string; readonly owner: string; readonly anchor?: { readonly before: string } | { readonly after: string } | undefined }
 
 > What a component sees when a contribution or a page threw.
 ### FallbackProps
@@ -363,6 +398,13 @@
     problem?: string
     }
     hasSlot: (name: string) => boolean
+    // A pipeline's steps in the order they run, and who put each there.
+    explain: (pipeline: string) => readonly ExplainedStep[]
+    // A registry as the viewer sees it: `list` changes identity only when an entry or a permission changed.
+    registry: (name: string) => {
+    list: () => readonly RegistryEntry[]
+    watch: (notify: () => void) => () => void
+    }
     fallbackFor: (plugin: string) => ComponentType<FallbackProps> | undefined
     context: (plugin: string) => Context
     permissions: {
@@ -395,6 +437,12 @@
     | "UNDECLARED_EVENT"
     | "UNDECLARED_HOOK"
     | "UNDECLARED_SLOT"
+    | "UNDECLARED_REGISTRY"
+    | "DUPLICATE_REGISTRY"
+    | "INVALID_ENTRY"
+    | "UNDECLARED_PIPELINE"
+    | "INVALID_PIPELINE"
+    | "PIPELINE_FAILED"
     | "UNDECLARED_COMMAND"
     | "UNDECLARED_PERMISSION"
     | "UNDECLARED_DEPENDENCY"
@@ -492,6 +540,23 @@
 ### PermissionSource
     granted: () => readonly string[]
 
+> Ordered steps one plugin declares and others add to, run in the caller's context. It opens no transaction:
+> a step that calls a provider never writes inside the same transaction, since a provider call must never hold locks.
+### Pipeline = Describable &
+    input: z.ZodType
+    output: z.ZodType
+    steps: readonly PipelineStep[]
+
+> One step of a pipeline: it answers the next state, or `stop(result)` to end the run with that output.
+### PipelineStep
+    id: string
+    // Where an added step sits: beside one step, before or after it. The owner's own steps need neither.
+    before?: string | undefined
+    after?: string | undefined
+    run: (state: unknown, ctx: Context, step: {
+    stop: (result: unknown) => unknown
+    }) => unknown
+
 > A plugin: its name, and what it declared.
 ### Plugin
     name: string
@@ -530,6 +595,35 @@
 ### RegisteredRoute = Route &
     plugin: string
     fallback: ComponentType<FallbackProps> | undefined
+
+> A named list one plugin declares and others add to, each entry checked as the owner says.
+### Registry = Describable &
+    // What every entry must match, whoever adds it and whenever.
+    entry: z.ZodType
+    // The entry field naming it: a non-empty string, unique within the registry.
+    key: string
+    // The most entries it holds; an add beyond it is refused.
+    cap?: number | undefined
+    // Keys only the owner may add.
+    reserved?: readonly string[] | undefined
+    // A second entry under a taken key: refused (the default), or it replaces the first with a warning.
+    replace?: "refuse" | "warn" | undefined
+    // Who may add: the plugins depending on the owner (the default), or the owner alone.
+    set?: "owner" | "dependants" | undefined
+    // The server registry this one mirrors (`<owner>.<name>` on the api): read from its snapshot, kept live over the socket, never added to here.
+    remote?: string | undefined
+
+> What a plugin reads from, and adds to, one registry.
+### RegistryAccess
+    // Ordered by `order`, then key, without what the viewer lacks the `requires` for.
+    list: () => readonly Readonly<Record<string, unknown>>[]
+    // Checks the entry as the owner declared, and answers what takes it out again.
+    set: (entry: unknown) => () => void
+
+> One entry in a registry, and the plugin that added it.
+### RegistryEntry = Readonly<Record<string, unknown>> &
+    readonly order?: number | undefined
+    readonly requires?: readonly string[] | undefined
 
 > A page, and what it takes to see it.
 ### Route<Config = unknown, Services = unknown> =
@@ -1109,7 +1203,6 @@ Imported whole, then reached through the name: `import { transport } from "@onet
     send?: (to: string) => ReactNode
     params?: RouteParams
 
-> Renders every contribution to a slot.
 ### Slot({ name, payload }: { name: string; payload?: unknown }): ReactNode
     name: string
     payload?: unknown
@@ -1152,6 +1245,10 @@ Imported whole, then reached through the name: `import { transport } from "@onet
 
 > One plugin's context and services, by name.
 ### usePlugin<Config = unknown, Services = unknown>(name: string): PluginHandle<Config, Services>
+
+> Renders every contribution to a slot.
+> A registry's entries the viewer may see, ordered; re-renders when one is added, taken out, or a permission changes.
+### useRegistry(name: string): readonly RegistryEntry[]
 
 > Reads a value a service keeps, and re-renders when it changes.
 ### useStore<Value>(watch: (notify: () => void) => () => void, read: () => Value): Value
@@ -1353,6 +1450,13 @@ Imported whole, then reached through the name: `import { transport } from "@onet
     cleared: number
     // Every key the plugin fetched ahead, in order.
     prefetched: unknown[][]
+    // What the plugin set in each registry, by name, in order; a stop takes its entry out.
+    registries: Record<string, unknown[]>
+    // Every pipeline the plugin ran, with its input, in order; a run answers its input.
+    piped: {
+    pipeline: string
+    input: unknown
+    }[]
     // What `ctx.hooks.run` answers next. Set it to refuse.
     refusal: string | undefined
     // Sends a message on a channel, as a server would.
@@ -1423,6 +1527,13 @@ Imported whole, then reached through the name: `import { transport } from "@onet
     required?: readonly string[]
     // Refuses what 6.x only warns about (a plugin's usage.md past its size); the default from 7.0.
     strict?: boolean
+    // Lines a source file may reach before it warns (500): past it, one file holds more than one idea.
+    maxLines?: number
+    // A plugin's test lines as a share of its production lines before it warns (0.1): past it, tests re-prove what they already proved.
+    maxTestRatio?: number
+    // A vitest JSON report (`--reporter=json --outputFile=...`); a test file taking over `maxTestShare` of the suite's time warns.
+    testReport?: string
+    maxTestShare?: number
     // The size a document may reach before it has outgrown its point.
     maxCharacters?: number
     // The published type declaring `Definition`, read to list the keys a plugin may declare.
@@ -1445,7 +1556,7 @@ Imported whole, then reached through the name: `import { transport } from "@onet
 
 > One thing a run found wrong, tagged with the check that found it and phrased for a reader.
 ### ProjectProblem
-    check: "boundaries" | "wiring" | "unexplained" | "token" | "class" | "comment" | "literal" | "oversized" | "missing" | "dangling" | "twice" | "budget" | "split" | "shadowed" | "reach" | "undocumented"
+    check: "boundaries" | "wiring" | "unexplained" | "token" | "class" | "comment" | "literal" | "oversized" | "missing" | "dangling" | "twice" | "budget" | "split" | "shadowed" | "reach" | "undocumented" | "unfinished" | "size" | "tests" | "slow"
     message: string
 
 > What a run did not look at, and why.
@@ -1506,6 +1617,61 @@ Imported whole, then reached through the name: `import { transport } from "@onet
 ### Unwatched
     file: string
     shape: string
+
+# @onetype/stack-app-kit/testing/app
+
+## Functions
+
+> A 200 carrying `body`.
+### ok: (body: unknown) => AppAnswer
+
+> Starts the application as a browser would (router, query cache, kernel) against answers instead of an api, and
+> renders it at `path`. After each test, what it rendered unmounts, every app it opened stops, and `fetch` is restored.
+### openApp({ path, plugins, answers, preset, config, apiBase, staleTimeMs, permissions, log, transport, calls }: OpenAppOptions): Promise<OpenedApp>
+
+## Types
+
+> What the api answers; a 204 carries no body.
+### AppAnswer
+    status: number
+    body?: unknown
+
+> An answer, or one worked out from the call; `undefined` falls through to the next source.
+### AppAnswering = AppAnswer | ((call: AppCall) => AppAnswer | undefined)
+
+> Answers keyed `"METHOD /path"`, or `"*"` for any call nothing else answers.
+### AppAnswers = Readonly<Record<string, AppAnswering>>
+
+> One request the app made, as the api would read it: the path without the api base.
+### AppCall
+    method: string
+    path: string
+    query: Readonly<Record<string, string>>
+    body: unknown
+    headers: Headers
+
+### OpenAppOptions
+    // Where the browser is when the app starts.
+    path: string
+    plugins: readonly Plugin[]
+    // Asked first, then `answers["*"]`, then `preset`; nothing answering is a 404 `NOT_FOUND`.
+    answers?: AppAnswers | undefined
+    // Answers shared by many tests, overridden by `answers`.
+    preset?: AppAnswers | undefined
+    config?: Readonly<Record<string, unknown>> | undefined
+    apiBase?: string | undefined
+    staleTimeMs?: number | undefined
+    permissions?: StartOptions["permissions"] | undefined
+    log?: StartOptions["log"] | undefined
+    // Merged over `{ baseUrl: apiBase, retries: 0 }`.
+    transport?: Partial<StartOptions["transport"]> | undefined
+    // Where calls are recorded, so several apps in one test can share one list.
+    calls?: AppCall[] | undefined
+
+### OpenedApp
+    app: StartedApp
+    calls: AppCall[]
+    client: QueryClient
 
 # @onetype/stack-app-kit/server
 

@@ -41,6 +41,6 @@ A `.tsx` folder holds its own `.module.css`.
 
 Every key `plugin.ts` accepts: `version`, `describe`, `dependsOn`, `config`,
 `permissions`, `services`, `grants`, `grantsSupported`, `routes`, `pages`,
-`frame`, `slots`, `contributes`, `emits`, `listens`, `hooks`, `participates`,
-`commands`, `sends`, `messages`, `fallback`, `setup`, `teardown`. Only the
-first two are required.
+`frame`, `slots`, `registries`, `pipelines`, `adds`, `contributes`, `emits`,
+`listens`, `hooks`, `participates`, `commands`, `sends`, `messages`,
+`fallback`, `setup`, `teardown`. Only the first two are required.

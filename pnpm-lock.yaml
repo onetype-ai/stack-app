@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@onetype/stack-app-kit':
-        specifier: ^6.4.0
-        version: 6.4.0(playwright@1.62.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(vite@8.2.2(@types/node@26.4.0))
+        specifier: ^6.5.0
+        version: 6.5.0(@tanstack/react-query@5.102.8(react@19.2.8))(@tanstack/react-router@1.170.32(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(@testing-library/react@16.3.3(@testing-library/dom@10.4.1)(@types/react-dom@19.2.5(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(playwright@1.62.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(vite@8.2.2(@types/node@26.4.0))(vitest@4.1.11(@types/node@26.4.0)(jsdom@30.0.1)(vite@8.2.2(@types/node@26.4.0)))
       '@tanstack/react-query':
         specifier: 5.102.8
         version: 5.102.8(react@19.2.8)
@@ -284,16 +284,26 @@ packages:
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
 
-  '@onetype/stack-app-kit@6.4.0':
-    resolution: {integrity: sha512-4n+CaqZkF9w1E1ewlSTs3bOCE0GdAD0y4JZV7UYGOIPFvflPrue59ZrsfkVqQ6ZDzAQsugMWBVjvijH2G31gdA==}
+  '@onetype/stack-app-kit@6.5.0':
+    resolution: {integrity: sha512-cXD19OMLJMnWfLF9M2RZuXHNwsmW00CJhkcUbafzz6M9Z56Q38N8/DeNH5e/qzmfJodMsavBkIxJbpeDeCZvOA==}
     engines: {node: '>=22'}
     hasBin: true
     peerDependencies:
+      '@tanstack/react-query': '>=5'
+      '@tanstack/react-router': '>=1.100'
+      '@testing-library/react': '>=16'
       playwright: '>=1.40'
       react: '>=18'
       react-dom: '>=18'
       vite: '>=6'
+      vitest: '>=2'
     peerDependenciesMeta:
+      '@tanstack/react-query':
+        optional: true
+      '@tanstack/react-router':
+        optional: true
+      '@testing-library/react':
+        optional: true
       playwright:
         optional: true
       react:
@@ -301,6 +311,8 @@ packages:
       react-dom:
         optional: true
       vite:
+        optional: true
+      vitest:
         optional: true
 
   '@oxc-project/types@0.147.0':
@@ -1621,14 +1633,18 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.6.0
 
-  '@onetype/stack-app-kit@6.4.0(playwright@1.62.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(vite@8.2.2(@types/node@26.4.0))':
+  '@onetype/stack-app-kit@6.5.0(@tanstack/react-query@5.102.8(react@19.2.8))(@tanstack/react-router@1.170.32(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(@testing-library/react@16.3.3(@testing-library/dom@10.4.1)(@types/react-dom@19.2.5(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(playwright@1.62.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(vite@8.2.2(@types/node@26.4.0))(vitest@4.1.11(@types/node@26.4.0)(jsdom@30.0.1)(vite@8.2.2(@types/node@26.4.0)))':
     dependencies:
       zod: 4.5.4
     optionalDependencies:
+      '@tanstack/react-query': 5.102.8(react@19.2.8)
+      '@tanstack/react-router': 1.170.32(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      '@testing-library/react': 16.3.3(@testing-library/dom@10.4.1)(@types/react-dom@19.2.5(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       playwright: 1.62.1
       react: 19.2.8
       react-dom: 19.2.8(react@19.2.8)
       vite: 8.2.2(@types/node@26.4.0)
+      vitest: 4.1.11(@types/node@26.4.0)(jsdom@30.0.1)(vite@8.2.2(@types/node@26.4.0))
 
   '@oxc-project/types@0.147.0': {}
 
